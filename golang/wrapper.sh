@@ -6,6 +6,8 @@ set -eu -o pipefail
 : ${TARGETOS=}
 : ${TARGETARCH=}
 : ${TARGETVARIANT=}
+: ${CGO_ENABLED=}
+: ${GOARCH=}
 
 if [ ! -z "$TARGETPLATFORM" ]; then
   os="$(echo $TARGETPLATFORM | cut -d"/" -f1)"
@@ -51,6 +53,33 @@ if [ ! -z "$TARGETVARIANT" ]; then
       ;;
     esac
   fi
+fi
+
+if [ "$CGO_ENABLED" == "1" ]; then
+  case "$GOARCH" in
+  "amd64")
+    export CC="x86_64-linux-gnu-gcc"
+    ;;
+  "ppc64le")
+    export CC="powerpc64le-linux-gnu-gcc"
+    ;;
+  "s390x")
+    export CC="s390x-linux-gnu-gcc"
+    ;;
+  "arm64")
+    export CC="aarch64-linux-gnu-gcc"
+    ;;
+  "arm")
+    case "$GOARM" in
+    "v5")
+      export CC="arm-linux-gnueabi-gcc"
+      ;;
+    *)
+      export CC="arm-linux-gnueabihf-gcc"
+      ;;
+    esac
+    ;;
+  esac
 fi
 
 exec /usr/local/go/bin/go "$@"
