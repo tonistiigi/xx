@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 
-set -eu -o pipefail
-
 : ${TARGETPLATFORM=}
 : ${TARGETOS=}
 : ${TARGETARCH=}
 : ${TARGETVARIANT=}
 : ${CGO_ENABLED=}
 : ${GOARCH=}
+: ${GOARM=}
+
+set -eu
 
 if [ ! -z "$TARGETPLATFORM" ]; then
   os="$(echo $TARGETPLATFORM | cut -d"/" -f1)"
@@ -15,7 +16,7 @@ if [ ! -z "$TARGETPLATFORM" ]; then
   if [ ! -z "$os" ] && [ ! -z "$arch" ]; then
     export GOOS="$os"
     export GOARCH="$arch"
-    if [ "$arch" == "arm" ]; then
+    if [ "$arch" = "arm" ]; then
       case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
       "v5")
         export GOARM="5"
@@ -39,8 +40,8 @@ if [ ! -z "$TARGETARCH" ]; then
   export GOARCH="$TARGETARCH"
 fi
 
-if [ ! -z "$TARGETVARIANT" ]; then
-  if [ "$GOARCH" == "arm" ]; then
+if [ "$TARGETARCH" = "arm" ]; then
+  if [ ! -z "$TARGETVARIANT" ]; then
     case "$TARGETVARIANT" in
     "v5")
       export GOARM="5"
@@ -52,10 +53,12 @@ if [ ! -z "$TARGETVARIANT" ]; then
       export GOARM="7"
       ;;
     esac
+  else
+    export GOARM="7"
   fi
 fi
 
-if [ "$CGO_ENABLED" == "1" ]; then
+if [ "$CGO_ENABLED" = "1" ]; then
   case "$GOARCH" in
   "amd64")
     export CC="x86_64-linux-gnu-gcc"
@@ -71,7 +74,7 @@ if [ "$CGO_ENABLED" == "1" ]; then
     ;;
   "arm")
     case "$GOARM" in
-    "v5")
+    "5")
       export CC="arm-linux-gnueabi-gcc"
       ;;
     *)
