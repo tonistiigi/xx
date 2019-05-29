@@ -6,6 +6,7 @@
 : ${TARGETVARIANT=}
 : ${CGO_ENABLED=}
 : ${GOARCH=}
+: ${GOOS=}
 : ${GOARM=}
 
 set -eu
@@ -83,6 +84,10 @@ if [ "$CGO_ENABLED" = "1" ]; then
     esac
     ;;
   esac
+fi
+
+if [ "$GOOS" = "wasi" ]; then
+  export GOOS="js"
 fi
 
 exec /usr/local/go/bin/go "$@"
