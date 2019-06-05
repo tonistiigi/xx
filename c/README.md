@@ -11,6 +11,8 @@ RUN $(CC) main.c
 
 Inside build you can call `target-linux-gnu` to return the correct target platform if requested by tooling.
 
+`tonistiigi/xx:gcc-sid` image is similar but based on Debian sid and also supports RISC-V .
+
 ### Example with bash:
 
 ```
