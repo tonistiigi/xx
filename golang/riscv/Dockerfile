@@ -5,7 +5,7 @@ FROM golang:alpine AS build
 RUN apk add --no-cache gcc musl-dev bash git
 WORKDIR /src
 
-RUN git clone https://github.com/4a6f656c/riscv-go -b riscvdev --depth=1 go && \
+RUN git clone https://github.com/4a6f656c/riscv-go -b riscvdev-go1.13 --depth=1 go && \
   cd go/src && ./make.bash && \
   rm -rf go/pkg/bootstrap && \
   rm -rf go/pkg/obj
