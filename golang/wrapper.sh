@@ -90,4 +90,8 @@ if [ "$GOOS" = "wasi" ]; then
   export GOOS="js"
 fi
 
+if [ -z "$GOBIN" ] && [ -n "$GOPATH" ] && [ -n "$GOARCH" ] && [ -n "$GOOS" ]; then
+  export PATH=${GOPATH}/bin/${GOOS}_${GOARCH}:${PATH}
+fi
+
 exec /usr/local/go/bin/go "$@"
