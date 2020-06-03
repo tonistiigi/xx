@@ -6,13 +6,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git build-essential file wget cpio python unzip rsync bc curl ca-certificates
   
 WORKDIR /src
-RUN curl -s https://buildroot.org/downloads/buildroot-2019.02.2.tar.gz | tar xvz
-WORKDIR /src/buildroot-2019.02.2
+RUN curl -s https://buildroot.org/downloads/buildroot-2019.02.11.tar.gz | tar xvz
+WORKDIR /src/buildroot-2019.02.11
 
 ENV FORCE_UNSAFE_CONFIGURE=1
 COPY config .config
 
-RUN make && \
+RUN make -j $(nproc) && \
   mv output/host /usr/riscv64-linux-gnu && \
   rm -rf output
 

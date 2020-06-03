@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Buildroot 2019.02.2 Configuration
+# Buildroot 2019.02.11 Configuration
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_HOST_GCC_AT_LEAST_4_5=y
@@ -165,7 +165,7 @@ BR2_KERNEL_HEADERS_4_19=y
 # BR2_KERNEL_HEADERS_VERSION is not set
 # BR2_KERNEL_HEADERS_CUSTOM_TARBALL is not set
 # BR2_KERNEL_HEADERS_CUSTOM_GIT is not set
-BR2_DEFAULT_KERNEL_HEADERS="4.19.36"
+BR2_DEFAULT_KERNEL_HEADERS="4.19.114"
 BR2_PACKAGE_LINUX_HEADERS=y
 BR2_PACKAGE_GLIBC=y
 
@@ -692,6 +692,7 @@ BR2_PACKAGE_LTP_TESTSUITE_ARCH_SUPPORTS=y
 #
 # libva-utils needs a toolchain w/ C++, threads, dynamic library
 #
+BR2_PACKAGE_NETSURF_ARCH_SUPPORTS=y
 # BR2_PACKAGE_NETSURF is not set
 # BR2_PACKAGE_PNGQUANT is not set
 # BR2_PACKAGE_RRDTOOL is not set
@@ -1081,6 +1082,7 @@ BR2_PACKAGE_OPENAL_ARCH_SUPPORTS=y
 # Compression and decompression
 #
 # BR2_PACKAGE_LIBARCHIVE is not set
+# BR2_PACKAGE_LIBMSPACK is not set
 
 #
 # libsquish needs a toolchain w/ C++
@@ -1351,6 +1353,10 @@ BR2_PACKAGE_PROVIDES_HOST_OPENSSL="host-libopenssl"
 # BR2_PACKAGE_TIFF is not set
 # BR2_PACKAGE_WAYLAND is not set
 # BR2_PACKAGE_WEBP is not set
+
+#
+# woff2 needs a toolchain w/ C++
+#
 
 #
 # zbar needs a toolchain w/ threads, C++ and headers >= 3.17
@@ -1634,7 +1640,7 @@ BR2_PACKAGE_PROVIDES_HOST_OPENSSL="host-libopenssl"
 # BR2_PACKAGE_ALLJOYN_TCL_BASE is not set
 
 #
-# azmq needs a toolchain w/ C++11, wchar and NTPL
+# azmq needs a toolchain w/ C++11, wchar and NPTL
 #
 
 #
