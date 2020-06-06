@@ -27,4 +27,4 @@ jobs:
           docker buildx build \
             --output "type=image,push=false" \
             --platform ${{ steps.buildx.outputs.platforms }} \
-            --file ./golang/Dockerfile.test ./golang
+            --file ./golang/Dockerfile ./golang
