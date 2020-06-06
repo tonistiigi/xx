@@ -1,4 +1,8 @@
 FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine AS builder
 
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN printf "I am running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATFORM:-linux/amd64}\n$(uname -a)\n"
+
 COPY wrapper.sh /go/bin/go
 RUN go env
