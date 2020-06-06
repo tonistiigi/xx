@@ -1,0 +1,4 @@
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine AS builder
+
+COPY wrapper.sh /go/bin/go
+RUN go env

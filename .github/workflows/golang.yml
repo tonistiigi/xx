@@ -1,0 +1,30 @@
+name: golang
+
+on:
+  push:
+    paths:
+      - '.github/workflows/golang.yml'
+      - 'golang/**'
+  pull_request:
+    paths:
+      - '.github/workflows/golang.yml'
+      - 'golang/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v2
+      -
+        name: Test
+        run: |
+          docker buildx build \
+            --output "type=image,push=false" \
+            --platform ${{ steps.buildx.outputs.platforms }} \
+            --file ./golang/Dockerfile.test ./golang
