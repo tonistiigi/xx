@@ -8,6 +8,7 @@
 : ${GOARCH=}
 : ${GOOS=}
 : ${GOARM=}
+: ${GOBIN=}
 
 set -eu
 
