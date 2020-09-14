@@ -5,7 +5,7 @@ on:
     branches:
       - 'master'
     tags:
-      - 'v*'
+      - 'golang/v*'
     paths:
       - '.github/workflows/golang.yml'
       - 'golang/**'
@@ -45,13 +45,15 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Prepare
+        name: Evaluate target names
         id: prep
         run: |
           DOCKER_IMAGE=tonistiigi/xx
-          VERSION=golang-edge
+          VERSION=dummy
           if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
+            VERSION=${GITHUB_REF#refs/tags/golang/v}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=${GITHUB_REF#refs/heads/}
           fi
           TAGS="${DOCKER_IMAGE}:golang-${VERSION}"
           if [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
