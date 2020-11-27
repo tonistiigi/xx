@@ -1,9 +1,13 @@
 group "test-detect" {
-    targets = ["test-detect-alpine"]
+    targets = ["test-detect-alpine", "test-detect-debian"]
 }
 
 target "test-detect-alpine" {
     context = "detect"
-    dockerfile = "Dockerfile"
     target = "test-alpine"
+}
+
+target "test-detect-debian" {
+    context = "detect"
+    target = "test-debian"
 }
