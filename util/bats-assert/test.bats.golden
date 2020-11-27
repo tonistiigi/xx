@@ -1,0 +1,26 @@
+1..5
+not ok 1 failing
+# (from function `assert_equal' in file bats-assert/src/assert.bash, line 91,
+#  in test file test.bats, line 6)
+#   `assert_equal "foo" "bar"' failed
+# 
+# -- values do not equal --
+# expected : bar
+# actual   : foo
+# --
+# 
+not ok 2 run-no-success
+# (in test file test.bats, line 10)
+#   `run echo "start" && false' failed
+ok 3 run foobar
+ok 4 run
+not ok 5 run-fail
+# (from function `assert_output' in file bats-assert/src/assert.bash, line 239,
+#  in test file test.bats, line 28)
+#   `assert_output "bcd"' failed
+# 
+# -- output differs --
+# expected : bcd
+# actual   : abc
+# --
+# 
