@@ -1,38 +1,55 @@
 #!/usr/bin/env bats
 
+load 'assert'
+
 @test "vendor" {
-  result="$(xx-detect vendor)"
-  [ "$result" = "alpine" ]
+  assert_equal "alpine" "$(xx-detect vendor)"
 }
 
 @test "libc" {
-  result="$(xx-detect libc)"
-  echo $result
-  [ "$result" = "musl" ]
-  result="$(XX_LIBC=gnu xx-detect libc)"
-  [ "$result" = "gnu" ]
+  assert_equal "musl" "$(xx-detect libc)"
+  assert_equal "gnu" "$(XX_LIBC=gnu xx-detect libc)"
 }
 
-@test "arch os filled" {
-  result="$(xx-detect march)"
-  [ "$result" = "$(uname -m)" ]
-  result="$(xx-detect os)"
-  [ "$result" = "linux" ]
+@test "libc-override" {
+  assert_equal "aarch64-alpine-linux-gnu" "$(TARGETPLATFORM=linux/arm64 XX_LIBC=gnu xx-detect triple)"
 }
 
-@test "is-cross" {
-  run xx-detect is-cross
-  [ "$status" -eq 1 ]
-  if [ "$(uname -m)" != "x86_64" ]; then
-    echo "here2"
-    run TARGETARCH=amd64 xx-detect is-cross
-  else
-    run TARGETARCH=arm64 xx-detect is-cross
-  fi
-  [ "$status" -eq 0 ]
+@test "alpine-arch" {
+  assert_equal "$(xx-detect alpine-arch)" "$(xx-detect pkg-arch)"
 }
 
-@test "invalid-command" {
-  run xx-detect something
-  [ "$status" -eq 1 ]
+@test "aarch64" {
+  assert_equal "aarch64-alpine-linux-musl" "$(TARGETPLATFORM=linux/arm64 xx-detect triple)"
+  assert_equal "aarch64" "$(TARGETPLATFORM=linux/arm64 xx-detect pkg-arch)"
+}
+
+@test "arm" {
+  assert_equal "armv7-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm xx-detect triple)"
+  assert_equal "armv7" "$(TARGETPLATFORM=linux/arm xx-detect pkg-arch)"
+}
+
+@test "armv6" {
+  assert_equal "armv6-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm/v6 xx-detect triple)"
+  assert_equal "armhf" "$(TARGETPLATFORM=linux/arm/v6 xx-detect pkg-arch)"
+}
+
+@test "386" {
+  assert_equal "i586-alpine-linux-musl" "$(TARGETPLATFORM=linux/386 xx-detect triple)"
+  assert_equal "x86" "$(TARGETPLATFORM=linux/386 xx-detect pkg-arch)"
+}
+
+@test "ppc64le" {
+  assert_equal "powerpc64le-alpine-linux-musl" "$(TARGETPLATFORM=linux/ppc64le xx-detect triple)"
+  assert_equal "ppc64le" "$(TARGETPLATFORM=linux/ppc64le xx-detect pkg-arch)"
+}
+
+@test "s390x" {
+  assert_equal "s390x-alpine-linux-musl" "$(TARGETPLATFORM=linux/s390x xx-detect triple)"
+  assert_equal "s390x" "$(TARGETPLATFORM=linux/s390x xx-detect pkg-arch)"
+}
+
+@test "riscv64" {
+  assert_equal "riscv64-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 xx-detect triple)"
+  assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-detect pkg-arch)"
 }

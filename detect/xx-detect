@@ -14,6 +14,8 @@
 : ${XX_VENDOR=unknown}
 : ${XX_LIBC=}
 
+set -e
+
 # break up TARGETPLATFORM if provided
 if [ -n "$TARGETPLATFORM" ]; then
   os="$(echo $TARGETPLATFORM | cut -d"/" -f1)"
@@ -24,13 +26,16 @@ if [ -n "$TARGETPLATFORM" ]; then
     if [ "$arch" = "arm" ]; then
       case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
       "v5")
-        export TARGETVARIANT="5"
+        TARGETVARIANT="v5"
         ;;
       "v6")
-        export TARGETVARIANT="6"
+        TARGETVARIANT="v6"
+        ;;
+      "v8")
+        TARGETVARIANT="v8"
         ;;
       *)
-        export TARGETVARIANT="7"
+        TARGETVARIANT="v7"
         ;;
       esac
     fi
@@ -38,10 +43,12 @@ if [ -n "$TARGETPLATFORM" ]; then
 fi
 
 # detect distro vendor
-source /etc/os-release && XX_VENDOR=$ID
+if . /etc/os-release 2>/dev/null; then
+  XX_VENDOR=$ID
+fi
 
 vendor=""
-if [ "$XX_VENDOR" != "unknown" && "$XX_VENDOR" != "debian" ]; then
+if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
   vendor="-${XX_VENDOR}"
 fi
 
@@ -58,6 +65,9 @@ if [ -z "$TARGETARCH" ]; then
 case "$(uname -m)" in
 "x86_64")
   TARGETARCH="amd64"
+  ;;
+"i386")
+  TARGETARCH="386"
   ;;
 "aarch64")
   TARGETARCH="arm64"
@@ -90,6 +100,10 @@ if [ -z "$TARGETOS" ]; then
   TARGETOS="linux"
 fi
 
+if [ "$TARGETARCH" = "arm" ] && [ -z "$TARGETVARIANT" ]; then
+  TARGETVARIANT="v7"
+fi
+
 case "$TARGETARCH" in
 "amd64")
   XX_MARCH="x86_64"
@@ -99,7 +113,7 @@ case "$TARGETARCH" in
   ;;
 "arm64")
   XX_MARCH="aarch64"
-  XX_DEBIAN_ARCH="aarch64"
+  XX_DEBIAN_ARCH="arm64"
   XX_ALPINE_ARCH="aarch64"
   XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
   ;;
@@ -140,13 +154,19 @@ case "$TARGETARCH" in
   XX_MARCH="ppc64le"
   XX_DEBIAN_ARCH="ppc64el"
   XX_ALPINE_ARCH="ppc64le"
-  XX_TRIPLE="powerpc64le${vendor}-linux-gnu"
+  XX_TRIPLE="powerpc64le${vendor}-linux-${XX_LIBC}"
   ;;
 "s390x")
   XX_MARCH="s390x"
   XX_DEBIAN_ARCH="s390x"
   XX_ALPINE_ARCH="s390x"
-  XX_TRIPLE="s390x${vendor}-linux-gnu"
+  XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
+  ;;
+"386")
+  XX_MARCH="i386"
+  XX_DEBIAN_ARCH="i386"
+  XX_ALPINE_ARCH="x86"
+  XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
   ;;
 esac
 
@@ -165,8 +185,14 @@ case "$1" in
     exit 0
   fi
   ;;
+"arch")
+  echo $TARGETARCH
+  ;;
+"variant")
+  echo $TARGETVARIANT
+  ;;
 "os")
-  echo $TARGETOS; # TODO:
+  echo $TARGETOS # TODO:
   ;;
 "march")
   echo $XX_MARCH;
@@ -186,7 +212,7 @@ case "$1" in
 "vendor")
   echo $XX_VENDOR;
   ;;
-"libc")
+"libc") # this is not abi, just the prefix
   echo $XX_LIBC;
   ;;
 "env")
@@ -196,6 +222,12 @@ case "$1" in
   echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
   echo "XX_TRIPLE=${XX_TRIPLE}"
   echo "XX_LIBC=${XX_LIBC}"
+  echo "TARGETOS=${TARGETOS}"
+  echo "TARGETARCH=${TARGETARCH}"
+  echo "TARGETVARIANT=${TARGETVARIANT}"
+  ;;
+"")
+  echo $XX_TRIPLE;
   ;;
 *)
   echo "unknown command $1"
