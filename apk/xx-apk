@@ -1,0 +1,91 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_APK_NOLOCK" ]; then
+  lock="/var/lock/xx-apk"
+  exec 200>$lock
+  flock -x 200
+  export XX_APK_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_APK" ]; then
+    set -x
+fi
+
+for l in $(xx-detect env); do
+  export $l
+done
+
+
+setup() {
+  if ! xx-detect is-cross; then
+    return
+  fi
+  done_file="/${XX_TRIPLE}/.xx-setup"
+  if [ -f "$done_file" ]; then
+    return
+  fi
+  apk_dir="/${XX_TRIPLE}/etc/apk"
+  mkdir -p "$apk_dir"
+  cp -r /etc/apk/* "$apk_dir/"
+  echo $XX_PKG_ARCH > "$apk_dir/arch"
+  rm "$apk_dir/world"
+  rm -rf "$apk_dir/keys/*"
+  apk add --no-cache --initdb -p "/${XX_TRIPLE}" --allow-untrusted alpine-keys
+  touch $done_file
+}
+
+add() {
+  setup
+  root="-p /"
+  if xx-detect is-cross; then
+    root="-p /${XX_TRIPLE}"
+  fi
+  apk add --no-cache $root "$@"
+  if xx-detect is-cross; then
+  if [ -z "$XX_APK_KEEP_BINARIES" ]; then
+    rm -rf /${XX_TRIPLE}/usr/bin/*
+  fi
+  fi
+}
+
+setup_clang() {
+  setup
+  done_file="/${XX_TRIPLE}/.xx-setup-clang"
+  if [ -f "$done_file" ]; then
+    return
+  fi
+  apk add --no-cache clang lld
+  mkdir -p /etc/llvm
+  # TODO: lld has no support for s390x
+  echo "-fuse-ld=lld" > /etc/llvm/default.cfg
+  ln -s xx-clang-wrapper /usr/local/bin/clang 2> /dev/null || true
+  ln -s xx-clang-wrapper /usr/local/bin/clang++ 2> /dev/null || true
+  if ! xx-detect is-cross; then
+    return
+  fi
+  ln -s clang /usr/bin/${XX_TRIPLE}-clang
+  ln -s clang /usr/bin/${XX_TRIPLE}-clang++
+
+  echo "--target=${XX_TRIPLE} --sysroot=/${XX_TRIPLE}/ -fuse-ld=lld" > /usr/bin/${XX_TRIPLE}.cfg
+  touch $done_file
+}
+
+case "$1" in
+"setup")
+  setup
+  ;;
+"add")
+  shift
+  add "$@"
+  ;;
+"setup-clang")
+  setup_clang
+  ;;
+
+*)
+  echo "unknown command $1"
+  exit 1
+  ;;
+esac
