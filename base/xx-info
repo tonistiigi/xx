@@ -47,18 +47,18 @@ if [ -n "$TARGETPLATFORM" ]; then
     TARGETARCH="$arch"
     if [ "$arch" = "arm" ]; then
       case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
-      "v5")
-        TARGETVARIANT="v5"
-        ;;
-      "v6")
-        TARGETVARIANT="v6"
-        ;;
-      "v8")
-        TARGETVARIANT="v8"
-        ;;
-      *)
-        TARGETVARIANT="v7"
-        ;;
+        "v5")
+          TARGETVARIANT="v5"
+          ;;
+        "v6")
+          TARGETVARIANT="v6"
+          ;;
+        "v8")
+          TARGETVARIANT="v8"
+          ;;
+        *)
+          TARGETVARIANT="v7"
+          ;;
       esac
     fi
   fi
@@ -75,47 +75,47 @@ if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
 fi
 
 if [ -z "$XX_LIBC" ]; then
-if [ "$XX_VENDOR" = "alpine" ]; then
-  XX_LIBC="musl"
-else
-  XX_LIBC="gnu"
-fi
+  if [ "$XX_VENDOR" = "alpine" ]; then
+    XX_LIBC="musl"
+  else
+    XX_LIBC="gnu"
+  fi
 fi
 
 # reverse lookup if no parameters given
 if [ -z "$TARGETARCH" ]; then
-case "$(uname -m)" in
-"x86_64")
-  TARGETARCH="amd64"
-  ;;
-"i386")
-  TARGETARCH="386"
-  ;;
-"aarch64")
-  TARGETARCH="arm64"
-  ;;
-"armv7l")
-  TARGETARCH="arm"
-  TARGETVARIANT="v7"
-  ;;
-"armv6l")
-  TARGETARCH="arm"
-  TARGETARCH="v6"
-  ;;
-"armv5l")
-  TARGETARCH="arm"
-  TARGETARCH="v5"
-  ;;
-"riscv64")
-  TARGETARCH="riscv64"
-  ;;
-"ppc64le")
-  TARGETARCH="ppc64le"
-  ;;
-"s390x")
-  TARGETARCH="s390x"
-  ;;
-esac
+  case "$(uname -m)" in
+    "x86_64")
+      TARGETARCH="amd64"
+      ;;
+    "i386")
+      TARGETARCH="386"
+      ;;
+    "aarch64")
+      TARGETARCH="arm64"
+      ;;
+    "armv7l")
+      TARGETARCH="arm"
+      TARGETVARIANT="v7"
+      ;;
+    "armv6l")
+      TARGETARCH="arm"
+      TARGETARCH="v6"
+      ;;
+    "armv5l")
+      TARGETARCH="arm"
+      TARGETARCH="v5"
+      ;;
+    "riscv64")
+      TARGETARCH="riscv64"
+      ;;
+    "ppc64le")
+      TARGETARCH="ppc64le"
+      ;;
+    "s390x")
+      TARGETARCH="s390x"
+      ;;
+  esac
 fi
 
 if [ -z "$TARGETOS" ]; then
@@ -127,135 +127,135 @@ if [ "$TARGETARCH" = "arm" ] && [ -z "$TARGETVARIANT" ]; then
 fi
 
 case "$TARGETARCH" in
-"amd64")
-  XX_MARCH="x86_64"
-  XX_DEBIAN_ARCH="amd64"
-  XX_ALPINE_ARCH="x86_64"
-  XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
-  ;;
-"arm64")
-  XX_MARCH="aarch64"
-  XX_DEBIAN_ARCH="arm64"
-  XX_ALPINE_ARCH="aarch64"
-  XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
-  ;;
-"arm")
-  XX_MARCH="armv7l"
-  XX_DEBIAN_ARCH="armhf"
-  XX_ALPINE_ARCH="armv7"
-  XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabihf"
-  if [ "$XX_VENDOR" = "alpine" ]; then
-    XX_TRIPLE="armv7${vendor}-linux-${XX_LIBC}eabihf"
-  fi
-  if [ "$TARGETVARIANT" = "v6" ]; then
-    XX_MARCH="armv6l"
-    XX_DEBIAN_ARCH="armel"
-    XX_ALPINE_ARCH="armhf"
-    XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
+  "amd64")
+    XX_MARCH="x86_64"
+    XX_DEBIAN_ARCH="amd64"
+    XX_ALPINE_ARCH="x86_64"
+    XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
+    ;;
+  "arm64")
+    XX_MARCH="aarch64"
+    XX_DEBIAN_ARCH="arm64"
+    XX_ALPINE_ARCH="aarch64"
+    XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
+    ;;
+  "arm")
+    XX_MARCH="armv7l"
+    XX_DEBIAN_ARCH="armhf"
+    XX_ALPINE_ARCH="armv7"
+    XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabihf"
     if [ "$XX_VENDOR" = "alpine" ]; then
-      XX_TRIPLE="armv6${vendor}-linux-${XX_LIBC}eabihf"
+      XX_TRIPLE="armv7${vendor}-linux-${XX_LIBC}eabihf"
     fi
-  fi
-  if [ "$TARGETVARIANT" = "v5" ]; then
-    XX_MARCH="armv5l"
-    XX_DEBIAN_ARCH="armel"
-    XX_ALPINE_ARCH="armel" # alpine does not actually support v5
-    XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
-    if [ "$XX_VENDOR" = "alpine" ]; then
-      XX_TRIPLE="armv5${vendor}-linux-${XX_LIBC}eabi"
+    if [ "$TARGETVARIANT" = "v6" ]; then
+      XX_MARCH="armv6l"
+      XX_DEBIAN_ARCH="armel"
+      XX_ALPINE_ARCH="armhf"
+      XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
+      if [ "$XX_VENDOR" = "alpine" ]; then
+        XX_TRIPLE="armv6${vendor}-linux-${XX_LIBC}eabihf"
+      fi
     fi
-  fi
-  ;;
-"riscv64")
-  XX_MARCH="riscv64"
-  XX_DEBIAN_ARCH="riscv64"
-  XX_ALPINE_ARCH="riscv64"
-  XX_TRIPLE="riscv64${vendor}-linux-${XX_LIBC}"
-  ;;
-"ppc64le")
-  XX_MARCH="ppc64le"
-  XX_DEBIAN_ARCH="ppc64el"
-  XX_ALPINE_ARCH="ppc64le"
-  XX_TRIPLE="powerpc64le${vendor}-linux-${XX_LIBC}"
-  ;;
-"s390x")
-  XX_MARCH="s390x"
-  XX_DEBIAN_ARCH="s390x"
-  XX_ALPINE_ARCH="s390x"
-  XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
-  ;;
-"386")
-  XX_MARCH="i386"
-  XX_DEBIAN_ARCH="i386"
-  XX_ALPINE_ARCH="x86"
-  XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
-  ;;
+    if [ "$TARGETVARIANT" = "v5" ]; then
+      XX_MARCH="armv5l"
+      XX_DEBIAN_ARCH="armel"
+      XX_ALPINE_ARCH="armel" # alpine does not actually support v5
+      XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
+      if [ "$XX_VENDOR" = "alpine" ]; then
+        XX_TRIPLE="armv5${vendor}-linux-${XX_LIBC}eabi"
+      fi
+    fi
+    ;;
+  "riscv64")
+    XX_MARCH="riscv64"
+    XX_DEBIAN_ARCH="riscv64"
+    XX_ALPINE_ARCH="riscv64"
+    XX_TRIPLE="riscv64${vendor}-linux-${XX_LIBC}"
+    ;;
+  "ppc64le")
+    XX_MARCH="ppc64le"
+    XX_DEBIAN_ARCH="ppc64el"
+    XX_ALPINE_ARCH="ppc64le"
+    XX_TRIPLE="powerpc64le${vendor}-linux-${XX_LIBC}"
+    ;;
+  "s390x")
+    XX_MARCH="s390x"
+    XX_DEBIAN_ARCH="s390x"
+    XX_ALPINE_ARCH="s390x"
+    XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
+    ;;
+  "386")
+    XX_MARCH="i386"
+    XX_DEBIAN_ARCH="i386"
+    XX_ALPINE_ARCH="x86"
+    XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
+    ;;
 esac
 
 XX_PKG_ARCH=$TARGETARCH
 if [ "$XX_VENDOR" = "debian" ]; then
-    XX_PKG_ARCH=${XX_DEBIAN_ARCH}
-elif  [ "$XX_VENDOR" = "alpine" ]; then
-    XX_PKG_ARCH=${XX_ALPINE_ARCH}
+  XX_PKG_ARCH=${XX_DEBIAN_ARCH}
+elif [ "$XX_VENDOR" = "alpine" ]; then
+  XX_PKG_ARCH=${XX_ALPINE_ARCH}
 fi
 
 case "$1" in
-"is-cross")
-  if [ "$XX_MARCH" = "$(uname -m)" ]; then
+  "is-cross")
+    if [ "$XX_MARCH" = "$(uname -m)" ]; then
+      exit 1
+    else
+      exit 0
+    fi
+    ;;
+  "arch")
+    echo $TARGETARCH
+    ;;
+  "variant")
+    echo $TARGETVARIANT
+    ;;
+  "os")
+    echo $TARGETOS # TODO:
+    ;;
+  "march")
+    echo $XX_MARCH
+    ;;
+  "debian-arch")
+    echo $XX_DEBIAN_ARCH
+    ;;
+  "alpine-arch")
+    echo $XX_ALPINE_ARCH
+    ;;
+  "pkg-arch")
+    echo $XX_PKG_ARCH
+    ;;
+  "triple")
+    echo $XX_TRIPLE
+    ;;
+  "vendor")
+    echo $XX_VENDOR
+    ;;
+  "libc") # this is not abi, just the prefix
+    echo $XX_LIBC
+    ;;
+  "env")
+    echo "XX_OS=${TARGETOS}"
+    echo "XX_MARCH=${XX_MARCH}"
+    echo "XX_VENDOR=${XX_VENDOR}"
+    echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
+    echo "XX_TRIPLE=${XX_TRIPLE}"
+    echo "XX_LIBC=${XX_LIBC}"
+    echo "TARGETOS=${TARGETOS}"
+    echo "TARGETARCH=${TARGETARCH}"
+    echo "TARGETVARIANT=${TARGETVARIANT}"
+    ;;
+  "--help")
+    usage
+    ;;
+  "")
+    echo $XX_TRIPLE
+    ;;
+  *)
+    echo "unknown command $1"
     exit 1
-  else
-    exit 0
-  fi
-  ;;
-"arch")
-  echo $TARGETARCH
-  ;;
-"variant")
-  echo $TARGETVARIANT
-  ;;
-"os")
-  echo $TARGETOS # TODO:
-  ;;
-"march")
-  echo $XX_MARCH;
-  ;;
-"debian-arch")
-  echo $XX_DEBIAN_ARCH;
-  ;;
-"alpine-arch")
-  echo $XX_ALPINE_ARCH;
-  ;;
-"pkg-arch")
-  echo $XX_PKG_ARCH;
-  ;;
-"triple")
-  echo $XX_TRIPLE;
-  ;;
-"vendor")
-  echo $XX_VENDOR;
-  ;;
-"libc") # this is not abi, just the prefix
-  echo $XX_LIBC;
-  ;;
-"env")
-  echo "XX_OS=${TARGETOS}"
-  echo "XX_MARCH=${XX_MARCH}"
-  echo "XX_VENDOR=${XX_VENDOR}"
-  echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
-  echo "XX_TRIPLE=${XX_TRIPLE}"
-  echo "XX_LIBC=${XX_LIBC}"
-  echo "TARGETOS=${TARGETOS}"
-  echo "TARGETARCH=${TARGETARCH}"
-  echo "TARGETVARIANT=${TARGETVARIANT}"
-  ;;
-"--help")
-  usage
-  ;;
-"")
-  echo $XX_TRIPLE;
-  ;;
-*)
-  echo "unknown command $1"
-  exit 1
-  ;;
+    ;;
 esac

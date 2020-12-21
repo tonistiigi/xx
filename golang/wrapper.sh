@@ -20,15 +20,15 @@ if [ ! -z "$TARGETPLATFORM" ]; then
     export GOARCH="$arch"
     if [ "$arch" = "arm" ]; then
       case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
-      "v5")
-        export GOARM="5"
-        ;;
-      "v6")
-        export GOARM="6"
-        ;;
-      *)
-        export GOARM="7"
-        ;;
+        "v5")
+          export GOARM="5"
+          ;;
+        "v6")
+          export GOARM="6"
+          ;;
+        *)
+          export GOARM="7"
+          ;;
       esac
     fi
   fi
@@ -45,15 +45,15 @@ fi
 if [ "$TARGETARCH" = "arm" ]; then
   if [ ! -z "$TARGETVARIANT" ]; then
     case "$TARGETVARIANT" in
-    "v5")
-      export GOARM="5"
-      ;;
-    "v6")
-      export GOARM="6"
-      ;;
-    *)
-      export GOARM="7"
-      ;;
+      "v5")
+        export GOARM="5"
+        ;;
+      "v6")
+        export GOARM="6"
+        ;;
+      *)
+        export GOARM="7"
+        ;;
     esac
   else
     export GOARM="7"
@@ -62,38 +62,38 @@ fi
 
 if [ "$CGO_ENABLED" = "1" ]; then
   case "$GOARCH" in
-  "amd64")
-    export CC="x86_64-linux-gnu-gcc"
-    export CXX="x86_64-linux-gnu-g++"
-    ;;
-  "ppc64le")
-    export CC="powerpc64le-linux-gnu-gcc"
-    export CXX="powerpc64le-linux-gnu-g++"
-    ;;
-  "mips64le")
-    export CC="mips64el-linux-gnuabi64-gcc"
-    export CXX="mips64el-linux-gnuabi64-g++"
-    ;;
-  "s390x")
-    export CC="s390x-linux-gnu-gcc"
-    export CXX="s390x-linux-gnu-g++"
-    ;;
-  "arm64")
-    export CC="aarch64-linux-gnu-gcc"
-    export CXX="aarch64-linux-gnu-g++"
-    ;;
-  "arm")
-    case "$GOARM" in
-    "5")
-      export CC="arm-linux-gnueabi-gcc"
-      export CXX="arm-linux-gnueabi-g++"
+    "amd64")
+      export CC="x86_64-linux-gnu-gcc"
+      export CXX="x86_64-linux-gnu-g++"
       ;;
-    *)
-      export CC="arm-linux-gnueabihf-gcc"
-      export CXX="arm-linux-gnueabihf-g++"
+    "ppc64le")
+      export CC="powerpc64le-linux-gnu-gcc"
+      export CXX="powerpc64le-linux-gnu-g++"
       ;;
-    esac
-    ;;
+    "mips64le")
+      export CC="mips64el-linux-gnuabi64-gcc"
+      export CXX="mips64el-linux-gnuabi64-g++"
+      ;;
+    "s390x")
+      export CC="s390x-linux-gnu-gcc"
+      export CXX="s390x-linux-gnu-g++"
+      ;;
+    "arm64")
+      export CC="aarch64-linux-gnu-gcc"
+      export CXX="aarch64-linux-gnu-g++"
+      ;;
+    "arm")
+      case "$GOARM" in
+        "5")
+          export CC="arm-linux-gnueabi-gcc"
+          export CXX="arm-linux-gnueabi-g++"
+          ;;
+        *)
+          export CC="arm-linux-gnueabihf-gcc"
+          export CXX="arm-linux-gnueabihf-g++"
+          ;;
+      esac
+      ;;
   esac
 fi
 
