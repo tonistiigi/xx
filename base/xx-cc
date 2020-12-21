@@ -1,0 +1,207 @@
+#!/usr/bin/env sh
+
+set -e
+
+basename=$(basename $0)
+name=${basename#xx-}
+
+: ${XX_CC_PREFER_LINKER=lld}
+
+if [ "$name" = "cc" ]; then
+  name="clang"
+fi
+
+if [ "$name" = "c++" ]; then
+  name="clang++"
+fi
+
+setup() {
+  if [ -z "$XX_CC_NOLOCK" ]; then
+    lock="/var/lock/xx-cc"
+    exec 9>$lock
+    flock -x 9
+    export XX_CC_NOLOCK=1
+  fi
+
+  done_file="/usr/bin/${target}.cfg"
+  if [ -z "${target}" ]; then
+    done_file="/etc/llvm/xx-default.cfg"
+  fi
+  if [ -f "$done_file" ]; then
+    return
+  fi
+
+  if [ ! -f /usr/bin/$name ]; then
+    echo >&2 "/usr/bin/$name not found"
+    exit 1 
+  fi
+
+  linker=
+  
+  if [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
+    if which lld >/dev/null 2>/dev/null; then
+      # TODO: lld has no support for s390x
+      linker="lld"
+    fi 
+  fi
+
+  if [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
+  if [ -z "${linker}" ]; then
+    ld=$(which $target-gold 2>/dev/null || true)
+    if [ $? = 0 ]; then
+      linker=ld
+    fi
+  fi
+  if [ -z "${linker}" ] && [ -f "/${target}/bin/gold" ] ; then
+    linker="/${target}/bin/gold"
+  fi
+  fi
+
+  if [ -z "${linker}" ]; then
+    if which $target-ld 2>/dev/null; then
+      linker=ld
+    fi
+  fi
+  if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ] ; then
+    linker="/${target}/bin/ld"
+  fi
+
+  if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
+    support=$(ld -V 2>/dev/null || true)
+    exp=$(echo $target | cut -d- -f 1)
+    if [ "$exp" = "armv7" ] || [ "$exp" = "armv6" ] ||  [ "$exp" = "armv5" ]; then
+      exp="arm"
+    fi
+    if [ "$exp" = "powerpc64le" ]; then
+      exp="ppc"
+    fi
+    if [ "$exp" = "s390x" ]; then
+      exp="s390"
+    fi
+    if [ "$exp" = "riscv64" ]; then
+      exp="riscv"
+    fi
+    if [ "$exp" = "i586" ]; then
+      exp="i386"
+    fi
+    if ld -V 2>/dev/null | grep $exp 2>dev/null ; then
+      linker="ld"
+    fi
+  fi
+
+  if [ -z "${linker}" ]; then
+    echo >&2 "no suitable linker found for $target. Please install lld or ld for your target"
+    exit 1
+  fi
+  
+  if [ ! -f /etc/llvm/xx-default.cfg ]; then
+    mkdir -p /etc/llvm
+    echo "-fuse-ld=${linker}" >/etc/llvm/xx-default.cfg
+
+    # TODO: support installations other than hardcoded /usr/bin and /usr/local/bin
+    ln -s /usr/bin/xx-clang /usr/local/bin/clang 2>/dev/null || true
+    ln -s /usr/bin/xx-clang++ /usr/local/bin/clang++ 2>/dev/null || true
+  fi
+
+  if [ -z "${target}" ]; then
+    return
+  fi
+
+  ln -s clang /usr/bin/${target}-clang
+  ln -s clang /usr/bin/${target}-clang++
+
+  config="--target=${target} -fuse-ld=${linker}"
+  nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
+  if [ "${nativeTarget}" != "${target}" ]; then
+    config="${config} --sysroot=/${target}/"
+  fi
+  echo $config >/usr/bin/${target}.cfg
+}
+
+check_compiler() {
+  if [ ! -f /usr/bin/$name ]; then
+    echo >&2 "/usr/bin/$name not found. Make sure package is installed. xx doesn't currently support binaries in custom location"
+    exit
+  fi
+}
+
+# Contrary to documentation https://clang.llvm.org/docs/UsersManual.html#configuration-files
+# it looks like clang does not pick up any default configuration for targets unless the
+# binary has been renamed.
+# So we always need to wrap clang and load in the target based config here. Even when cross target is not even applied.
+# More on this thread: http://lists.llvm.org/pipermail/cfe-dev/2016-September/050928.html
+
+setupTarget=
+printTarget=
+target=
+nextIsTarget=
+for p in "$@"; do
+  # ignore if custom --config already set
+  if [ "${p}" = "--config" ]; then
+    exec /usr/bin/$name "$@"
+  fi
+  if [ "${p}" = "--print-target-triple" ] || [ "${p}" = "-print-target-triple" ]; then
+    printTarget=1
+  fi
+  if [ "${p}" = "--setup-target-triple" ] || [ "${p}" = "-setup-target-triple" ]; then
+    setupTarget=1
+  fi
+
+  # handle "-target foo"
+  if [ -n "$nextIsTarget" ]; then
+    target="$p"
+    nextIsTarget=
+  fi
+  if [ "${p}" = "-target" ]; then
+    nextIsTarget=1
+  fi
+  # handle "--target=foo"
+  if [ "${p#--target=}" != "${p}" ]; then
+    target="${p#--target=}"
+  fi
+done
+
+
+
+
+# if no target set and called with xx- then set target from env
+if [ -z "$target" ] && [ "xx-$name" = "$basename" ]; then
+  target=$(xx-info triple)
+fi
+
+# if print & target then setup and print current target
+if [ -n "${target}" ] && [ -n "${printTarget}" ]; then
+  setup
+  echo ${target}
+  exit 0
+fi
+
+# if setup then setup and exit
+if [ -n "${setupTarget}" ]; then
+  setup
+  exit 0
+fi
+
+# if target without a config and xx prefix then create config
+if [ -n "$target" ] && [ ! -f "/usr/bin/${target}.cfg" ] && [ "xx-$name" = "$basename" ]; then
+  setup
+fi
+
+# if no target, no default config and xx prefix then create config
+if [ -z "${target}" ] && [ ! -f /etc/llvm/xx-default.cfg ] && [ "xx-$name" = "$basename" ]; then
+  setup
+fi
+
+
+if [ ! -f /usr/bin/$name ]; then
+  echo >&2 "/usr/bin/$name not found. Make sure package is installed. xx doesn't currently support binaries in custom location"
+  exit
+fi
+
+if [ -z "$target" ] && [ -f /etc/llvm/xx-default.cfg ]; then
+  exec /usr/bin/$name --config /etc/llvm/xx-default.cfg "$@"
+elif [ -f "/usr/bin/${target}.cfg" ]; then
+  exec /usr/bin/$name --config /usr/bin/${target}.cfg "$@"
+else
+  exec /usr/bin/$name "$@"
+fi
