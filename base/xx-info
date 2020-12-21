@@ -14,6 +14,28 @@
 : ${XX_VENDOR=unknown}
 : ${XX_LIBC=}
 
+usage() {
+  cat >&2 <<EOT
+Usage: $(basename $0) [COMMAND]
+
+Commands:
+  alpine-arch    Print target architecture for Alpine package repositories
+  arch           Print target architecture for Docker
+  debian-arch    Print target architecture for Debian package repositories
+  env            Print XX_* variables defining target environment
+  is-cross       Exit cleanly if target is not native architecture
+  libc           Print used libc (musl or gnu)
+  march          Print target machine architecture, uname -m
+  os             Print target operating system (linux,darwin,windows,wasi)
+  pkg-arch       Print either alpine-arch or debian-arch
+  triple         Print target triple in arch[-vendor]-os-abi form
+  vendor         Print vendor part of target triple
+  variant        Print target variant if architecture is arm (eg. v7)
+
+EOT
+  exit 0
+}
+
 set -e
 
 # break up TARGETPLATFORM if provided
@@ -225,6 +247,9 @@ case "$1" in
   echo "TARGETOS=${TARGETOS}"
   echo "TARGETARCH=${TARGETARCH}"
   echo "TARGETVARIANT=${TARGETVARIANT}"
+  ;;
+"--help")
+  usage
   ;;
 "")
   echo $XX_TRIPLE;
