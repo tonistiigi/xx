@@ -1,7 +1,13 @@
 ARG TEST_BASE=alpine
 
+FROM alpine AS scripts
+COPY xx-* /out/
+RUN ln -s xx-cc /out/xx-clang && \
+    ln -s xx-cc /out/xx-clang++ && \
+    ln -s xx-cc /out/xx-c++ 
+
 FROM scratch AS base
-COPY xx-* /usr/bin/
+COPY --from=scripts /out/ /usr/bin/
 
 FROM --platform=$BUILDPLATFORM tonistiigi/bats-assert AS assert
 
