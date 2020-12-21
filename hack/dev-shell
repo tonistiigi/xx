@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+docker buildx build --load -t tonistiigi/xx:dev --target=dev ./base
+docker run -it --rm tonistiigi/xx:dev
+docker rmi tonistiigi/xx:dev

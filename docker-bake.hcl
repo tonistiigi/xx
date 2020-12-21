@@ -1,13 +1,15 @@
-group "test-detect" {
-    targets = ["test-detect-alpine", "test-detect-debian"]
+group "test" {
+    targets = ["test-info-alpine", "test-info-debian"]
 }
 
-target "test-detect-alpine" {
-    context = "detect"
-    target = "test-alpine"
+target "test-info-alpine" {
+    context = "base"
+    target = "test"
 }
 
-target "test-detect-debian" {
-    context = "detect"
-    target = "test-debian"
+target "test-info-debian" {
+    inherits = ["test-info-alpine"]
+    args = {
+        TEST_BASE = "debian"
+    }
 }
