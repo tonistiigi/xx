@@ -1,0 +1,208 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_VERIFY_NOLOCK" ]; then
+  lock="/var/lock/xx-verify"
+  exec 9>$lock
+  flock -x 9
+  export XX_VERIFY_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_VERIFY" ]; then
+    set -x
+fi
+
+for l in $(xx-info env); do
+  export $l
+done
+
+
+setup() {
+  if ! which file >/dev/null 2>/dev/null; then
+    if which apk >/dev/null; then
+      apk add --no-cache file >$1
+    elif which apt >/dev/null; then
+      apt update && apt install -y file
+    else
+      echo >&2 "file not installed and no package manager not found"
+      exit 1
+    fi
+  fi
+}
+
+usage() {
+  cat >&2 <<EOT
+Usage: $(basename $0) [--static] FILE [FILE]...
+
+EOT
+  exit 1
+}
+
+static=""
+files=""
+
+for i in "$@"; do
+  case "$i" in
+  "--setup")
+    setup /dev/stderr
+    if [ $# = "1" ]; then exit 0; fi
+    ;;
+  "--static")
+    static=1
+    ;;
+  "--help")
+    usage
+    ;;
+  -*)
+    echo >&2 "invalid flag $i"
+    exit 1
+    ;;
+  *)
+    files=1
+    ;;
+  esac
+done
+
+if [ -z "${files}" ]; then
+  usage
+fi
+
+setup /dev/null
+
+set +e
+for f in "$@"; do
+  if [ "${f#-}" != "${f}" ]; then continue; fi
+
+  if [ ! -f "${f}" ]; then
+    echo >&2 "file not found: ${f}"
+    exit 1
+  fi
+
+  out=$(file -L -b "${f}" 2>&1)
+
+  if [ $? != 0 ]; then
+    echo >&2 "failed to run file for ${f}: $out"
+    exit 1
+  fi
+
+  expOS=""
+  case "$TARGETOS" in
+  "linux")
+    expOS="ELF"
+    ;;
+  "darwin")
+    expOS="Mach-O"
+    ;;
+  "windows")
+    expOS="MS Windows"
+    ;;
+  esac
+
+  if [ -z "$expOS" ]; then
+    echo >&2 "unsupported target os ${TARGETOS}"
+    exit 1
+  fi
+
+  if ! echo $out | grep "$expOS" >/dev/null; then
+    echo >&2 "file ${f} does not match expected target OS ${TARGETOS}: $out"
+    exit 1
+  fi
+
+  expArch=""
+  expArch2="" # extra check for endianness
+  case "$TARGETARCH" in
+  "arm64")
+    case "$TARGETOS" in
+    "linux")
+      expArch="ARM aarch64"
+      expArch2="64-bit LSB"
+      ;;
+    "darwin")
+      expArch="arm64"
+      ;;
+    "windows")
+      expArch="Aarch64"
+      ;;
+    esac
+    ;;
+  "amd64")
+    case "$TARGETOS" in
+    "linux")
+      expArch="x86-64"
+      expArch2="64-bit LSB"
+      ;;
+    "darwin")
+      expArch="x86_64"
+      ;;
+    "windows")
+      expArch="x86-64"
+      ;;
+    esac
+    ;;
+  "arm")
+    case "$TARGETOS" in
+    "linux")
+      expArch="ARM,"
+      expArch2="32-bit LSB"
+      ;;
+    "windows")
+      expArch="ARMv7"
+      ;;
+    esac
+    ;;
+  "riscv64")
+    expArch="RISC-V"
+    expArch2="64-bit LSB"
+  ;;
+  "ppc64le")
+    expArch="64-bit PowerPC"
+    expArch2="64-bit LSB"
+  ;;
+  "s390x")
+    expArch="IBM S/390"
+    expArch2="64-bit MSB"
+  ;;
+  "mips")
+    expArch="MIPS"
+    expArch2="32-bit MSB"
+    ;;
+  "mipsle")
+    expArch="MIPS"
+    expArch2="32-bit LSB"
+    ;;
+  "mips64")
+    expArch="MIPS"
+    expArch2="64-bit MSB"
+    ;;
+  "mips64le")
+    expArch="MIPS"
+    expArch2="64-bit LSB"
+    ;;
+  esac
+
+  if [ -z "$expArch" ]; then
+    echo >&2 "unsupported target architecture ${TARGETARCH}"
+    exit 1
+  fi
+
+  if ! echo $out | grep "$expArch" >/dev/null; then
+    echo >&2 "file ${f} does not match expected target architecture ${TARGETARCH}: $out"
+    exit 1
+  fi
+
+  if [ -n "$expArch2" ]; then
+  if ! echo $out | grep "$expArch2" >/dev/null; then
+    echo >&2 "file ${f} does not match expected endianness for ${TARGETARCH}: $out"
+    exit 1
+  fi
+  fi
+
+  if [ -n "$static" ]; then
+  if ! echo $out | grep "statically linked" >/dev/null; then
+    echo >&2 "file ${f} is not statically linked: $out"
+    exit 1
+  fi 
+  fi
+
+done
