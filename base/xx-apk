@@ -10,13 +10,12 @@ if [ -z "$XX_APK_NOLOCK" ]; then
 fi
 
 if [ -n "$XX_DEBUG_APK" ]; then
-    set -x
+  set -x
 fi
 
 for l in $(xx-info env); do
   export $l
 done
-
 
 setup() {
   if ! xx-info is-cross; then
@@ -29,7 +28,7 @@ setup() {
   apk_dir="/${XX_TRIPLE}/etc/apk"
   mkdir -p "$apk_dir"
   cp -r /etc/apk/* "$apk_dir/"
-  echo $XX_PKG_ARCH > "$apk_dir/arch"
+  echo $XX_PKG_ARCH >"$apk_dir/arch"
   rm "$apk_dir/world"
   rm -rf "$apk_dir/keys/*"
   apk add --no-cache --initdb -p "/${XX_TRIPLE}" --allow-untrusted alpine-keys
@@ -41,7 +40,10 @@ clean() {
     return
   fi
   # safety first
-  if [ -z "${XX_TRIPLE}" ]; then echo >&2 "invalid triple root $XX_TRIPLE"; exit 1; fi
+  if [ -z "${XX_TRIPLE}" ]; then
+    echo >&2 "invalid triple root $XX_TRIPLE"
+    exit 1
+  fi
   rm -rf "/${XX_TRIPLE}"
 }
 
@@ -54,7 +56,7 @@ cmd() {
   if [ "$#" = "0" ]; then
     root=""
   else
-    echo "+ apk $root" "$@" 
+    echo "+ apk $root" "$@"
   fi
   apk $root "$@"
   if xx-info is-cross; then
@@ -73,30 +75,30 @@ setup_clang() {
   apk add --no-cache clang lld
   mkdir -p /etc/llvm
   # TODO: lld has no support for s390x
-  echo "-fuse-ld=lld" > /etc/llvm/default.cfg
-  ln -s xx-clang-wrapper /usr/local/bin/clang 2> /dev/null || true
-  ln -s xx-clang-wrapper /usr/local/bin/clang++ 2> /dev/null || true
+  echo "-fuse-ld=lld" >/etc/llvm/default.cfg
+  ln -s xx-clang-wrapper /usr/local/bin/clang 2>/dev/null || true
+  ln -s xx-clang-wrapper /usr/local/bin/clang++ 2>/dev/null || true
   if ! xx-info is-cross; then
     return
   fi
   ln -s clang /usr/bin/${XX_TRIPLE}-clang
   ln -s clang /usr/bin/${XX_TRIPLE}-clang++
 
-  echo "--target=${XX_TRIPLE} --sysroot=/${XX_TRIPLE}/ -fuse-ld=lld" > /usr/bin/${XX_TRIPLE}.cfg
+  echo "--target=${XX_TRIPLE} --sysroot=/${XX_TRIPLE}/ -fuse-ld=lld" >/usr/bin/${XX_TRIPLE}.cfg
   touch $done_file
 }
 
 case "$1" in
-"setup")
-  setup
-  ;;
-"clean")
-  clean
-  ;;
-"setup-clang")
-  setup_clang
-  ;;
-*)
-  cmd "$@"
-  ;;
+  "setup")
+    setup
+    ;;
+  "clean")
+    clean
+    ;;
+  "setup-clang")
+    setup_clang
+    ;;
+  *)
+    cmd "$@"
+    ;;
 esac

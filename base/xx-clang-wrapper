@@ -4,35 +4,35 @@ set -e
 
 # Contrary to documentation https://clang.llvm.org/docs/UsersManual.html#configuration-files
 # it looks like clang does not pick up any default configuration for targets unless the
-# binary has been renamed. 
+# binary has been renamed.
 # So we wrap clang and load in the target based config here.j
 # More on this thread: http://lists.llvm.org/pipermail/cfe-dev/2016-September/050928.html
 
 target=
 nextIsTarget=
 for p in "$@"; do
-    # ignore if custom --config already set
-	if [ "${p}" = "--config" ]; then
-		exec /usr/bin/$(basename $0) "$@"
-	fi
-    # handle "-target foo"
-	if [ -n "$nextIsTarget" ]; then
-		target="$p"
-		nextIsTarget=
-	fi
-	if [ "${p}" = "-target" ]; then
-		nextIsTarget=1
-	fi
-    # handle "--target=foo"
-	if [ "${p#--target=}" != ${p} ]; then
-		target="${p#--target=}"
-	fi
+  # ignore if custom --config already set
+  if [ "${p}" = "--config" ]; then
+    exec /usr/bin/$(basename $0) "$@"
+  fi
+  # handle "-target foo"
+  if [ -n "$nextIsTarget" ]; then
+    target="$p"
+    nextIsTarget=
+  fi
+  if [ "${p}" = "-target" ]; then
+    nextIsTarget=1
+  fi
+  # handle "--target=foo"
+  if [ "${p#--target=}" != ${p} ]; then
+    target="${p#--target=}"
+  fi
 done
 
 if [ -z "$target" ] && [ -f /etc/llvm/default.cfg ]; then
-	exec /usr/bin/$(basename $0) --config /etc/llvm/default.cfg "$@"
+  exec /usr/bin/$(basename $0) --config /etc/llvm/default.cfg "$@"
 elif [ -f "/usr/bin/${target}.cfg" ]; then
-	exec /usr/bin/$(basename $0) --config /usr/bin/${target}.cfg "$@"
+  exec /usr/bin/$(basename $0) --config /usr/bin/${target}.cfg "$@"
 else
-	exec /usr/bin/$(basename $0) "$@"
+  exec /usr/bin/$(basename $0) "$@"
 fi

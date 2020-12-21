@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+docker buildx build \
+  --target "update" \
+  --output "type=local,dest=." \
+  --file "./hack/dockerfiles/shfmt.Dockerfile" \
+  .

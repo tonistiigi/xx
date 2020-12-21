@@ -20,15 +20,15 @@ if [ ! -z "$TARGETPLATFORM" ]; then
     export GOARCH="$arch"
     if [ "$arch" = "arm" ]; then
       case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
-      "v5")
-        export GOARM="5"
-        ;;
-      "v6")
-        export GOARM="6"
-        ;;
-      *)
-        export GOARM="7"
-        ;;
+        "v5")
+          export GOARM="5"
+          ;;
+        "v6")
+          export GOARM="6"
+          ;;
+        *)
+          export GOARM="7"
+          ;;
       esac
     fi
   fi
@@ -45,15 +45,15 @@ fi
 if [ "$TARGETARCH" = "arm" ]; then
   if [ ! -z "$TARGETVARIANT" ]; then
     case "$TARGETVARIANT" in
-    "v5")
-      export GOARM="5"
-      ;;
-    "v6")
-      export GOARM="6"
-      ;;
-    *)
-      export GOARM="7"
-      ;;
+      "v5")
+        export GOARM="5"
+        ;;
+      "v6")
+        export GOARM="6"
+        ;;
+      *)
+        export GOARM="7"
+        ;;
     esac
   else
     export GOARM="7"
@@ -62,28 +62,28 @@ fi
 
 if [ "$CGO_ENABLED" = "1" ]; then
   case "$GOARCH" in
-  "amd64")
-    export CC="x86_64-linux-gnu-gcc"
-    ;;
-  "ppc64le")
-    export CC="powerpc64le-linux-gnu-gcc"
-    ;;
-  "s390x")
-    export CC="s390x-linux-gnu-gcc"
-    ;;
-  "arm64")
-    export CC="aarch64-linux-gnu-gcc"
-    ;;
-  "arm")
-    case "$GOARM" in
-    "5")
-      export CC="arm-linux-gnueabi-gcc"
+    "amd64")
+      export CC="x86_64-linux-gnu-gcc"
       ;;
-    *)
-      export CC="arm-linux-gnueabihf-gcc"
+    "ppc64le")
+      export CC="powerpc64le-linux-gnu-gcc"
       ;;
-    esac
-    ;;
+    "s390x")
+      export CC="s390x-linux-gnu-gcc"
+      ;;
+    "arm64")
+      export CC="aarch64-linux-gnu-gcc"
+      ;;
+    "arm")
+      case "$GOARM" in
+        "5")
+          export CC="arm-linux-gnueabi-gcc"
+          ;;
+        *)
+          export CC="arm-linux-gnueabihf-gcc"
+          ;;
+      esac
+      ;;
   esac
 fi
 
