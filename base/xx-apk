@@ -36,6 +36,15 @@ setup() {
   touch $done_file
 }
 
+clean() {
+  if ! xx-info is-cross; then
+    return
+  fi
+  # safety first
+  if [ -z "${XX_TRIPLE}" ]; then echo >&2 "invalid triple root $XX_TRIPLE"; exit 1; fi
+  rm -rf "/${XX_TRIPLE}"
+}
+
 cmd() {
   setup
   root="-p /"
@@ -80,6 +89,9 @@ setup_clang() {
 case "$1" in
 "setup")
   setup
+  ;;
+"clean")
+  clean
   ;;
 "setup-clang")
   setup_clang

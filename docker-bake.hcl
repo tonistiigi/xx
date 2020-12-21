@@ -1,14 +1,14 @@
 group "test" {
-    targets = ["test-info-alpine", "test-info-debian"]
+    targets = ["test-alpine", "test-debian"]
 }
 
-target "test-info-alpine" {
+target "test-alpine" {
     context = "base"
     target = "test"
 }
 
-target "test-info-debian" {
-    inherits = ["test-info-alpine"]
+target "test-debian" {
+    inherits = ["test-alpine"]
     args = {
         TEST_BASE = "debian"
     }

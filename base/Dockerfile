@@ -12,7 +12,9 @@ COPY --from=bats-assert . .
 COPY --from=base / /
 COPY test-*.bats .
 ARG TEST_BASE
-RUN ./test-common.bats && ./test-${TEST_BASE}.bats
+ARG TEST_CMDS
+RUN [ "${TEST_CMDS:-info}" = "${TEST_CMDS#*info}" ] && exit 0; ./test-info-common.bats && ./test-info-${TEST_BASE}.bats
+RUN [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ "${TEST_BASE}" != "alpine" ] || ./test-apk.bats
 
 FROM alpine AS dev
 RUN apk add --no-cache vim
