@@ -13,13 +13,13 @@ if [ -n "$XX_DEBUG_APK" ]; then
     set -x
 fi
 
-for l in $(xx-detect env); do
+for l in $(xx-info env); do
   export $l
 done
 
 
 setup() {
-  if ! xx-detect is-cross; then
+  if ! xx-info is-cross; then
     return
   fi
   done_file="/${XX_TRIPLE}/.xx-setup"
@@ -39,11 +39,11 @@ setup() {
 add() {
   setup
   root="-p /"
-  if xx-detect is-cross; then
+  if xx-info is-cross; then
     root="-p /${XX_TRIPLE}"
   fi
   apk add --no-cache $root "$@"
-  if xx-detect is-cross; then
+  if xx-info is-cross; then
   if [ -z "$XX_APK_KEEP_BINARIES" ]; then
     rm -rf /${XX_TRIPLE}/usr/bin/*
   fi
@@ -62,7 +62,7 @@ setup_clang() {
   echo "-fuse-ld=lld" > /etc/llvm/default.cfg
   ln -s xx-clang-wrapper /usr/local/bin/clang 2> /dev/null || true
   ln -s xx-clang-wrapper /usr/local/bin/clang++ 2> /dev/null || true
-  if ! xx-detect is-cross; then
+  if ! xx-info is-cross; then
     return
   fi
   ln -s clang /usr/bin/${XX_TRIPLE}-clang

@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-
-docker buildx build --load -t tonistiigi/xx:detect-dev --target=dev ./detect
-docker run -it --rm tonistiigi/xx:detect-dev
-docker rmi tonistiigi/xx:detect-dev
