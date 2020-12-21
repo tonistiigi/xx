@@ -36,17 +36,22 @@ setup() {
   touch $done_file
 }
 
-add() {
+cmd() {
   setup
   root="-p /"
   if xx-info is-cross; then
     root="-p /${XX_TRIPLE}"
   fi
-  apk add --no-cache $root "$@"
-  if xx-info is-cross; then
-  if [ -z "$XX_APK_KEEP_BINARIES" ]; then
-    rm -rf /${XX_TRIPLE}/usr/bin/*
+  if [ "$#" = "0" ]; then
+    root=""
+  else
+    echo "+ apk $root" "$@" 
   fi
+  apk $root "$@"
+  if xx-info is-cross; then
+    if [ -z "$XX_APK_KEEP_BINARIES" ]; then
+      rm -rf /${XX_TRIPLE}/usr/bin/*
+    fi
   fi
 }
 
@@ -76,16 +81,10 @@ case "$1" in
 "setup")
   setup
   ;;
-"add")
-  shift
-  add "$@"
-  ;;
 "setup-clang")
   setup_clang
   ;;
-
 *)
-  echo "unknown command $1"
-  exit 1
+  cmd "$@"
   ;;
 esac
