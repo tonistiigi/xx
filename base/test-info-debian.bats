@@ -15,6 +15,11 @@ load "assert"
   assert_equal "$(xx-info debian-arch)" "$(xx-info pkg-arch)"
 }
 
+@test "amd64" {
+  assert_equal "x86_64-linux-gnu" "$(TARGETPLATFORM=linux/amd64 xx-info triple)"
+  assert_equal "amd64" "$(TARGETPLATFORM=linux/amd64 xx-info pkg-arch)"
+}
+
 @test "aarch64" {
   assert_equal "aarch64-linux-gnu" "$(TARGETPLATFORM=linux/arm64 xx-info triple)"
   assert_equal "arm64" "$(TARGETPLATFORM=linux/arm64 xx-info pkg-arch)"

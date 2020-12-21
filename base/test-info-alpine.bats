@@ -19,6 +19,11 @@ load 'assert'
   assert_equal "$(xx-info alpine-arch)" "$(xx-info pkg-arch)"
 }
 
+@test "amd64" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64 xx-info triple)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=linux/amd64 xx-info pkg-arch)"
+}
+
 @test "aarch64" {
   assert_equal "aarch64-alpine-linux-musl" "$(TARGETPLATFORM=linux/arm64 xx-info triple)"
   assert_equal "aarch64" "$(TARGETPLATFORM=linux/arm64 xx-info pkg-arch)"
