@@ -42,28 +42,28 @@ setup() {
 
   if [ ! -f /usr/bin/$name ]; then
     echo >&2 "/usr/bin/$name not found"
-    exit 1 
+    exit 1
   fi
 
   linker=
-  
+
   if [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
       # TODO: lld has no support for s390x
       linker="lld"
-    fi 
+    fi
   fi
 
   if [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
-  if [ -z "${linker}" ]; then
-    ld=$(which $target-gold 2>/dev/null || true)
-    if [ $? = 0 ]; then
-      linker=ld
+    if [ -z "${linker}" ]; then
+      ld=$(which $target-gold 2>/dev/null || true)
+      if [ $? = 0 ]; then
+        linker=ld
+      fi
     fi
-  fi
-  if [ -z "${linker}" ] && [ -f "/${target}/bin/gold" ] ; then
-    linker="/${target}/bin/gold"
-  fi
+    if [ -z "${linker}" ] && [ -f "/${target}/bin/gold" ]; then
+      linker="/${target}/bin/gold"
+    fi
   fi
 
   if [ -z "${linker}" ]; then
@@ -71,14 +71,14 @@ setup() {
       linker=ld
     fi
   fi
-  if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ] ; then
+  if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ]; then
     linker="/${target}/bin/ld"
   fi
 
   if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
     support=$(ld -V 2>/dev/null || true)
     exp=$(echo $target | cut -d- -f 1)
-    if [ "$exp" = "armv7" ] || [ "$exp" = "armv6" ] ||  [ "$exp" = "armv5" ]; then
+    if [ "$exp" = "armv7" ] || [ "$exp" = "armv6" ] || [ "$exp" = "armv5" ]; then
       exp="arm"
     fi
     if [ "$exp" = "powerpc64le" ]; then
@@ -93,7 +93,7 @@ setup() {
     if [ "$exp" = "i586" ]; then
       exp="i386"
     fi
-    if ld -V 2>/dev/null | grep $exp >/dev/null ; then
+    if ld -V 2>/dev/null | grep $exp >/dev/null; then
       linker="ld"
     fi
   fi
@@ -102,7 +102,7 @@ setup() {
     echo >&2 "no suitable linker found for $target. Please install lld or ld for your target"
     exit 1
   fi
-  
+
   if [ ! -f /etc/llvm/xx-default.cfg ]; then
     mkdir -p /etc/llvm
     echo "-fuse-ld=${linker}" >/etc/llvm/xx-default.cfg
@@ -180,7 +180,6 @@ for p in "$@"; do
   fi
 done
 
-
 # if no target set and called with xx- then set target from env
 if [ -z "$target" ] && [ -n "$wrapped" ]; then
   target=$(xx-info triple)
@@ -208,7 +207,6 @@ fi
 if [ -z "${target}" ] && [ ! -f /etc/llvm/xx-default.cfg ] && [ -n "$wrapped" ]; then
   setup
 fi
-
 
 if [ ! -f /usr/bin/$name ]; then
   echo >&2 "/usr/bin/$name not found. Make sure package is installed. xx doesn't currently support binaries in custom location"
