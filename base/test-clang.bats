@@ -81,6 +81,47 @@ testBuildHello() {
   testHelloCLLD
 }
 
+@test "wrap-unwrap" {
+  target="arm64"
+  if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
+  export TARGETARCH=$target
+
+  nativeTriple=$(TARGETARCH= xx-info triple)
+  crossTriple=$(xx-info triple)
+
+  [ "$nativeTriple" != "$crossTriple" ]
+  
+  run clang --print-target-triple
+  assert_success
+  assert_output "$nativeTriple"
+
+  run xx-clang --print-target-triple
+  assert_success
+  assert_output "$crossTriple"
+
+  run xx-clang --wrap
+  assert_success
+
+  run clang --print-target-triple
+  assert_success
+  assert_output "$crossTriple"
+
+  run xx-clang --print-target-triple
+  assert_success
+  assert_output "$crossTriple"
+
+  run xx-clang --unwrap
+  assert_success
+
+  run clang --print-target-triple
+  assert_success
+  assert_output "$nativeTriple"
+
+  run xx-clang --print-target-triple
+  assert_success
+  assert_output "$crossTriple"
+}
+
 @test "native-c-ld" {
   clean
   apk del lld
@@ -105,7 +146,7 @@ testBuildHello() {
   apk del binutils
 }
 
-@test "c++" {
+@test "native-c++" {
   unset TARGETARCH
   testHelloCPPLLD
 }
