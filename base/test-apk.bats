@@ -9,7 +9,7 @@ load 'assert'
 }
 
 @test "list-native" {
-  run xx-apk list
+  run xx-apk list --installed
   assert_success
   assert_output --partial "busybox"
   assert_output --partial "alpine-baselayout"
@@ -20,7 +20,7 @@ load 'assert'
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
   export TARGETARCH=$target
   [ ! -d "/$(xx-info)" ]
-  run xx-apk list
+  run xx-apk list --installed
   assert_success
   assert_output --partial "alpine-keys"
   refute_output --partial "alpine-baselayout"
