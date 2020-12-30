@@ -15,6 +15,15 @@ if [ "$name" = "c++" ]; then
   name="clang++"
 fi
 
+wrapped=
+if [ "xx-$name" = "$basename" ]; then
+  wrapped=1
+fi
+
+if [ -f /.xx-cc-autowrap ]; then
+  wrapped=1
+fi
+
 setup() {
   if [ -z "$XX_CC_NOLOCK" ]; then
     lock="/var/lock/xx-cc"
@@ -159,13 +168,21 @@ for p in "$@"; do
   if [ "${p#--target=}" != "${p}" ]; then
     target="${p#--target=}"
   fi
+
+  if [ "${p}" = "--wrap" ] && [ "xx-$name" = "$basename" ]; then
+    touch /.xx-cc-autowrap
+    exit 0
+  fi
+
+  if [ "${p}" = "--unwrap" ] && [ "xx-$name" = "$basename" ]; then
+    rm /.xx-cc-autowrap || true
+    exit 0
+  fi
 done
 
 
-
-
 # if no target set and called with xx- then set target from env
-if [ -z "$target" ] && [ "xx-$name" = "$basename" ]; then
+if [ -z "$target" ] && [ -n "$wrapped" ]; then
   target=$(xx-info triple)
 fi
 
@@ -183,12 +200,12 @@ if [ -n "${setupTarget}" ]; then
 fi
 
 # if target without a config and xx prefix then create config
-if [ -n "$target" ] && [ ! -f "/usr/bin/${target}.cfg" ] && [ "xx-$name" = "$basename" ]; then
+if [ -n "$target" ] && [ ! -f "/usr/bin/${target}.cfg" ] && [ -n "$wrapped" ]; then
   setup
 fi
 
 # if no target, no default config and xx prefix then create config
-if [ -z "${target}" ] && [ ! -f /etc/llvm/xx-default.cfg ] && [ "xx-$name" = "$basename" ]; then
+if [ -z "${target}" ] && [ ! -f /etc/llvm/xx-default.cfg ] && [ -n "$wrapped" ]; then
   setup
 fi
 
