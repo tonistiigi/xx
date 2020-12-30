@@ -129,9 +129,7 @@ testBuildHello() {
 
 @test "armv7-c-lld" {
   export TARGETARCH=arm
-  export TARGETVARIANT=v7
   testHelloCLLD
-  unset TARGETVARIANT
 }
 
 
@@ -161,7 +159,14 @@ testBuildHello() {
   testHelloCPPLLD
 }
 
-@test "arm-c++-lld" {
+@test "armv6-c++-lld" {
+  export TARGETARCH=arm
+  export TARGETVARIANT=v6
+  testHelloCPPLLD
+  unset TARGETVARIANT
+}
+
+@test "armv7-c++-lld" {
   export TARGETARCH=arm
   testHelloCPPLLD
 }
