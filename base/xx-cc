@@ -84,7 +84,7 @@ setup() {
     if [ "$exp" = "i586" ]; then
       exp="i386"
     fi
-    if ld -V 2>/dev/null | grep $exp 2>dev/null ; then
+    if ld -V 2>/dev/null | grep $exp >/dev/null ; then
       linker="ld"
     fi
   fi
