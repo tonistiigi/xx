@@ -178,10 +178,14 @@ for f in "$@"; do
       expArch="MIPS"
       expArch2="64-bit LSB"
       ;;
+    "386")
+      expArch="Intel 80386"
+      expArch2="32-bit LSB"
+      ;;
   esac
 
   if [ -z "$expArch" ]; then
-    echo >&2 "unsupported target architecture ${TARGETARCH}"
+    echo >&2 "unsupported target architecture ${TARGETARCH} for xx-verify"
     exit 1
   fi
 
