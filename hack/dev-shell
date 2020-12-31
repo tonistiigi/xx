@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 
 docker buildx build --load -t tonistiigi/xx:dev --target=dev ./base
-docker run -it --rm tonistiigi/xx:dev
+
+if ! docker volume inspect xx-pkg-cache &>/dev/null; then
+  docker volume create xx-pkg-cache &>/dev/null
+fi
+
+docker run -it --rm -v xx-pkg-cache:/etc/apk/cache tonistiigi/xx:dev
 docker rmi tonistiigi/xx:dev
