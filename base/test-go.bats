@@ -53,16 +53,16 @@ testEnv() {
 
 @test "armv6-env" {
   export TARGETARCH=arm
-  export TARGETVARIANT=v5
-  expArm=5
+  export TARGETVARIANT=v6
+  expArm=6
   testEnv
   unset TARGETVARIANT
 }
 
 @test "armv7-env" {
   export TARGETARCH=arm
-  export TARGETVARIANT=v5
-  expArm=5
+  export TARGETVARIANT=v7
+  expArm=7
   testEnv
   unset TARGETVARIANT
 }
