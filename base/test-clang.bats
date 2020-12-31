@@ -26,9 +26,9 @@ testHelloCLLD() {
   run cat /usr/bin/$(xx-info triple).cfg
   assert_success
   if ! xx-info is-cross; then
-    assert_output "--target=$(xx-info triple) -fuse-ld=lld" 
+    assert_output "--target=$(xx-info triple) -fuse-ld=lld"
   else
-    assert_output "--target=$(xx-info triple) -fuse-ld=lld --sysroot=/$(xx-info triple)/" 
+    assert_output "--target=$(xx-info triple) -fuse-ld=lld --sysroot=/$(xx-info triple)/"
   fi
   testBuildHello
 }
@@ -53,9 +53,9 @@ testBuildHello() {
   clang --target=$(xx-clang --print-target-triple) -o /tmp/a.out fixtures/hello.c
   xx-verify /tmp/a.out
   if ! xx-info is-cross; then
-  run /tmp/a.out
-  assert_success
-  assert_output "hello c"
+    run /tmp/a.out
+    assert_success
+    assert_output "hello c"
   fi
 }
 
@@ -90,7 +90,7 @@ testBuildHello() {
   crossTriple=$(xx-info triple)
 
   [ "$nativeTriple" != "$crossTriple" ]
-  
+
   run clang --print-target-triple
   assert_success
   assert_output "$nativeTriple"
@@ -141,7 +141,7 @@ testBuildHello() {
   [ -f /usr/bin/$(xx-info triple).cfg ]
   run cat /usr/bin/$(xx-info triple).cfg
   assert_success
-  assert_output "--target=$(xx-info triple) -fuse-ld=ld" 
+  assert_output "--target=$(xx-info triple) -fuse-ld=ld"
   testBuildHello
   apk del binutils
 }
@@ -172,7 +172,6 @@ testBuildHello() {
   export TARGETARCH=arm
   testHelloCLLD
 }
-
 
 # ld.lld: error: unknown emulation: elf64_s390
 # @test "s390x-c-lld" {

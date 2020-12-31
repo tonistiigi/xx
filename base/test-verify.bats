@@ -4,7 +4,7 @@ load 'assert'
 
 @test "native" {
   run xx-verify /bin/ls
-  assert_success 
+  assert_success
 }
 
 @test "flags" {

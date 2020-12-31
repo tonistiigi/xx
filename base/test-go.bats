@@ -100,9 +100,9 @@ testHelloGO() {
   assert_success
   xx-verify /tmp/a.out
   if ! xx-info is-cross; then
-  run /tmp/a.out
-  assert_success
-  assert_output "hello go"
+    run /tmp/a.out
+    assert_success
+    assert_output "hello go"
   fi
 }
 
@@ -155,9 +155,9 @@ testHelloCGO() {
   assert_success
   xx-verify /tmp/a.out
   if ! xx-info is-cross; then
-  run /tmp/a.out
-  assert_success
-  assert_output "hello cgo"
+    run /tmp/a.out
+    assert_success
+    assert_output "hello cgo"
   fi
 }
 
