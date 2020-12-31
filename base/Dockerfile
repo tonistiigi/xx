@@ -30,14 +30,14 @@ RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-verify}" = "${TEST_CMDS#*verify}" ] && exit 0; ./test-verify.bats
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-clang}" = "${TEST_CMDS#*clang}" ] && exit 0; [ "${TEST_BASE}" != "alpine" ] || ./test-clang.bats
-
+RUN --mount=type=cache,target=/pkg-cache \
+    --mount=target=/root/.cache,type=cache \
+    [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; [ "${TEST_BASE}" != "alpine" ] || ./test-go.bats
 
 FROM alpine AS dev
-RUN --mount=type=cache,target=/pkg-cache \
-    ln -s /pkg-cache /etc/apk/cache; \
-    pkginstall() { if [ -f /sbin/apk ]; then apk add --no-cache $@; else apt-get update && apt-get install -y $@; fi };\
-    pkginstall bats
 RUN apk add --no-cache vim
+WORKDIR /work
+COPY fixtures fixtures
 COPY --from=base / /
 ENTRYPOINT ["/bin/ash"]
 
