@@ -12,7 +12,7 @@ clean() {
 testHelloCLLD() {
   clean
   apk add clang lld
-  xx-apk add --no-cache musl-dev gcc
+  xx-apk add musl-dev gcc
   run xx-clang --print-target-triple
   assert_success
   assert_output $(xx-info triple)
