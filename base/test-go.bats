@@ -191,3 +191,28 @@ testHelloCGO() {
   export TARGETARCH=386
   testHelloCGO
 }
+
+@test "wrap-unwrap" {
+  target="arm64"
+  if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
+  export TARGETARCH=$target
+
+  nativeArch=$(TARGETARCH= xx-info arch)
+  
+  run go env GOARCH
+  assert_success
+  assert_output "$nativeArch"
+
+  run xx-go --wrap
+  assert_success
+
+  run go env GOARCH
+  assert_success
+  assert_output "$target"
+
+  run xx-go --unwrap
+
+  run go env GOARCH
+  assert_success
+  assert_output "$nativeArch"
+}

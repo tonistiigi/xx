@@ -31,16 +31,53 @@ if [ "$GOOS" = "wasi" ]; then
   export GOOS="js"
 fi
 
+cgo=
 if [ "$CGO_ENABLED" = "1" ]; then
   triple=$(xx-clang --print-target-triple || true)
   if [ -n "$triple" ]; then
     export CC=$triple-clang
     export CXX=$triple-clang++
+    cgo=1
   fi
 fi
 
 if [ -z "$GOBIN" ] && [ -n "$GOPATH" ] && [ -n "$GOARCH" ] && [ -n "$GOOS" ]; then
   export PATH=${GOPATH}/bin/${GOOS}_${GOARCH}:${PATH}
 fi
+
+wrap() {
+  f=$(go env GOENV)
+  if [ -z "$f" ]; then
+    return
+  fi
+  mkdir -p $(dirname "$f")
+  echo "GOOS=$GOOS" > "$f"
+  echo "GOARCH=$GOARCH" >> "$f"
+  if [ -n "$GOARM" ]; then
+    echo "GOARM=$GOARM" >> "$f"
+  fi
+  if [ -n "$cgo" ]; then
+    echo "CC=$CC" >> "$f"
+    echo "CXX=$CXX" >> "$f"
+  fi
+}
+
+unwrap() {
+  f=$(go env GOENV)
+  if [ -n "$f" ] && [ -f "$f" ]; then
+    rm "$f"
+  fi
+}
+
+case "$1" in
+  "--wrap")
+    wrap
+    exit 0
+    ;;
+  "--unwrap")
+    unwrap
+    exit 0
+    ;;
+esac
 
 exec go "$@"
