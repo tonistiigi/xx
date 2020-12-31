@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'v2'
     paths:
       - '.github/workflows/bats-assert.yml'
       - 'util/bats-assert/**'
@@ -34,5 +35,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Publish
+        if: github.ref == 'pull_refs/heads/master'
         working-directory: ./util/bats-assert
         run: docker buildx bake all --push
