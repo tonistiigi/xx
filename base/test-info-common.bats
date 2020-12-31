@@ -24,7 +24,7 @@ load 'assert'
   TARGETPLATFORM=foo/bar run xx-info os
   assert_success
   assert_output "foo"
-  
+
   TARGETPLATFORM=foo/bar run xx-info arch
   assert_success
   assert_output "bar"

@@ -2,8 +2,8 @@
 
 docker buildx build --load -t tonistiigi/xx:dev --target=dev ./base
 
-if ! docker volume inspect xx-pkg-cache &>/dev/null; then
-  docker volume create xx-pkg-cache &>/dev/null
+if ! docker volume inspect xx-pkg-cache >/dev/null 2>&1; then
+  docker volume create xx-pkg-cache >/dev/null 2>&1
 fi
 
 docker run -it --rm -v xx-pkg-cache:/etc/apk/cache tonistiigi/xx:dev
