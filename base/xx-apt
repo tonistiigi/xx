@@ -26,13 +26,22 @@ for p in "$@"; do
   case "$p" in
     -*)
       arg="$p"
-    ;;
-    "install"|"remove"|"search"|"show"|"list"|"info")
+      ;;
+    "install" | "remove" | "search" | "show" | "list" | "info")
       parsed=1
       arg="$p"
-    ;;
+      ;;
     *)
       if [ -n "$parsed" ]; then
+        if [ "${p}" = "xx-c-essentials" ]; then
+          p="libc6-dev libgcc-8-dev"
+        elif [ "${p}" = "xx-cxx-essentials" ]; then
+          if apt info libstdc++-10-dev:${XX_PKG_ARCH} >/dev/null 2>/dev/null; then
+            p="libstdc++-10-dev"
+          else
+            p="libstdc++-8-dev"
+          fi
+        fi
         if [ -z "${packages}" ]; then
           packages="$p"
         else
@@ -41,7 +50,7 @@ for p in "$@"; do
       else
         arg="$p"
       fi
-    ;;
+      ;;
   esac
   if [ -n "$arg" ]; then
     if [ -z "$args" ]; then
@@ -52,11 +61,11 @@ for p in "$@"; do
   fi
 done
 
-if [ -z "${parsed}" ] || ! xx-info is-cross ; then
+if [ -z "${parsed}" ]; then
   exec apt "$@"
 fi
 
-if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null ; then
+if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
   dpkg --add-architecture "$XX_PKG_ARCH"
   apt-get update
 fi
@@ -66,12 +75,19 @@ if [ "$suffix" = "x86_64-linux-gnu" ]; then
   suffix="x86-64-linux-gnu"
 fi
 
+nocross=
+if ! xx-info is-cross; then
+  nocross=1
+fi
+
 new=
 for p in ${packages}; do
   n=
-  if apt info ${p}-${suffix} >/dev/null 2>/dev/null ; then
+  if [ -n "$nocross" ]; then
+    n=${p}
+  elif apt info ${p}-${suffix} >/dev/null 2>/dev/null; then
     n="${p}-${suffix}"
-  elif apt info ${p}-${XX_PKG_ARCH}-cross >/dev/null 2>/dev/null ; then
+  elif [ -n "${XX_APT_PREFER_CROSS}" ] && apt info ${p}-${XX_PKG_ARCH}-cross >/dev/null 2>/dev/null; then
     n="${p}-${XX_PKG_ARCH}-cross"
   else
     n="${p}:${XX_PKG_ARCH}"

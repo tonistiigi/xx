@@ -198,7 +198,7 @@ testHelloCGO() {
   export TARGETARCH=$target
 
   nativeArch=$(TARGETARCH= xx-info arch)
-  
+
   run go env GOARCH
   assert_success
   assert_output "$nativeArch"
