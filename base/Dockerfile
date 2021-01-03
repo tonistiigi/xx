@@ -39,6 +39,8 @@ RUN [ "${TEST_CMDS:-info}" = "${TEST_CMDS#*info}" ] && exit 0; ./test-info-commo
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-apk.bats
 RUN --mount=type=cache,target=/pkg-cache \
+    [ "${TEST_CMDS:-apt}" = "${TEST_CMDS#*apt}" ] && exit 0; [ ! -f /etc/debian_version ] || ./test-apt.bats
+RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-verify}" = "${TEST_CMDS#*verify}" ] && exit 0; ./test-verify.bats
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-clang}" = "${TEST_CMDS#*clang}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-clang.bats

@@ -41,7 +41,7 @@ load "assert"
 }
 
 @test "386" {
-  assert_equal "i586-linux-gnu" "$(TARGETPLATFORM=linux/386 xx-info triple)"
+  assert_equal "i686-linux-gnu" "$(TARGETPLATFORM=linux/386 xx-info triple)"
   assert_equal "i386" "$(TARGETPLATFORM=linux/386 xx-info pkg-arch)"
 }
 

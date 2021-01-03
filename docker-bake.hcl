@@ -10,6 +10,6 @@ target "test-alpine" {
 target "test-debian" {
     inherits = ["test-alpine"]
     args = {
-        TEST_BASE = "debian"
+        TEST_BASE_TYPE = "debian"
     }
 }

@@ -1,0 +1,87 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_APT_NOLOCK" ]; then
+  lock="/var/lock/xx-apt"
+  exec 9>$lock
+  flock -x 9
+  export XX_APT_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_APT" ]; then
+  set -x
+fi
+
+for l in $(xx-info env); do
+  export $l
+done
+
+packages=
+parsed=
+args=
+
+for p in "$@"; do
+  arg=
+  case "$p" in
+    -*)
+      arg="$p"
+    ;;
+    "install"|"remove"|"search"|"show"|"list"|"info")
+      parsed=1
+      arg="$p"
+    ;;
+    *)
+      if [ -n "$parsed" ]; then
+        if [ -z "${packages}" ]; then
+          packages="$p"
+        else
+          packages="${packages} ${p}"
+        fi
+      else
+        arg="$p"
+      fi
+    ;;
+  esac
+  if [ -n "$arg" ]; then
+    if [ -z "$args" ]; then
+      args="$arg"
+    else
+      args="${args} ${arg}"
+    fi
+  fi
+done
+
+if [ -z "${parsed}" ] || ! xx-info is-cross ; then
+  exec apt "$@"
+fi
+
+if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null ; then
+  dpkg --add-architecture "$XX_PKG_ARCH"
+  apt-get update
+fi
+
+suffix=$XX_TRIPLE
+if [ "$suffix" = "x86_64-linux-gnu" ]; then
+  suffix="x86-64-linux-gnu"
+fi
+
+new=
+for p in ${packages}; do
+  n=
+  if apt info ${p}-${suffix} >/dev/null 2>/dev/null ; then
+    n="${p}-${suffix}"
+  elif apt info ${p}-${XX_PKG_ARCH}-cross >/dev/null 2>/dev/null ; then
+    n="${p}-${XX_PKG_ARCH}-cross"
+  else
+    n="${p}:${XX_PKG_ARCH}"
+  fi
+  if [ -z "$new" ]; then
+    new="$n"
+  else
+    new="${new} ${n}"
+  fi
+done
+
+echo >&2 "+ apt ${args} ${new}"
+exec apt ${args} ${new}
