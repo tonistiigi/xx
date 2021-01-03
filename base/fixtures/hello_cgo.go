@@ -5,9 +5,12 @@ package main
 //
 // static void hello(char* s) {
 //   printf("hello %s\n", s);
+//   fflush(stdout);
 // }
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 func main() {
 	cs := C.CString("cgo")

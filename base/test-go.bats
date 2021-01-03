@@ -1,9 +1,10 @@
 #!/usr/bin/env bats
 
 load 'assert'
+load 'test_helper'
 
 @test "nogo" {
-  apk del go 2>/dev/null || true
+  del go 2>/dev/null || true
   run xx-go env
   assert_failure
   assert_output --partial "go: not found"
@@ -23,7 +24,11 @@ testEnv() {
 }
 
 @test "native-env" {
-  apk add go 2>/dev/null || true
+  if which apk >/dev/null 2>/dev/null; then 
+    add go
+  else
+    add golang
+  fi
   testEnv
 }
 
@@ -150,10 +155,11 @@ testHelloGO() {
 
 testHelloCGO() {
   export CGO_ENABLED=1
-  xx-apk add musl-dev gcc
+  xxadd xx-c-essentials
   run xx-go build -x -o /tmp/a.out ./fixtures/hello_cgo.go
   assert_success
-  xx-verify /tmp/a.out
+  run xx-verify /tmp/a.out
+  assert_success
   if ! xx-info is-cross; then
     run /tmp/a.out
     assert_success
@@ -162,7 +168,7 @@ testHelloCGO() {
 }
 
 @test "native-hellocgo" {
-  apk add clang lld
+  add clang lld
   unset TARGETARCH
   testHelloCGO
 }
@@ -215,4 +221,22 @@ testHelloCGO() {
   run go env GOARCH
   assert_success
   assert_output "$nativeArch"
+}
+
+@test "clean-packages" {
+  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6; do
+    TARGETPLATFORM=$p xxdel xx-c-essentials
+    root=/$(TARGETPLATFORM=$p xx-info triple)
+    if [ -d "$root" ] && [ "$root" != "/" ]; then
+      rm -rf "$root"
+    fi
+  done
+  del clang lld
+  if which apk >/dev/null 2>/dev/null; then 
+    del go
+  else
+    del golang
+  fi
+  rm /tmp/a.out
+  rm -rf /var/cache/apt/*.bin || true
 }
