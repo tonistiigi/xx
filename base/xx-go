@@ -51,14 +51,14 @@ wrap() {
     return
   fi
   mkdir -p $(dirname "$f")
-  echo "GOOS=$GOOS" > "$f"
-  echo "GOARCH=$GOARCH" >> "$f"
+  echo "GOOS=$GOOS" >"$f"
+  echo "GOARCH=$GOARCH" >>"$f"
   if [ -n "$GOARM" ]; then
-    echo "GOARM=$GOARM" >> "$f"
+    echo "GOARM=$GOARM" >>"$f"
   fi
   if [ -n "$cgo" ]; then
-    echo "CC=$CC" >> "$f"
-    echo "CXX=$CXX" >> "$f"
+    echo "CC=$CC" >>"$f"
+    echo "CXX=$CXX" >>"$f"
   fi
 }
 

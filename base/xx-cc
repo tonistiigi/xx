@@ -67,7 +67,7 @@ setup() {
   fi
 
   if [ -z "${linker}" ]; then
-    if which $target-ld 2>/dev/null; then
+    if which $target-ld >/dev/null 2>/dev/null; then
       linker=ld
     fi
   fi
@@ -117,14 +117,20 @@ setup() {
   fi
 
   ln -s clang /usr/bin/${target}-clang
-  ln -s clang /usr/bin/${target}-clang++
+  ln -s clang++ /usr/bin/${target}-clang++
 
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
-    config="${config} --sysroot=/${target}/"
+    if [ -f /etc/alpine-release ]; then
+      config="${config} --sysroot=/${target}/"
+    fi
   fi
-  echo $config >/usr/bin/${target}.cfg
+  f=$(dirname $(readlink -f $(which /usr/bin/clang)))/${target}.cfg
+  echo $config >${f}
+  if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
+    ln -s ${f} /usr/bin/${target}.cfg
+  fi
 }
 
 check_compiler() {

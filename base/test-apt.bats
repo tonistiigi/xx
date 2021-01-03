@@ -24,7 +24,7 @@ load 'assert'
 
 @test "amd64" {
   export TARGETARCH=amd64
-  if ! xx-info is-cross; then return; fi
+  if ! xx-info is-cross; then skip; fi
 
   run xx-apt info file
   assert_success
@@ -32,7 +32,13 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:amd64"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-amd64-cross"
+  unset XX_APT_PREFER_CROSS
 
   run xx-apt info gcc
   assert_success
@@ -49,7 +55,13 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:aarch64"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-arm64-cross"
+  unset XX_APT_PREFER_CROSS
 
   run xx-apt info gcc
   assert_success
@@ -66,13 +78,18 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:armhf"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-armhf-cross"
+  unset XX_APT_PREFER_CROSS
 
   run xx-apt info gcc
   assert_success
   assert_line "Package: gcc-arm-linux-gnueabihf"
 }
-
 
 @test "armv6" {
   export TARGETARCH=arm
@@ -85,14 +102,19 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:armel"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-armel-cross"
+  unset XX_APT_PREFER_CROSS
 
   run xx-apt info gcc
   assert_success
   assert_line "Package: gcc-arm-linux-gnueabi"
   unset TARGETVARIANT
 }
-
 
 @test "s390x" {
   export TARGETARCH=s390x
@@ -104,7 +126,13 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:s390x"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-s390x-cross"
+  unset XX_APT_PREFER_CROSS
 
   # buster has no gcc package for arm64
   if [ "$(uname -m)" == "aarch64" ] && [ "$(cat /etc/debian_version | cut -d. -f 1)" = "10" ]; then
@@ -126,7 +154,13 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:ppc64el"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-ppc64el-cross"
+  unset XX_APT_PREFER_CROSS
 
   # buster has no gcc package for arm64
   if [ "$(uname -m)" == "aarch64" ] && [ "$(cat /etc/debian_version | cut -d. -f 1)" = "10" ]; then
@@ -148,7 +182,13 @@ load 'assert'
 
   run xx-apt info libc6-dev
   assert_success
+  assert_line "Package: libc6-dev:i386"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt info libc6-dev
+  assert_success
   assert_line "Package: libc6-dev-i386-cross"
+  unset XX_APT_PREFER_CROSS
 
   run xx-apt info gcc
   assert_success

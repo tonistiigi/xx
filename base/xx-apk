@@ -59,12 +59,13 @@ cmd() {
   if xx-info is-cross; then
     root="-p /${XX_TRIPLE}"
   fi
+  args=$(echo "$@" | sed "s/xx-c-essentials/musl-dev gcc/" | sed "s/xx-cxx-essentials/g++/")
   if [ "$#" = "0" ]; then
     root=""
   else
-    echo "+ apk $root" "$@"
+    echo "+ apk $root" "$args"
   fi
-  apk $root "$@"
+  apk $root $args
   if xx-info is-cross; then
     if [ -z "$XX_APK_KEEP_BINARIES" ]; then
       rm -rf /${XX_TRIPLE}/usr/bin/*

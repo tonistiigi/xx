@@ -1,19 +1,20 @@
 #!/usr/bin/env bats
 
 load 'assert'
+load 'test_helper'
 
 clean() {
   rm /etc/llvm/xx-default.cfg || true
-  rm /usr/bin/*-alpine-*-clang || true
-  rm /usr/bin/*-alpine-*-clang++ || true
+  rm /usr/bin/*-linux-*-clang || true
+  rm /usr/bin/*-linux-*-clang++ || true
   rm /usr/bin/*.cfg || true
 }
 
 testHelloCLLD() {
   clean
-  apk add clang lld
-  xx-apk add musl-dev gcc
-  run xx-clang --print-target-triple
+  add clang lld
+  xxadd xx-c-essentials
+  run sh -c 'xx-clang --print-target-triple | sed s/unknown-//'
   assert_success
   assert_output $(xx-info triple)
   [ -f /etc/llvm/xx-default.cfg ]
@@ -28,18 +29,22 @@ testHelloCLLD() {
   if ! xx-info is-cross; then
     assert_output "--target=$(xx-info triple) -fuse-ld=lld"
   else
-    assert_output "--target=$(xx-info triple) -fuse-ld=lld --sysroot=/$(xx-info triple)/"
+    if [ -f /etc/alpine-release ]; then
+      assert_output "--target=$(xx-info triple) -fuse-ld=lld --sysroot=/$(xx-info triple)/"
+    else
+      assert_output "--target=$(xx-info triple) -fuse-ld=lld"
+    fi
   fi
   testBuildHello
 }
 
 testHelloCPPLLD() {
   clean
-  run xx-clang++ --print-target-triple
+  run sh -c 'xx-clang++ --print-target-triple | sed s/unknown-//'
   assert_success
   assert_output $(xx-info triple)
 
-  xx-apk add --no-cache g++
+  xxadd xx-cxx-essentials
   clang++ --target=$(xx-clang++ --print-target-triple) -o /tmp/a.out fixtures/hello.cc
   xx-verify /tmp/a.out
   if ! xx-info is-cross; then
@@ -60,7 +65,7 @@ testBuildHello() {
 }
 
 @test "noclang" {
-  apk del clang 2>/dev/null || true
+  del clang
   run xx-clang --print-target-triple
   assert_failure
   assert_output --partial "clang not found"
@@ -68,8 +73,9 @@ testBuildHello() {
 }
 
 @test "nolinker" {
-  apk del lld 2>/dev/null || true
-  apk add clang
+  if [ -f /etc/debian_version ]; then skip; fi # clang has dependency on ld in debian
+  del lld 2>/dev/null || true
+  add clang
   run xx-clang --print-target-triple
   assert_failure
   assert_output --partial "no suitable linker"
@@ -91,7 +97,7 @@ testBuildHello() {
 
   [ "$nativeTriple" != "$crossTriple" ]
 
-  run clang --print-target-triple
+  run sh -c "clang --print-target-triple | sed s/unknown-//"
   assert_success
   assert_output "$nativeTriple"
 
@@ -113,7 +119,7 @@ testBuildHello() {
   run xx-clang --unwrap
   assert_success
 
-  run clang --print-target-triple
+  run sh -c "clang --print-target-triple | sed s/unknown-//"
   assert_success
   assert_output "$nativeTriple"
 
@@ -124,17 +130,19 @@ testBuildHello() {
 
 @test "native-c-ld" {
   clean
-  apk del lld
-  apk add binutils
-  run xx-clang --print-target-triple
+  del lld
+  add binutils
+  run sh -c 'xx-clang --print-target-triple | sed s/unknown-//'
   assert_success
   assert_output $(xx-info triple)
+
   [ -f /etc/llvm/xx-default.cfg ]
   run cat /etc/llvm/xx-default.cfg
   assert_success
+
   assert_output "-fuse-ld=ld"
   [ -f /usr/bin/$(xx-info triple)-clang ]
-  run /usr/bin/$(xx-info triple)-clang --print-target-triple
+  run sh -c "/usr/bin/$(xx-info triple)-clang --print-target-triple | sed s/unknown-//"
   assert_success
   assert_output $(xx-info triple)
   [ -f /usr/bin/$(xx-info triple)-clang++ ]
@@ -143,10 +151,11 @@ testBuildHello() {
   assert_success
   assert_output "--target=$(xx-info triple) -fuse-ld=ld"
   testBuildHello
-  apk del binutils
+  del binutils
 }
 
 @test "native-c++" {
+  add clang
   unset TARGETARCH
   testHelloCPPLLD
 }
@@ -219,4 +228,18 @@ testBuildHello() {
 @test "386-c++-lld" {
   export TARGETARCH=386
   testHelloCPPLLD
+}
+
+@test "clean-packages" {
+  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6; do
+    TARGETPLATFORM=$p xxdel xx-c-essentials
+    TARGETPLATFORM=$p xxdel xx-cxx-essentials
+    root=/$(TARGETPLATFORM=$p xx-info triple)
+    if [ -d "$root" ] && [ "$root" != "/" ]; then
+      rm -rf "$root"
+    fi
+  done
+  del clang lld
+  rm /tmp/a.out
+  rm -rf /var/cache/apt/*.bin || true
 }

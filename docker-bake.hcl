@@ -11,5 +11,6 @@ target "test-debian" {
     inherits = ["test-alpine"]
     args = {
         TEST_BASE_TYPE = "debian"
+        TEST_BASE_IMAGE = "debian:bullseye"
     }
 }
