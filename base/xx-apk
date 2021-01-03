@@ -79,9 +79,6 @@ case "$1" in
   "clean")
     clean
     ;;
-  "setup-clang")
-    setup_clang
-    ;;
   *)
     cmd "$@"
     ;;

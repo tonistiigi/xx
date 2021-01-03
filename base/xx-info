@@ -188,7 +188,10 @@ case "$TARGETARCH" in
     XX_MARCH="i386"
     XX_DEBIAN_ARCH="i386"
     XX_ALPINE_ARCH="x86"
-    XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
+    XX_TRIPLE="i686${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_VENDOR" = "alpine" ]; then
+      XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
+    fi
     ;;
 esac
 
