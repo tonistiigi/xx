@@ -47,7 +47,7 @@ RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-clang}" = "${TEST_CMDS#*clang}" ] && exit 0; ./test-clang.bats
 RUN --mount=type=cache,target=/pkg-cache \
     --mount=target=/root/.cache,type=cache \
-    [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-go.bats
+    [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; ./test-go.bats
 
 FROM test-base-${TEST_BASE_TYPE} AS dev
 COPY fixtures fixtures
