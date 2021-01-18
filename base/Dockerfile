@@ -2,7 +2,7 @@
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
 
-FROM alpine AS scripts
+FROM --platform=$BUILDPLATFORM alpine AS scripts
 COPY xx-* /out/
 RUN ln -s xx-cc /out/xx-clang && \
     ln -s xx-cc /out/xx-clang++ && \
@@ -52,5 +52,26 @@ RUN --mount=type=cache,target=/pkg-cache \
 FROM test-base-${TEST_BASE_TYPE} AS dev
 COPY fixtures fixtures
 COPY --from=base / /
+
+
+ARG SHADOW_VERSION=4.8.1
+# newuidmap & newgidmap binaries (shadow-uidmap 4.7-r1) shipped with alpine cannot be executed without CAP_SYS_ADMIN,
+# because the binaries are built without libcap-dev.
+# So we need to build the binaries with libcap enabled.
+FROM --platform=$BUILDPLATFORM alpine AS idmap
+RUN apk add --no-cache git autoconf automake clang lld gettext-dev libtool make byacc binutils
+COPY --from=base / /
+ARG SHADOW_VERSION
+RUN git clone https://github.com/shadow-maint/shadow.git /shadow && cd /shadow && git checkout $SHADOW_VERSION
+WORKDIR /shadow
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache musl-dev gcc libcap-dev
+RUN CC=$(xx-clang --print-target-triple)-clang ./autogen.sh --disable-nls --disable-man --without-audit --without-selinux --without-acl --without-attr --without-tcb --without-nscd --host $(xx-clang --print-target-triple) \
+  && make -j $(nproc) \
+  && xx-verify src/newuidmap src/newuidmap \
+  && cp src/newuidmap src/newgidmap /usr/bin
+
+FROM scratch AS idmap-binaries
+COPY --from=idmap /usr/bin/newuidmap /usr/bin/newgidmap /
 
 FROM base
