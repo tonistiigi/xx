@@ -1,0 +1,25 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0e41f27..d89de6c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 11)
+ add_executable(gensig main.cpp macho.cpp signature.cpp hash.cpp)
+ target_link_libraries(gensig
+         PRIVATE
+-        PkgConfig::OPENSSL
++        ${OPENSSL_STATIC_LDFLAGS}
+         #CLI11:CLI11
+         )
+ 
+diff --git a/main.cpp b/main.cpp
+index 515428f..3b82dbf 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -4,6 +4,7 @@
+ #include "hash.h"
+ #include "signature.h"
+ #include "macho.h"
++#include <string.h>
+ 
+ #include <CLI/App.hpp>
+ #include <CLI/Formatter.hpp>

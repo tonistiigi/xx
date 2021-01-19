@@ -51,6 +51,136 @@ RUN --mount=type=cache,target=/pkg-cache \
     --mount=target=/root/.cache,type=cache \
     [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; ./test-go.bats
 
+FROM --platform=${BUILDPLATFORM} alpine AS libtapi-base
+RUN apk add --no-cache git clang lld cmake make python3 bash
+COPY --from=base / /
+ARG LIBTAPI_VERSION=1100.0.11
+RUN git clone https://github.com/tpoechtrager/apple-libtapi --depth 1 -b ${LIBTAPI_VERSION}
+WORKDIR ./apple-libtapi
+RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
+    git apply /tmp/libtapi-cmake-args.patch
+RUN apk add --no-cache gcc g++
+RUN NOMAKE=1 CMAKE_EXTRA_ARGS="-DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" ./build.sh && \
+    cd build && \
+    make -j $(nproc) clang-tblgen llvm-tblgen && \
+    cp -a bin/clang-tblgen bin/llvm-tblgen /usr/bin/ && \
+    cd .. && rm -rf build
+
+FROM libtapi-base AS libtapi
+ARG TARGETPLATFORM
+RUN xx-apk add g++
+RUN INSTALLPREFIX=/opt/libtapi/ \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" \
+    ./build.sh && ./install.sh && \
+    xx-verify /opt/libtapi/lib/libtapi.so && \
+    rm -rf build
+
+FROM libtapi-base AS libtapi-static
+ARG TARGETPLATFORM
+RUN xx-apk add g++
+RUN export INSTALLPREFIX=/opt/libtapi/ \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" \
+    && sed -i s/SHARED/STATIC/g src/llvm/projects/libtapi/tools/libtapi/CMakeLists.txt && \
+    ./build.sh && cd build && make -j $(nproc) LLVMObject tapiCore LLVMSupport LLVMDemangle LLVMMC LLVMBinaryFormat install-tapi-headers && mkdir /opt/libtapi/lib && cp -a ./lib/*.a /opt/libtapi/lib/ && \
+    cd .. && rm -rf build
+    #xx-verify --static ./build/lib/libtapi.a
+
+FROM --platform=${BUILDPLATFORM} alpine AS cctools-base
+RUN apk add --no-cache git clang lld make binutils
+COPY --from=base / /
+WORKDIR /work
+ARG CCTOOLS_VERSION=949.0.1-ld64-530
+RUN git clone https://github.com/tpoechtrager/cctools-port -b ${CCTOOLS_VERSION}
+WORKDIR ./cctools-port/cctools
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache musl-dev gcc g++
+
+FROM cctools-base AS lipo-base
+ARG LIPO_CFLAGS="-Wl,-s -Os"
+RUN export CFLAGS=${LIPO_CFLAGS} && \
+    ./configure --host=$(xx-clang --print-target-triple) LDFLAGS=--static && \
+    make -C libmacho && make -C libstuff && make -C misc lipo && \
+    xx-verify --static misc/lipo
+
+FROM scratch AS lipo-static
+COPY --from=lipo-base /work/cctools-port/cctools/misc/lipo /
+
+FROM cctools-base AS codesign-base
+ARG CODESIGN_CFLAGS="-Wl,-s -Os"
+RUN export CFLAGS=${CODESIGN_CFLAGS} && \
+    ./configure --host=$(xx-clang --print-target-triple) LDFLAGS=--static && \
+    make -C libmacho && make -C libstuff && make -C misc codesign_allocate && \
+    xx-verify --static misc/codesign_allocate
+
+FROM scratch AS codesign-static
+COPY --from=codesign-base /work/cctools-port/cctools/misc/codesign_allocate /
+
+FROM cctools-base AS otool-base
+ARG OTOOL_CFLAGS="-Wl,-s -Os"
+RUN export CFLAGS=${OTOOL_CFLAGS} && \
+    ./configure --host=$(xx-clang --print-target-triple) LDFLAGS=--static && \
+    make -C libstuff && make -C libobjc2 && make -C otool && \
+    xx-verify --static otool/otool
+
+FROM scratch AS otool-static
+COPY --from=otool-base /work/cctools-port/cctools/otool/otool /
+
+FROM cctools-base AS ld64-static-base
+# for LTO
+RUN apk add llvm-dev
+ARG LD64_CXXFLAGS="-Wl,-s -Os"
+RUN --mount=from=libtapi-static,source=/opt/libtapi,target=/opt/libtapi \
+    export CXXFLAGS=${LD64_CXXFLAGS} && ./configure --with-libtapi=/opt/libtapi --host=$(xx-clang --print-target-triple) &&\
+    sed -i 's/-ltapi/-ltapi -ltapiCore -lLLVMObject -lLLVMSupport -lLLVMDemangle -lLLVMMC -lLLVMBinaryFormat --static/' ld64/src/ld/Makefile && \
+    make -j $(nproc) -C ld64 && \
+    xx-verify --static ld64/src/ld/ld
+
+FROM scratch AS ld64-static
+COPY --from=ld64-static-base /work/cctools-port/cctools/ld64/src/ld/ld /ld64
+
+FROM cctools-base AS cctools-build
+# for LTO
+RUN apk add llvm-dev
+ARG CCTOOLS_CXXFLAGS="-Wl,-s -Os"
+ARG CCTOOLS_CFLAGS="-Wl,-s -Os"
+RUN --mount=from=libtapi,source=/opt/libtapi,target=/opt/libtapi \
+    # copy to /usr/bin for clean rpath. TODO: try static build
+    cp -a /opt/libtapi/. /usr/ && \ 
+    export CFLAGS=${CCTOOLS_CFLAGS} CXXFLAGS=${CCTOOLS_CXXFLAGS} && \
+    ./configure --prefix=/opt/cctools --with-libtapi=/opt/libtapi --host=$(xx-clang --print-target-triple) && \
+    make -j $(nproc) install && \
+    xx-verify /opt/cctools/bin/ld 
+
+FROM scratch AS cctools
+COPY --from=libtapi /opt/libtapi/lib/*.so /usr/lib/
+COPY --from=cctools-build /opt/cctools /usr
+
+FROM --platform=${BUILDPLATFORM} alpine AS sigtool-base
+RUN apk add --no-cache git clang lld cmake make pkgconf
+COPY --from=base / /
+WORKDIR /work
+RUN git clone https://github.com/CLIUtils/CLI11 && \
+    cd CLI11 && \
+    cp -a include/CLI /usr/include/ && \
+    cd .. && rm -rf CLI11
+ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
+RUN git clone https://github.com/thefloweringash/sigtool && \
+    cd sigtool && \
+    git checkout ${SIGTOOL_VERSION}
+WORKDIR ./sigtool
+RUN --mount=target=/tmp/sigtool-static.patch,source=sigtool-static.patch \
+    git apply /tmp/sigtool-static.patch
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache g++ openssl-dev openssl-libs-static
+RUN if xx-info is-cross; then cp -a /usr/include/CLI /$(xx-info triple)/usr/include/; fi && \ 
+    mkdir build && cd build && \
+    cmake -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_EXE_LINKER_FLAGS=-static -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ .. && \
+    make -j $(nproc) && \
+    xx-verify --static ./gensig
+
+FROM scratch AS sigtool
+COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
+
 FROM test-base-${TEST_BASE_TYPE} AS dev
 COPY fixtures fixtures
 COPY --from=base / /
