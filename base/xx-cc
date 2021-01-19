@@ -119,11 +119,20 @@ setup() {
   ln -s clang /usr/bin/${target}-clang
   ln -s clang++ /usr/bin/${target}-clang++
 
+
+
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
     if [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
+
+      cat <<EOT > /usr/bin/${target}-pkg-config
+#!/usr/bin/env sh
+export PKG_CONFIG_PATH=/${target}/usr/lib/pkgconfig
+exec pkg-config "\$@"
+EOT
+      chmod +x /usr/bin/${target}-pkg-config
     fi
   fi
   f=$(dirname $(readlink -f $(which /usr/bin/clang)))/${target}.cfg
