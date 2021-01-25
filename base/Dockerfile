@@ -245,6 +245,43 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld CFLAGS="-Wl,-s -Os" CXXFLAGS=-Wl,-s
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
     for f in /out/bin/*; do xx-verify $f; done
 
+FROM --platform=$BUILDPLATFORM alpine AS compiler-rt-build
+RUN apk add --no-cache git cmake clang lld make ninja python3 binutils
+WORKDIR /work
+COPY --from=base / /
+ARG LLVM_VERSION=llvmorg-11.0.1
+RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
+WORKDIR llvm-project/compiler-rt
+ARG COMPILER_RT_TARGET
+ENV TARGETPLATFORM=${COMPILER_RT_TARGET}
+RUN xx-apk add gcc g++
+RUN mkdir build && cd build && \
+    cmake -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -G Ninja .. && \
+    ninja && mkdir /out && cp -a lib/linux /out/ && \
+    cd .. && rm -rf build
+
+FROM scratch AS compiler-rt
+COPY --from=compiler-rt-build /out /usr/lib/clang/compiler-rt/
+
+FROM --platform=$BUILDPLATFORM alpine AS libcxx-build
+RUN apk add --no-cache git cmake clang lld make ninja python3 binutils
+WORKDIR /work
+COPY --from=base / /
+ARG LLVM_VERSION=llvmorg-11.0.1
+RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
+WORKDIR llvm-project/libcxx
+ARG LIBCXX_TARGET
+ENV TARGETPLATFORM=${LIBCXX_TARGET}
+RUN xx-apk -v add gcc g++ linux-headers
+RUN mkdir build && cd build && \
+    cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DLIBCXX_HAS_MUSL_LIBC=ON -G Ninja .. && \
+    ninja && mkdir /out && cp -a lib/libc++* /out/ && \
+    xx-verify /out/libc++.so && \
+    cd .. && rm -rf build
+
+FROM scratch AS libcxx
+COPY --from=libcxx-build /out /usr/lib/
+
 FROM scratch AS binutils
 COPY --from=binutils-base /out /usr/
 
