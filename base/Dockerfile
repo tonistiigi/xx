@@ -60,7 +60,7 @@ WORKDIR ./apple-libtapi
 RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
     git apply /tmp/libtapi-cmake-args.patch
 RUN apk add --no-cache gcc g++
-RUN NOMAKE=1 CMAKE_EXTRA_ARGS="-DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" ./build.sh && \
+RUN NOMAKE=1 CMAKE_EXTRA_ARGS="$(xx-clang --print-cmake-defines)" ./build.sh && \
     cd build && \
     make -j $(nproc) clang-tblgen llvm-tblgen && \
     cp -a bin/clang-tblgen bin/llvm-tblgen /usr/bin/ && \
@@ -70,7 +70,7 @@ FROM libtapi-base AS libtapi
 ARG TARGETPLATFORM
 RUN xx-apk add g++
 RUN INSTALLPREFIX=/opt/libtapi/ \
-    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen $(xx-clang --print-cmake-defines)" \
     ./build.sh && ./install.sh && \
     xx-verify /opt/libtapi/lib/libtapi.so && \
     rm -rf build
@@ -79,7 +79,7 @@ FROM libtapi-base AS libtapi-static
 ARG TARGETPLATFORM
 RUN xx-apk add g++
 RUN export INSTALLPREFIX=/opt/libtapi/ \
-    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++" \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen $(xx-clang --print-cmake-defines)" \
     && sed -i s/SHARED/STATIC/g src/llvm/projects/libtapi/tools/libtapi/CMakeLists.txt && \
     ./build.sh && cd build && make -j $(nproc) LLVMObject tapiCore LLVMSupport LLVMDemangle LLVMMC LLVMBinaryFormat install-tapi-headers && mkdir /opt/libtapi/lib && cp -a ./lib/*.a /opt/libtapi/lib/ && \
     cd .. && rm -rf build
@@ -174,7 +174,7 @@ ARG TARGETPLATFORM
 RUN xx-apk add --no-cache g++ openssl-dev openssl-libs-static
 RUN if xx-info is-cross; then cp -a /usr/include/CLI /$(xx-info triple)/usr/include/; fi && \ 
     mkdir build && cd build && \
-    cmake -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_EXE_LINKER_FLAGS=-static -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ .. && \
+    cmake $(xx-clang --print-cmake-defines) -DCMAKE_EXE_LINKER_FLAGS=-static .. && \
     make -j $(nproc) && \
     xx-verify --static ./gensig
 
@@ -256,7 +256,7 @@ ARG COMPILER_RT_TARGET
 ENV TARGETPLATFORM=${COMPILER_RT_TARGET}
 RUN xx-apk add gcc g++
 RUN mkdir build && cd build && \
-    cmake -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -G Ninja .. && \
+    cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -G Ninja .. && \
     ninja && mkdir /out && cp -a lib/linux /out/ && \
     cd .. && rm -rf build
 
@@ -274,7 +274,7 @@ ARG LIBCXX_TARGET
 ENV TARGETPLATFORM=${LIBCXX_TARGET}
 RUN xx-apk -v add gcc g++ linux-headers
 RUN mkdir build && cd build && \
-    cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DLIBCXX_HAS_MUSL_LIBC=ON -G Ninja .. && \
+    cmake $(xx-clang --print-cmake-defines) -DLIBCXX_HAS_MUSL_LIBC=ON -G Ninja .. && \
     ninja && mkdir /out && cp -a lib/libc++* /out/ && \
     xx-verify /out/libc++.so && \
     cd .. && rm -rf build
