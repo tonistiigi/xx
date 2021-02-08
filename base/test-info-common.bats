@@ -75,3 +75,29 @@ load 'assert'
 @test "ppc64le" {
   assert_equal "ppc64le" "$(TARGETPLATFORM=linux/ppc64le xx-info march)"
 }
+
+@test "parse duple" {
+  TARGETDUPLE=linux-amd64 run xx-info os
+  assert_success
+  assert_output "linux"
+
+  TARGETDUPLE=linux-arm64 run xx-info arch
+  assert_success
+  assert_output "arm64"
+
+  TARGETDUPLE=linux-armv7 run xx-info arch
+  assert_success
+  assert_output "arm"
+
+  TARGETDUPLE=linux-armv7 run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/arm xx-info)"
+
+  TARGETDUPLE=linux-armv5 run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/arm/v5 xx-info)"
+
+  TARGETDUPLE=linux-ppc64le run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/ppc64le xx-info)"
+}
