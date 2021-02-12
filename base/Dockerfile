@@ -172,14 +172,18 @@ RUN --mount=target=/tmp/sigtool-static.patch,source=sigtool-static.patch \
     git apply /tmp/sigtool-static.patch
 ARG TARGETPLATFORM
 RUN xx-apk add --no-cache g++ openssl-dev openssl-libs-static
+ARG SIGTOOL_CXXFLAGS="-Wl,-s -Os"
 RUN if xx-info is-cross; then cp -a /usr/include/CLI /$(xx-info triple)/usr/include/; fi && \ 
+    export CXXFLAGS=${SIGTOOL_CXXFLAGS} && \
     mkdir build && cd build && \
     cmake $(xx-clang --print-cmake-defines) -DCMAKE_EXE_LINKER_FLAGS=-static .. && \
     make -j $(nproc) && \
     xx-verify --static ./gensig
 
 FROM scratch AS sigtool
+COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
+
 
 FROM test-base-${TEST_BASE_TYPE} AS dev
 COPY fixtures fixtures
