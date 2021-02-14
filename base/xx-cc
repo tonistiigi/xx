@@ -47,14 +47,22 @@ setup() {
 
   linker=
 
-  if [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
+  if [ "$(xx-info os)" = "darwin" ]; then
+    if which ld64.signed >/dev/null 2>/dev/null; then
+      linker=$(which ld64.signed)
+    else
+      linker=ld64
+    fi
+  fi
+
+  if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
       # TODO: lld has no support for s390x
       linker="lld"
     fi
   fi
 
-  if [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
+  if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
     if [ -z "${linker}" ]; then
       ld=$(which $target-gold 2>/dev/null || true)
       if [ $? = 0 ]; then
@@ -122,7 +130,9 @@ setup() {
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
-    if [ -f /etc/alpine-release ]; then
+    if [ "$(xx-info os)" == "darwin" ]; then
+      config="${config} -isysroot /SDK/MacOSX11.1.sdk"
+    elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
 
       cat <<EOT >/usr/bin/${target}-pkg-config

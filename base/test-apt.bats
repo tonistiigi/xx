@@ -194,3 +194,12 @@ load 'assert'
   assert_success
   assert_line "Package: gcc-i686-linux-gnu"
 }
+
+@test "skip-nolinux" {
+  export TARGETOS="darwin"
+  export TARGETARCH="amd64"
+  run xx-apt install foo
+  assert_success
+  unset TARGETOS
+  unset TARGETARCH
+}

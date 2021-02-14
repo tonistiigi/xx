@@ -38,3 +38,12 @@ load 'assert'
   [ ! -d "/$(xx-info)" ]
   unset TARGETARCH
 }
+
+@test "skip-nolinux" {
+  export TARGETOS="darwin"
+  export TARGETARCH="amd64"
+  run xx-apk add foo
+  assert_success
+  unset TARGETOS
+  unset TARGETARCH
+}

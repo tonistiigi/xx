@@ -7,6 +7,8 @@ clean() {
   rm /etc/llvm/xx-default.cfg || true
   rm /usr/bin/*-linux-*-clang || true
   rm /usr/bin/*-linux-*-clang++ || true
+  rm /usr/bin/*-apple-*-clang || true
+  rm /usr/bin/*-apple-*-clang++ || true
   rm /usr/bin/*.cfg || true
 }
 
@@ -228,6 +230,46 @@ testBuildHello() {
 @test "386-c++-lld" {
   export TARGETARCH=386
   testHelloCPPLLD
+}
+
+@test "darwin-setup" {
+  clean
+  export TARGETARCH=amd64
+  export TARGETOS=darwin
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/x86_64-apple-macos10.4-clang ]
+  [ -f /usr/bin/x86_64-apple-macos10.4-clang++ ]
+
+  run cat /usr/bin/x86_64-apple-macos10.4.cfg
+  assert_success
+  assert_output "--target=x86_64-apple-macos10.4 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk"
+
+  export TARGETARCH=arm64
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
+  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+
+  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  assert_success
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk"
+
+  touch /usr/bin/ld64.signed
+  chmod +x /usr/bin/ld64.signed
+
+  clean
+
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
+  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+
+  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  assert_success
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.1.sdk"
+
+  rm /usr/bin/ld64.signed
+
+  unset TARGETOS
+  unset TARGETARCH
 }
 
 @test "clean-packages" {

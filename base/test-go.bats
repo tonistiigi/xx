@@ -153,6 +153,12 @@ testHelloGO() {
   testHelloGO
 }
 
+@test "darwin-amd64-hellogo" {
+  export TARGETARCH=amd64
+  export TARGETOS=darwin
+  testHelloGO
+}
+
 testHelloCGO() {
   export CGO_ENABLED=1
   xxadd xx-c-essentials

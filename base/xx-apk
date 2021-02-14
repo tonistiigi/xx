@@ -17,6 +17,11 @@ for l in $(xx-info env); do
   export $l
 done
 
+if [ "$XX_OS" != "linux" ]; then
+  echo &
+  "skipping packages installation on ${XX_OS}" >2
+fi
+
 setup() {
   if ! xx-info is-cross; then
     return
