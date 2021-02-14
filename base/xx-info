@@ -4,6 +4,7 @@
 : ${TARGETOS=}
 : ${TARGETARCH=}
 : ${TARGETVARIANT=}
+: ${MACOSX_VERSION_MIN=}
 
 : ${XX_MARCH=unknown}
 # https://pkgs.alpinelinux.org/packages
@@ -88,7 +89,12 @@ if . /etc/os-release 2>/dev/null; then
   XX_VENDOR=$ID
 fi
 
+if [ "$TARGETOS" = "darwin" ]; then
+  XX_VENDOR="apple"
+fi
+
 vendor=""
+
 if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
   vendor="-${XX_VENDOR}"
 fi
@@ -111,6 +117,9 @@ if [ -z "$TARGETARCH" ]; then
       TARGETARCH="386"
       ;;
     "aarch64")
+      TARGETARCH="arm64"
+      ;;
+    "arm64")
       TARGETARCH="arm64"
       ;;
     "armv7l")
@@ -145,18 +154,33 @@ if [ "$TARGETARCH" = "arm" ] && [ -z "$TARGETVARIANT" ]; then
   TARGETVARIANT="v7"
 fi
 
+if [ "$TARGETOS" = "darwin" ] && [ -z "$MACOSX_VERSION_MIN" ]; then
+  if [ "$TARGETARCH" == "amd64" ]; then
+    MACOSX_VERSION_MIN=10.4
+  else
+    MACOSX_VERSION_MIN=10.16
+  fi
+fi
+
 case "$TARGETARCH" in
   "amd64")
     XX_MARCH="x86_64"
     XX_DEBIAN_ARCH="amd64"
     XX_ALPINE_ARCH="x86_64"
     XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
+    if [ "$TARGETOS" = "darwin" ]; then
+      XX_TRIPLE="x86_64${vendor}-macos${MACOSX_VERSION_MIN}"
+    fi
     ;;
   "arm64")
     XX_MARCH="aarch64"
     XX_DEBIAN_ARCH="arm64"
     XX_ALPINE_ARCH="aarch64"
     XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
+    if [ "$TARGETOS" = "darwin" ]; then
+      XX_MARCH="arm64"
+      XX_TRIPLE="arm64${vendor}-macos${MACOSX_VERSION_MIN}"
+    fi
     ;;
   "arm")
     XX_MARCH="armv7l"

@@ -58,3 +58,14 @@ load 'assert'
   assert_equal "riscv64-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 xx-info triple)"
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
 }
+
+@test "darwin" {
+  assert_equal "x86_64-apple-macos10.4" "$(TARGETPLATFORM=darwin/amd64 xx-info triple)"
+  assert_equal "darwin" "$(TARGETPLATFORM=darwin/amd64 xx-info os)"
+  assert_equal "amd64" "$(TARGETPLATFORM=darwin/amd64 xx-info arch)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=darwin/amd64 xx-info march)"
+  assert_equal "arm64" "$(TARGETPLATFORM=darwin/arm64 xx-info march)"
+  assert_equal "arm64-apple-macos10.16" "$(TARGETPLATFORM=darwin/arm64 xx-info triple)"
+  assert_equal "x86_64-apple-macos10.16" "$(TARGETPLATFORM=darwin/amd64 MACOSX_VERSION_MIN=10.16 xx-info triple)"
+  assert_equal "apple" "$(TARGETPLATFORM=darwin/amd64 xx-info vendor)"
+}
