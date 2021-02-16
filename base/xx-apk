@@ -18,8 +18,8 @@ for l in $(xx-info env); do
 done
 
 if [ "$XX_OS" != "linux" ]; then
-  echo &
-  "skipping packages installation on ${XX_OS}" >2
+  echo >&2 "skipping packages installation on ${XX_OS}"
+  exit 0
 fi
 
 setup() {

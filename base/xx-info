@@ -105,6 +105,9 @@ if [ -z "$XX_LIBC" ]; then
   else
     XX_LIBC="gnu"
   fi
+  if [ "$TARGETOS" = "windows" ]; then
+    XX_LIBC="mingw32"
+  fi
 fi
 
 # reverse lookup if no parameters given
@@ -155,7 +158,7 @@ if [ "$TARGETARCH" = "arm" ] && [ -z "$TARGETVARIANT" ]; then
 fi
 
 if [ "$TARGETOS" = "darwin" ] && [ -z "$MACOSX_VERSION_MIN" ]; then
-  if [ "$TARGETARCH" == "amd64" ]; then
+  if [ "$TARGETARCH" = "amd64" ]; then
     MACOSX_VERSION_MIN=10.4
   else
     MACOSX_VERSION_MIN=10.16
@@ -170,6 +173,8 @@ case "$TARGETARCH" in
     XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
     if [ "$TARGETOS" = "darwin" ]; then
       XX_TRIPLE="x86_64${vendor}-macos${MACOSX_VERSION_MIN}"
+    elif [ "$TARGETOS" = "windows" ]; then
+      XX_TRIPLE="x86_64-w64-mingw32"
     fi
     ;;
   "arm64")
@@ -180,6 +185,8 @@ case "$TARGETARCH" in
     if [ "$TARGETOS" = "darwin" ]; then
       XX_MARCH="arm64"
       XX_TRIPLE="arm64${vendor}-macos${MACOSX_VERSION_MIN}"
+    elif [ "$TARGETOS" = "windows" ]; then
+      XX_TRIPLE="aarch64-w64-mingw32"
     fi
     ;;
   "arm")
@@ -208,6 +215,10 @@ case "$TARGETARCH" in
         XX_TRIPLE="armv5${vendor}-linux-${XX_LIBC}eabi"
       fi
     fi
+
+    if [ "$TARGETOS" = "windows" ]; then
+      XX_TRIPLE="armv7-w64-mingw32"
+    fi
     ;;
   "riscv64")
     XX_MARCH="riscv64"
@@ -235,6 +246,9 @@ case "$TARGETARCH" in
     if [ "$XX_VENDOR" = "alpine" ]; then
       XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
     fi
+    if [ "$TARGETOS" = "windows" ]; then
+      XX_TRIPLE="i686-w64-mingw32"
+    fi
     ;;
 esac
 
@@ -247,7 +261,7 @@ fi
 
 case "$1" in
   "is-cross")
-    if [ "$XX_MARCH" = "$(uname -m)" ]; then
+    if [ "$XX_MARCH" = "$(uname -m)" ] && [ "$TARGETOS" = "linux" ]; then
       exit 1
     else
       exit 0
@@ -287,8 +301,10 @@ case "$1" in
     echo "XX_OS=${TARGETOS}"
     echo "XX_MARCH=${XX_MARCH}"
     echo "XX_VENDOR=${XX_VENDOR}"
-    echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
-    echo "XX_TRIPLE=${XX_TRIPLE}"
+    if [ "$TARGETOS" = "linux" ]; then
+      echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
+      echo "XX_TRIPLE=${XX_TRIPLE}"
+    fi
     echo "XX_LIBC=${XX_LIBC}"
     echo "TARGETOS=${TARGETOS}"
     echo "TARGETARCH=${TARGETARCH}"
