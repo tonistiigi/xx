@@ -18,8 +18,8 @@ for l in $(xx-info env); do
 done
 
 if [ "$XX_OS" != "linux" ]; then
-  echo &
-  "skipping packages installation on ${XX_OS}" >2
+  echo >&2 "skipping packages installation on ${XX_OS}"
+  exit 0
 fi
 
 packages=
@@ -38,15 +38,6 @@ for p in "$@"; do
       ;;
     *)
       if [ -n "$parsed" ]; then
-        if [ "${p}" = "xx-c-essentials" ]; then
-          p="libc6-dev libgcc-8-dev"
-        elif [ "${p}" = "xx-cxx-essentials" ]; then
-          if apt info libstdc++-10-dev:${XX_PKG_ARCH} >/dev/null 2>/dev/null; then
-            p="libstdc++-10-dev"
-          else
-            p="libstdc++-8-dev"
-          fi
-        fi
         if [ -z "${packages}" ]; then
           packages="$p"
         else
@@ -85,8 +76,31 @@ if ! xx-info is-cross; then
   nocross=1
 fi
 
-new=
+packages2=
 for p in ${packages}; do
+  if [ "${p}" = "xx-c-essentials" ]; then
+    p="libc6-dev"
+    if apt info libgcc-10-dev:${XX_PKG_ARCH}; then
+      p="$p libgcc-10-dev"
+    else
+      p="$p libgcc-8-dev"
+    fi
+  elif [ "${p}" = "xx-cxx-essentials" ]; then
+    if apt info libstdc++-10-dev:${XX_PKG_ARCH}; then
+      p="libstdc++-10-dev"
+    else
+      p="libstdc++-8-dev"
+    fi
+  fi
+  if [ -z "$packages2" ]; then
+    packages2="$p"
+  else
+    packages2="${packages2} $p"
+  fi
+done
+
+new=
+for p in ${packages2}; do
   n=
   if [ -n "$nocross" ]; then
     n=${p}
