@@ -124,14 +124,30 @@ setup() {
     return
   fi
 
-  ln -s clang /usr/bin/${target}-clang
-  ln -s clang++ /usr/bin/${target}-clang++
+  for f in clang clang++; do
+    if [ -f /usr/bin/$f ]; then
+      ln -s $f /usr/bin/${target}-$f
+    else
+      echo &
+      "/usr/bin/$f not found: skipping" >2
+    fi
+  done
+
+  for f in addr2line ar as ranlib nm dlltool; do
+    if ! which "${target}-${f}" >/dev/null 2>/dev/null; then
+      if [ -f "/usr/bin/llvm-${f}" ]; then
+        ln -s llvm-$f /usr/bin/${target}-$f
+      fi
+    fi
+  done
 
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
-    if [ "$(xx-info os)" == "darwin" ]; then
+    if [ "$(xx-info os)" = "darwin" ]; then
       config="${config} -isysroot /SDK/MacOSX11.1.sdk"
+    elif [ "$(xx-info os)" = "windows" ]; then
+      config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
     elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
 
@@ -222,7 +238,7 @@ fi
 
 if [ -n "${printCmake}" ]; then
   setup
-  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple)
+  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}')
   exit 0
 fi
 

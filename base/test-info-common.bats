@@ -101,3 +101,15 @@ load 'assert'
   assert_success
   assert_output "$(TARGETPLATFORM=linux/ppc64le xx-info)"
 }
+
+@test "windows" {
+  assert_equal "x86_64-w64-mingw32" "$(TARGETPLATFORM=windows/amd64 xx-info triple)"
+  assert_equal "windows" "$(TARGETPLATFORM=windows/amd64 xx-info os)"
+  assert_equal "amd64" "$(TARGETPLATFORM=windows/amd64 xx-info arch)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=windows/amd64 xx-info march)"
+  assert_equal "aarch64" "$(TARGETPLATFORM=windows/arm64 xx-info march)"
+
+  assert_equal "aarch64-w64-mingw32" "$(TARGETPLATFORM=windows/arm64 xx-info triple)"
+  assert_equal "armv7-w64-mingw32" "$(TARGETPLATFORM=windows/arm xx-info triple)"
+  assert_equal "i686-w64-mingw32" "$(TARGETPLATFORM=windows/386 xx-info triple)"
+}

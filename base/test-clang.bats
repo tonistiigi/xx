@@ -272,6 +272,35 @@ testBuildHello() {
   unset TARGETARCH
 }
 
+@test "windows-setup" {
+  clean
+  export TARGETARCH=amd64
+  export TARGETOS=windows
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/x86_64-w64-mingw32-clang ]
+  [ -f /usr/bin/x86_64-w64-mingw32-clang++ ]
+
+  run cat /usr/bin/x86_64-w64-mingw32.cfg
+  assert_success
+  assert_output "--target=x86_64-w64-mingw32 -fuse-ld=lld -I/usr/x86_64-w64-mingw32/include -L/usr/x86_64-w64-mingw32/lib"
+
+  add llvm
+
+  export TARGETARCH=arm64
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/aarch64-w64-mingw32-clang ]
+  [ -f /usr/bin/aarch64-w64-mingw32-clang++ ]
+
+  [ -f /usr/bin/aarch64-w64-mingw32-dlltool ]
+  run readlink /usr/bin/aarch64-w64-mingw32-dlltool
+  assert_success
+  assert_output "llvm-dlltool"
+
+  run cat /usr/bin/aarch64-w64-mingw32.cfg
+  assert_success
+  assert_output "--target=aarch64-w64-mingw32 -fuse-ld=lld -I/usr/aarch64-w64-mingw32/include -L/usr/aarch64-w64-mingw32/lib"
+}
+
 @test "clean-packages" {
   for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6; do
     TARGETPLATFORM=$p xxdel xx-c-essentials
@@ -281,7 +310,7 @@ testBuildHello() {
       rm -rf "$root"
     fi
   done
-  del clang lld
+  del clang lld llvm
   rm /tmp/a.out
   rm -rf /var/cache/apt/*.bin || true
 }
