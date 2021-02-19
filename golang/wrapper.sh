@@ -64,23 +64,29 @@ if [ "$CGO_ENABLED" = "1" ]; then
   case "$GOARCH" in
   "amd64")
     export CC="x86_64-linux-gnu-gcc"
+    export CXX="x86_64-linux-gnu-g++"
     ;;
   "ppc64le")
     export CC="powerpc64le-linux-gnu-gcc"
+    export CXX="powerpc64le-linux-gnu-g++"
     ;;
   "s390x")
     export CC="s390x-linux-gnu-gcc"
+    export CXX="s390x-linux-gnu-g++"
     ;;
   "arm64")
     export CC="aarch64-linux-gnu-gcc"
+    export CXX="aarch64-linux-gnu-g++"
     ;;
   "arm")
     case "$GOARM" in
     "5")
       export CC="arm-linux-gnueabi-gcc"
+      export CXX="arm-linux-gnueabi-g++"
       ;;
     *)
       export CC="arm-linux-gnueabihf-gcc"
+      export CXX="arm-linux-gnueabihf-g++"
       ;;
     esac
     ;;
