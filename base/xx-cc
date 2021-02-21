@@ -81,6 +81,23 @@ EOF
   chmod +x /usr/bin/xcrun
 }
 
+macos_sdk_path=/SDK/MacOSX11.1.sdk
+macos_sdk_version=11.1
+
+detectMacOSSDK() {
+  if [ -d "/SDK" ]; then
+    for f in /SDK/MacOSX*.sdk; do
+      macos_sdk_path="$f"
+      trim="${sdk_path#/SDK/MacOSX}"
+      trim="${trim%.sdk}"
+      if [ -n "$trim" ]; then
+        macos_sdk_version=$trim
+      fi
+      break
+    done
+  fi
+}
+
 basename=$(basename $0)
 name=${basename#xx-}
 
@@ -240,7 +257,8 @@ EOT
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
     if [ "${target#*-apple-macos}" != "${target}" ]; then
-      config="${config} -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
+      detectMacOSSDK
+      config="${config} -isysroot ${macos_sdk_path} -stdlib=libc++"
     elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
       config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
     elif [ -f /etc/alpine-release ]; then

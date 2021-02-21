@@ -266,6 +266,18 @@ testBuildHello() {
   assert_success
   assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
 
+  clean
+
+  mkdir -p /SDK/MacOSX11.2.sdk
+  xx-clang --setup-target-triple
+  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
+  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+
+  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  assert_success
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.2.sdk -stdlib=libc++"
+
+  rm -r /SDK/MacOSX11.2.sdk
   rm /usr/bin/ld64.signed
 
   unset TARGETOS
