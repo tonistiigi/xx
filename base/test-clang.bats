@@ -237,12 +237,12 @@ testBuildHello() {
   export TARGETARCH=amd64
   export TARGETOS=darwin
   xx-clang --setup-target-triple
-  [ -f /usr/bin/x86_64-apple-macos10.4-clang ]
-  [ -f /usr/bin/x86_64-apple-macos10.4-clang++ ]
+  [ -f /usr/bin/x86_64-apple-macos10.6-clang ]
+  [ -f /usr/bin/x86_64-apple-macos10.6-clang++ ]
 
-  run cat /usr/bin/x86_64-apple-macos10.4.cfg
+  run cat /usr/bin/x86_64-apple-macos10.6.cfg
   assert_success
-  assert_output "--target=x86_64-apple-macos10.4 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk"
+  assert_output "--target=x86_64-apple-macos10.6 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
 
   export TARGETARCH=arm64
   xx-clang --setup-target-triple
@@ -251,7 +251,7 @@ testBuildHello() {
 
   run cat /usr/bin/arm64-apple-macos10.16.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk"
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
 
   touch /usr/bin/ld64.signed
   chmod +x /usr/bin/ld64.signed
@@ -264,7 +264,7 @@ testBuildHello() {
 
   run cat /usr/bin/arm64-apple-macos10.16.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.1.sdk"
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
 
   rm /usr/bin/ld64.signed
 
