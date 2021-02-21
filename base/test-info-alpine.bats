@@ -60,12 +60,12 @@ load 'assert'
 }
 
 @test "darwin" {
-  assert_equal "x86_64-apple-macos10.4" "$(TARGETPLATFORM=darwin/amd64 xx-info triple)"
+  assert_equal "x86_64-apple-macos10.6" "$(TARGETPLATFORM=darwin/amd64 xx-info triple)"
   assert_equal "darwin" "$(TARGETPLATFORM=darwin/amd64 xx-info os)"
   assert_equal "amd64" "$(TARGETPLATFORM=darwin/amd64 xx-info arch)"
   assert_equal "x86_64" "$(TARGETPLATFORM=darwin/amd64 xx-info march)"
   assert_equal "arm64" "$(TARGETPLATFORM=darwin/arm64 xx-info march)"
   assert_equal "arm64-apple-macos10.16" "$(TARGETPLATFORM=darwin/arm64 xx-info triple)"
-  assert_equal "x86_64-apple-macos10.16" "$(TARGETPLATFORM=darwin/amd64 MACOSX_VERSION_MIN=10.16 xx-info triple)"
+  assert_equal "x86_64-apple-macos10.15" "$(TARGETPLATFORM=darwin/amd64 MACOSX_VERSION_MIN=10.15 xx-info triple)"
   assert_equal "apple" "$(TARGETPLATFORM=darwin/amd64 xx-info vendor)"
 }

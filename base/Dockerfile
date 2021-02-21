@@ -1,6 +1,7 @@
 #syntax=docker/dockerfile:1.2
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
+ARG TEST_WITH_DARWIN=false
 
 ARG SHADOW_VERSION=4.8.1
 
@@ -184,8 +185,19 @@ FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
+FROM --platform=$BUILDPLATFORM tonistiigi/osxcross:11.1 AS darwinsdk
 
-FROM test-base-${TEST_BASE_TYPE} AS dev
+FROM tonistiigi/osxcross:11.1 AS os-extras-darwin
+COPY --from=ld64-static / /usr/bin
+COPY --from=sigtool / /usr/bin
+COPY ld64.signed /usr/bin
+
+FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
+COPY --from=os-extras-darwin / /
+
+FROM test-base-${TEST_BASE_TYPE} AS test-base-darwinfalse
+
+FROM test-base-darwin${TEST_WITH_DARWIN} AS dev
 COPY fixtures fixtures
 COPY --from=base / /
 
@@ -260,7 +272,7 @@ ARG COMPILER_RT_TARGET
 ENV TARGETPLATFORM=${COMPILER_RT_TARGET}
 RUN xx-apk add gcc g++
 RUN mkdir build && cd build && \
-    cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -G Ninja .. && \
+    cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_LIPO=/usr/bin/llvm-lipo -G Ninja .. && \
     ninja && mkdir /out && cp -a lib/linux /out/ && \
     cd .. && rm -rf build
 

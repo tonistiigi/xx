@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-docker buildx build --load -t tonistiigi/xx:dev --build-arg TEST_BASE_TYPE --build-arg TEST_BASE_IMAGE --target=dev ./base
+docker buildx build --load -t tonistiigi/xx:dev --build-arg TEST_BASE_TYPE --build-arg TEST_BASE_IMAGE --build-arg TEST_WITH_DARWIN --target=dev ./base
 
 if ! docker volume inspect xx-pkg-cache >/dev/null 2>&1; then
   docker volume create xx-pkg-cache >/dev/null 2>&1

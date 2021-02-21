@@ -2,6 +2,85 @@
 
 set -e
 
+writexcrun() {
+  cat <<'EOF' >/usr/bin/xcrun
+#!/usr/bin/env sh
+
+sdk=
+show_sdk=
+show_version=
+
+usage() {
+  cat <<EOT >&2
+minimal xcrun port for xx tools. Only basic options are implemented. PRs welcome!
+
+-h, --help
+--sdk <sdk name>
+--show-sdk-path
+--show-sdk-version
+
+EOT
+}
+
+while :; do
+  case $1 in
+    -h | --help)
+      usage
+      exit
+      ;;
+    --sdk)
+      if [ -n "$2" ]; then
+        sdk=$2
+        shift
+      else
+        echo >&2 "xcrun: error: argument to '--sdk' is missing"
+      fi
+      ;;
+    --show-sdk-path)
+      show_sdk=1
+      ;;
+    --show-sdk-version)
+      show_version=1
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -?*)
+      echo >&2 "option $1 not found or unimplemented"
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
+if [ -n "$sdk" ] && [ "$sdk" != "macosx" ] && [ "$sdk" != "macosx11.1" ]; then
+  echo >&2 "sdk $sdk not found"
+  exit 1
+fi
+
+if [ -n "$show_sdk" ]; then
+  echo "/SDK/MacOSX11.1.sdk"
+  exit 0
+fi
+
+if [ -n "$show_version" ]; then
+  echo "11.1"
+  exit 0
+fi
+
+if [ -n "$1" ]; then
+  "$@"
+else
+  usage
+  exit 1
+fi
+EOF
+  chmod +x /usr/bin/xcrun
+}
+
 basename=$(basename $0)
 name=${basename#xx-}
 
@@ -126,17 +205,33 @@ setup() {
 
   for f in clang clang++; do
     if [ -f /usr/bin/$f ]; then
-      ln -s $f /usr/bin/${target}-$f
+      # there seems to be a bug in llvm that prevents config to be loaded if target contains a dot , like macos10.4
+      if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
+        cat <<EOT >/usr/bin/${target}-$f
+#!/usr/bin/env sh
+$f --config /usr/bin/${target}.cfg "\$@"
+EOT
+        chmod +x /usr/bin/${target}-$f
+      else
+        ln -s $f /usr/bin/${target}-$f
+      fi
     else
-      echo &
-      "/usr/bin/$f not found: skipping" >2
+      echo >&2 "/usr/bin/$f not found: skipping"
     fi
   done
 
   for f in addr2line ar as ranlib nm dlltool; do
     if ! which "${target}-${f}" >/dev/null 2>/dev/null; then
       if [ -f "/usr/bin/llvm-${f}" ]; then
-        ln -s llvm-$f /usr/bin/${target}-$f
+        if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
+          cat <<EOT >/usr/bin/${target}-$f
+#!/usr/bin/env sh
+llvm-$f "\$@"
+EOT
+          chmod +x /usr/bin/${target}-$f
+        else
+          ln -s llvm-$f /usr/bin/${target}-$f
+        fi
       fi
     fi
   done
@@ -144,9 +239,9 @@ setup() {
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
-    if [ "$(xx-info os)" = "darwin" ]; then
-      config="${config} -isysroot /SDK/MacOSX11.1.sdk"
-    elif [ "$(xx-info os)" = "windows" ]; then
+    if [ "${target#*-apple-macos}" != "${target}" ]; then
+      config="${config} -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
+    elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
       config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
     elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
@@ -163,6 +258,12 @@ EOT
   echo $config >${f}
   if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
     ln -s ${f} /usr/bin/${target}.cfg
+  fi
+
+  if [ "${target#*-apple-macos}" != "${target}" ]; then
+    if ! which xcrun 2>/dev/null >/dev/null; then
+      writexcrun
+    fi
   fi
 }
 
@@ -238,7 +339,7 @@ fi
 
 if [ -n "${printCmake}" ]; then
   setup
-  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}')
+  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple)
   exit 0
 fi
 
