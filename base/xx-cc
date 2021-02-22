@@ -147,14 +147,19 @@ setup() {
     if which ld64.signed >/dev/null 2>/dev/null; then
       linker=$(which ld64.signed)
     else
+      if ! which ld64 >/dev/null 2>/dev/null; then
+        echo >&2 "error: building for darwin requires ld64 linker"
+      fi
       linker=ld64
     fi
   fi
 
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
-      # TODO: lld has no support for s390x
-      linker="lld"
+      # lld has no support for s390x
+      if [ "${target%s390x}" != "${target}" ]; then
+        linker="lld"
+      fi
     fi
   fi
 
@@ -199,6 +204,16 @@ setup() {
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
       linker="ld"
+    fi
+  fi
+
+
+  if [ -z "$linker" ]; then
+    if which lld >/dev/null 2>/dev/null; then
+      # lld has no support for s390x
+      if [ "${target%s390x}" != "${target}" ]; then
+        linker="lld"
+      fi
     fi
   fi
 
