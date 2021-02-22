@@ -70,6 +70,10 @@ if [ "$CGO_ENABLED" = "1" ]; then
     export CC="powerpc64le-linux-gnu-gcc"
     export CXX="powerpc64le-linux-gnu-g++"
     ;;
+  "mips64le")
+    export CC="mips64el-linux-gnuabi64-gcc"
+    export CXX="mips64el-linux-gnuabi64-g++"
+    ;;
   "s390x")
     export CC="s390x-linux-gnu-gcc"
     export CXX="s390x-linux-gnu-g++"
