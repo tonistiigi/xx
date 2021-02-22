@@ -220,7 +220,7 @@ RUN CC=$(xx-clang --print-target-triple)-clang ./autogen.sh --disable-nls --disa
 FROM scratch AS idmap-binaries
 COPY --from=idmap /usr/bin/newuidmap /usr/bin/newgidmap /
 
-FROM --platform=$BUILDPLATFORM alpine AS binutils-base
+FROM --platform=$BUILDPLATFORM alpine AS binutils-base0
 RUN apk add --no-cache git clang lld zlib-dev gcc patch make musl-dev
 WORKDIR /work
 # BINUTILS_PATCHES_VERSION defines version of aports to use for patches
@@ -230,7 +230,7 @@ RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpine
     cp -a aports/main/binutils/*.patch patches/ && \
     rm -rf aports
 COPY --from=base / /
-ARG BINUTILS_VERSION=2.35
+ARG BINUTILS_VERSION=2.36.1
 ARG TARGETPLATFORM
 # first build version for current architecture that is used then cross compiling
 RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} && unset TARGETPLATFORM && \
@@ -244,6 +244,7 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} &
     cd ..  && rm -rf binutils-${BINUTILS_VERSION}
 
 RUN xx-apk add --no-cache musl-dev gcc g++ zlib-dev
+FROM binutils-base0 AS binutils-base
 #RUN apk add --no-cache file && ls -l /usr/bin && fail
 # BINUTILS_TARGET defines platform that binutils binaries will target when run
 ARG BINUTILS_TARGET
@@ -251,11 +252,11 @@ ARG BINUTILS_TARGET
 ARG BINUTILS_CFLAGS="-Wl,-s -Os"
 # BINUTILS_CONFIG defines extra options passed to binutils configure script
 ARG BINUTILS_CONFIG=
-RUN export CC=xx-clang CXX=xx-clang++ LD=lld CFLAGS="-Wl,-s -Os" CXXFLAGS=-Wl,-s && \
+RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$BINUTILS_CFLAGS" CXXFLAGS="$BINUTILS_CFLAGS" && \
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/out --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --host $(xx-clang --print-target-triple) --disable-nls --enable-gold --enable-relro --enable-plugins --with-pic --with-mmap --with-system-zlib $BINUTILS_CONFIG && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/out --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM= TARGETDUPLE=$BINUTILS_TARGET xx-info) --host $(xx-clang --print-target-triple) --disable-nls --enable-gold --enable-relro --enable-plugins --with-pic --with-mmap --with-system-zlib $BINUTILS_CONFIG && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
