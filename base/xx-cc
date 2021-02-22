@@ -271,6 +271,8 @@ exec pkg-config "\$@"
 EOT
       chmod +x /usr/bin/${target}-pkg-config
     fi
+  elif [ ! -f /usr/bin/${target}-pkg-config ]; then
+    ln -s pkg-config /usr/bin/${target}-pkg-config
   fi
   f=$(dirname $(readlink -f $(which /usr/bin/clang)))/${target}.cfg
   echo $config >${f}

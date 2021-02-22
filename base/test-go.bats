@@ -204,6 +204,24 @@ testHelloCGO() {
   testHelloCGO
 }
 
+@test "arm64-cgoenv" {
+  export TARGETARCH=arm64
+  export CGO_ENABLED=1
+  rm /usr/bin/$(xx-info triple).cfg || true
+  rm /etc/llvm/xx-default.cfg || true
+  rm -rf /usr/bin/$(xx-info triple)* || true
+
+  add llvm
+  add pkgconfig || add pkg-config
+  xxadd xx-c-essentials
+  run xx-go env
+  assert_success
+  assert_output --partial 'CC="'"$(xx-info triple)-clang"'"'
+  assert_output --partial 'CXX="'"$(xx-info triple)-clang++"'"'
+  assert_output --partial 'AR="'"$(xx-info triple)-ar"'"'
+  assert_output --partial 'PKG_CONFIG="'"$(xx-info triple)-pkg-config"'"'
+}
+
 @test "wrap-unwrap" {
   target="arm64"
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
@@ -237,7 +255,8 @@ testHelloCGO() {
       rm -rf "$root"
     fi
   done
-  del clang lld
+  del clang lld llvm
+  del pkgconfig || del pkg-config
   if which apk >/dev/null 2>/dev/null; then
     del go
   else
