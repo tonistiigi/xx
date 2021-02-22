@@ -39,12 +39,12 @@ EOT
 
 set -e
 
-# TARGETDUPLE is an optional alternative format $TARGETOS-$TARGETARCH$TARGETVARIANT, eg linux-amd64, linux-armv7
+# TARGETPAIR is an optional alternative format $TARGETOS-$TARGETARCH$TARGETVARIANT, eg linux-amd64, linux-armv7
 # This format is recommended to be used in image and binary names where slashes are not allowed.
 # Architecture and variant component are not separated with a dash to automatically handle empty value.
-if [ -n "$TARGETDUPLE" ]; then
-  os="$(echo $TARGETDUPLE | cut -d"-" -f1)"
-  arch="$(echo $TARGETDUPLE | cut -d"-" -f2)"
+if [ -n "$TARGETPAIR" ]; then
+  os="$(echo $TARGETPAIR | cut -d"-" -f1)"
+  arch="$(echo $TARGETPAIR | cut -d"-" -f2)"
   if [ "${arch#armv}" != "${arch}" ]; then
     variant="${arch#arm}"
     arch="arm"
