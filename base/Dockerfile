@@ -231,10 +231,10 @@ RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpine
     rm -rf aports
 COPY --from=base / /
 ARG BINUTILS_VERSION=2.36.1
+RUN wget https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz
 ARG TARGETPLATFORM
 # first build version for current architecture that is used then cross compiling
 RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} && unset TARGETPLATFORM && \
-    wget https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz && \
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
@@ -245,7 +245,6 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} &
 
 RUN xx-apk add --no-cache musl-dev gcc g++ zlib-dev
 FROM binutils-base0 AS binutils-base
-#RUN apk add --no-cache file && ls -l /usr/bin && fail
 # BINUTILS_TARGET defines platform that binutils binaries will target when run
 ARG BINUTILS_TARGET
 # BINUTILS_CFLAGS defines C compiler flags when building binutils
@@ -261,6 +260,37 @@ RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$BINUTILS_CFLAGS" CXXFLAGS="$BINUT
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
     for f in /out/bin/*; do xx-verify $f; done
+
+FROM binutils-base0 AS ld-base
+RUN xx-apk add --no-cache zlib-static
+# LD_TARGET defines platform that binutils binaries will target when run
+ARG LD_TARGET
+# LD_CFLAGS defines C compiler flags when building binutils
+ARG LD_CFLAGS="-Wl,-s -Os"
+# BINUTILS_CONFIG defines extra options passed to binutils configure script
+ARG BINUTILS_CONFIG=
+RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$LD_CFLAGS --static" CXXFLAGS="$LD_CFLAGS" LD_TARGET=$(TARGETPLATFORM= TARGETDUPLE=$LD_TARGET xx-info) && \
+    tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
+    cd binutils-${BINUTILS_VERSION} && \
+    for f in ../patches/*; do patch -p1 < $f; done && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/ --disable-multilib --enable-deterministic-archives --target=$LD_TARGET --host $(xx-clang --print-target-triple) --disable-nls --disable-gold --enable-relro --disable-plugins --with-pic --with-mmap --with-system-zlib --disable-gas --disable-elfcpp --disable-binutils --disable-gprof $BINUTILS_CONFIG && \
+    make -j $(nproc) && \
+    make install && \
+    cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
+    xx-verify --static /$LD_TARGET/bin/ld && \
+    mkdir -p /out/usr/bin && mv /$LD_TARGET/bin/ld /out/usr/bin/$LD_TARGET-ld && \
+    mkdir -p /out/$LD_TARGET/lib/ldscripts && mv /$LD_TARGET/lib/ldscripts/* /out/$LD_TARGET/lib/ldscripts/
+
+FROM ld-base AS ld-tgz-base
+ARG TARGETOS TARGETARCH TARGETVARIANT
+WORKDIR /out
+RUN mkdir /out-tgz && tar cvzf /out-tgz/$LD_TARGET-ld-$TARGETOS-$TARGETARCH$TARGETVARIANT.tar.gz *
+
+FROM scratch AS ld-static
+COPY --from=ld-base /out /
+
+FROM scratch AS ld-static-tgz
+COPY --from=ld-tgz-base /out-tgz/ /
 
 FROM --platform=$BUILDPLATFORM alpine AS compiler-rt-build
 RUN apk add --no-cache git cmake clang lld make ninja python3 binutils

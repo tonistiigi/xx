@@ -154,3 +154,98 @@ target "binutils-windows-386-alpine" {
     tags = binutilsTag(XX_REPO, BINUTILS_VERSION, BINUTILS_VERSION_ONLY, "windows-386")
     cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, BINUTILS_VERSION_ONLY, "windows-386")[0]])]
 }
+
+group "ld-static-tgz" {
+    targets = [for v in ["linux-arm64", "linux-amd64", "linux-riscv64", "linux-s390x", "linux-armv6", "linux-armv7", "linux-ppc64le", "linux-386", "windows-amd64", "windows-386"]: "ld-${v}-tgz"]
+}
+
+target "ld-tgz-base" {
+    context = "base"
+    target = "ld-static-tgz"
+    args = {
+        LD_VERSION = BINUTILS_VERSION
+    }
+    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/s390x", "linux/ppc64le"]
+    cache-to = ["type=inline"]
+    output = ["./ld-tgz"]
+}
+
+target "ld-linux-arm64-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-arm64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-arm64")[0]])]
+}
+
+target "ld-linux-amd64-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-amd64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-amd64")[0]])]
+}
+
+target "ld-linux-armv7-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-armv7"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-armv7")[0]])]
+}
+
+target "ld-linux-armv6-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-armv6"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-armv6")[0]])]
+}
+
+target "ld-linux-386-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-386"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-386")[0]])]
+}
+
+target "ld-linux-ppc64le-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-ppc64le"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-ppc64le")[0]])]
+}
+
+target "ld-linux-s390x-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-s390x"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-s390x")[0]])]
+}
+
+target "ld-linux-riscv64-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "linux-riscv64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-riscv64")[0]])]
+}
+
+target "ld-windows-amd64-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "windows-amd64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "windows-amd64")[0]])]
+}
+
+target "ld-windows-386-tgz" {
+    inherits = ["ld-tgz-base"]
+    args = {
+        LD_TARGET = "windows-386"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "windows-386")[0]])]
+}
