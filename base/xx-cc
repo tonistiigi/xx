@@ -98,6 +98,158 @@ detectMacOSSDK() {
   fi
 }
 
+download_ld() {
+  # for f in *; do echo -n "${f%.tar.gz} " ; shasum -a 1 -b $f | cut -d' ' -f1 ; done | pbcopy
+  shas=$(
+    cat <<'EOT'
+linux-386-ld-linux-386 f26c1d9bdefe3c139db91f1f02369a897db1a682
+linux-386-ld-linux-amd64 1bbb8c30de5855ed183ba5e1799d46da66f18525
+linux-386-ld-linux-arm64 8fe1e78d15e0835272025de3cd14b1d863038e0b
+linux-386-ld-linux-armv6 0b6fdc84037e2d20057ef4c3d567989b4ce588b1
+linux-386-ld-linux-armv7 a860b73e473f3596a9166462a8e279d871e1596b
+linux-386-ld-linux-ppc64le 359cbcf078111430e42654e06a06817384d08f1c
+linux-386-ld-linux-s390x fc63fe0ad012ac5ed8d5423b8d40e709ed690da7
+linux-amd64-ld-linux-386 7211f566acb3bf43e3cf5b0e89583203d14e00b5
+linux-amd64-ld-linux-amd64 00b702ae772948804f222996f15ba9dc3def8d9f
+linux-amd64-ld-linux-arm64 67f3be9f050435699bfe1edfdf9e6fed569afd56
+linux-amd64-ld-linux-armv6 97e9ed3e0f20a69e913fca5495a00429abf53204
+linux-amd64-ld-linux-armv7 0218d6fed88fc5e0b7ec3241b8ba22bf694dc861
+linux-amd64-ld-linux-ppc64le 851638910f930390a6e28ff32f05f8a7a1424a33
+linux-amd64-ld-linux-s390x 9fd10cc922d78e781fb57969b642f82262f5b9b6
+linux-arm64-ld-linux-386 67ed0a1c166895b5bc69746a4d46462c66433f1f
+linux-arm64-ld-linux-amd64 63d9ea9166dd42015ed0b88258dded7800ba0991
+linux-arm64-ld-linux-arm64 f87a87bd6cd2fdba224656fecea8b87ebe4e06df
+linux-arm64-ld-linux-armv6 d5afd182c57bfd49e7543c4690dd4562487c1bb2
+linux-arm64-ld-linux-armv7 146c11f8f51034fed91c4462cb56f042dfd8f6ee
+linux-arm64-ld-linux-ppc64le 32440a9eb9fee7ae7979e91f029456af14fe77bc
+linux-arm64-ld-linux-s390x 2d8b144a7c662d32517130bbd479a1ba950d4021
+linux-armv6-ld-linux-386 8f1412fa81afd382c5bf37ccbeee9933120e4e24
+linux-armv6-ld-linux-amd64 bc9191dd462119e7561366be0903d5aa80182745
+linux-armv6-ld-linux-arm64 9b8cc4996ab5f7ad7981632c3b80e56a81841632
+linux-armv6-ld-linux-armv6 4aa7d4981c1ca62ffe95c3b822508ffbc915bfd4
+linux-armv6-ld-linux-armv7 c60bd68a5229fb9c6edabc74f75e569d67a8c191
+linux-armv6-ld-linux-ppc64le 05f7220c713c57ebda9cfae674685cce1efd15eb
+linux-armv6-ld-linux-s390x 6f16aa712e04200635bee2a18221bc2b53b5367f
+linux-armv7-ld-linux-386 dc7b03f32f7b62117af7b158f8918194821ed70c
+linux-armv7-ld-linux-amd64 20b59e08b60214d4ac7f9c552802412347e4cb0b
+linux-armv7-ld-linux-arm64 fbdff9ab4676e6a4abd4462f93031a8f2043bf0e
+linux-armv7-ld-linux-armv6 9e91f0a25b816342a4241d722ca36bfec9c9cf97
+linux-armv7-ld-linux-armv7 c2f0dcbdd2afe320f2c93b8aa5f9214f692b439e
+linux-armv7-ld-linux-ppc64le 52b0c279025b147ca5f8c9a9795e636bdf02632b
+linux-armv7-ld-linux-s390x a9544446c0890c961f53c0dadc43784eca406f0a
+linux-ppc64le-ld-linux-386 93c90d7a14407e9e17cadcdcb695b833187fcdb4
+linux-ppc64le-ld-linux-amd64 c90cdfb51bf6e439c273b5867518ad5e9c6dd371
+linux-ppc64le-ld-linux-arm64 b58ed9a8bb7287a558d0027d1c5901a14f9214fb
+linux-ppc64le-ld-linux-armv6 0c4635be4d2df4010213babc4b194b5b4148716b
+linux-ppc64le-ld-linux-armv7 15c7b36d0df188081e00ecdc3297eb14093b255f
+linux-ppc64le-ld-linux-ppc64le f48781830bce5e87f814fe3bf480ea349d019d89
+linux-ppc64le-ld-linux-s390x 72ec84b9a73904555aa56490fc8acf37813b397e
+linux-riscv64-ld-linux-386 0028e50478b516f8e97640d48329cc3dca4d1aef
+linux-riscv64-ld-linux-amd64 3f1a6c377fd37b0bd20cee2d5de0dd2594652b91
+linux-riscv64-ld-linux-arm64 2be29a72197846ccaba24832ecf99cf9df1db2b2
+linux-riscv64-ld-linux-armv6 f88badee63c0ecaecb7d807cc65586bf5711bb13
+linux-riscv64-ld-linux-armv7 6d8cbb17d3fc71e48001566f3ef4895f2f680b81
+linux-riscv64-ld-linux-ppc64le 9fa253d83d4f46c39fd141d551c0d2b211c8826c
+linux-riscv64-ld-linux-s390x c17ebba5f0742fb78d39fb65288f851a3652dd90
+linux-s390x-ld-linux-386 e6d6b1ac10b726cc6d57efe7900e40131295d446
+linux-s390x-ld-linux-amd64 f7d1e1a0a0dbf6bdb64e3da253e6ca843d42a683
+linux-s390x-ld-linux-arm64 490d359bf81c8d338e8fced61f9185e516e3bf7a
+linux-s390x-ld-linux-armv6 dc2c3c584fbf0e31b227c26436b6a3bb2fa6f58d
+linux-s390x-ld-linux-armv7 de9a38da06d6c08f411b85fd7e81ce20c3b6c956
+linux-s390x-ld-linux-ppc64le 09f74ed0bfbc97f38e5ef9c8885f19cceedfeb11
+linux-s390x-ld-linux-s390x 3e882ae2edaf06f5ae0900d16cd456516f710482
+windows-386-ld-linux-386 6519bb906421c76df6432c0f9a324759f7a89799
+windows-386-ld-linux-amd64 b7c26a07cb1811808c9b51bcab11718aa73fc3d0
+windows-386-ld-linux-arm64 7d218748f9608e580cf0718a0286de5803cc7148
+windows-386-ld-linux-armv6 656ecf7ccfcf8815f541abb1c812659c93828d79
+windows-386-ld-linux-armv7 73b2e3414932b3d6e18db6eb717078f08b705543
+windows-386-ld-linux-ppc64le e259fd1b96e1403b669538bc5769a15c9dc4e5a0
+windows-386-ld-linux-s390x 035ccf00fbc7d283c25f34c189cdac85f819ed5e
+windows-amd64-ld-linux-386 2a82e2de449522a5643ec009b4fedd22751e7af6
+windows-amd64-ld-linux-amd64 800175f19d6c2bfe27cf92e7b7c286fb1a459968
+windows-amd64-ld-linux-arm64 af4a20ea92033de3331d6a1add46e8273ecc420d
+windows-amd64-ld-linux-armv6 ae97f91058d79281256e19815a84c792dc15709e
+windows-amd64-ld-linux-armv7 d57ab7ba5e84953069d10ad75ed6d8977df90de1
+windows-amd64-ld-linux-ppc64le e667b511c61b84d83e2956a5aad3d580b66e3c80
+windows-amd64-ld-linux-s390x 92777b3e15b6bdde0c106a86466abc9d0d9cdb94
+EOT
+  )
+
+  os=""
+  if [ "${target#*-linux-}" != "${target}" ]; then
+    os="linux"
+  elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
+    os="windows"
+  fi
+
+  if [ -z "$os" ]; then
+    return
+  fi
+
+  arch=$(echo $target | cut -d- -f1)
+  archv=""
+
+  if [ "$arch" == "aarch64" ] || [ "$arch" == "arm64" ]; then
+    archv="arm64"
+  elif [ "$arch" == "x86_64" ]; then
+    archv="amd64"
+  elif [ "$arch" == "armv7" ] || [ "$arch" == "arm" ]; then
+    archv="armv7"
+  elif [ "$arch" == "armv6" ]; then
+    archv="armv6"
+  elif [ "$arch" == "i386" ] || [ "$arch" == "i586" ] || [ "$arch" == "i686" ]; then
+    archv="386"
+  elif [ "$arch" == "riscv64" ]; then
+    archv="riscv64"
+  elif [ "$arch" == "s390x" ]; then
+    archv="s390x"
+  elif [ "$arch" == "powerpc64le" ]; then
+    archv="ppc64le"
+  fi
+
+  if [ -z "$archv" ]; then
+    return
+  fi
+
+  file="$os-$archv-ld-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)"
+  sha=$(echo $shas | grep $file | cut -d' ' -f2 || true)
+
+  if [ -z "$sha" ]; then
+    return
+  fi
+
+  mirrors="https://github.com/tonistiigi/xx/releases/download/prebuilt%2Fld-1"
+
+  if [ -n "$XX_MIRROR" ]; then
+    mirrors="$XX_MIRROR"
+  fi
+
+  tmpdir=$(mktemp -d)
+
+  for m in $mirrors; do
+    if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+      continue
+    fi
+    if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then
+      sha2="$(sha1sum $tmpdir/$file.tar.gz | cut -d' ' -f2)"
+      if [ "$sha" != "$sha2" ]; then
+        echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
+        rm $tmpdir/$file.tar.gz
+        continue
+      fi
+    fi
+    tar xzf $tmpdir/$file.tar.gz -C /usr/bin
+    ln -s "$os-$archv-ld" /usr/bin/$target-ld
+    rm $tmpdir/$file.tar.gz
+    break
+  done
+
+  rm -r $tmpdir
+  if [ -f "/usr/bin/$target-ld" ]; then
+    linker="/usr/bin/$target-ld"
+  fi
+}
+
 basename=$(basename $0)
 name=${basename#xx-}
 
@@ -166,7 +318,7 @@ setup() {
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
     if [ -z "${linker}" ]; then
       ld=$(which $target-gold 2>/dev/null || true)
-      if [ -n  "$ld" ]; then
+      if [ -n "$ld" ]; then
         linker=${ld}
       fi
     fi
@@ -208,7 +360,6 @@ setup() {
     fi
   fi
 
-
   if [ -z "$linker" ]; then
     if which lld >/dev/null 2>/dev/null; then
       # lld has no support for s390x
@@ -216,6 +367,10 @@ setup() {
         linker="lld"
       fi
     fi
+  fi
+
+  if [ -z "${linker}" ] || [ "$XX_CC_PREFER_LINKER" = "ld" ]; then
+    download_ld
   fi
 
   if [ -z "${linker}" ]; then
@@ -321,6 +476,7 @@ printTarget=
 printCmake=
 target=
 nextIsTarget=
+downloadLD=
 for p in "$@"; do
   # ignore if custom --config already set
   if [ "${p}" = "--config" ]; then
@@ -335,6 +491,9 @@ for p in "$@"; do
   if [ "${p}" = "--print-cmake-defines" ] || [ "${p}" = "-print-cmake-defines" ]; then
     setupTarget=1
     printCmake=1
+  fi
+  if [ "${p}" = "--download-prog=ld" ]; then
+    downloadLD=1
   fi
 
   # handle "-target foo"
@@ -364,6 +523,18 @@ done
 # if no target set and called with xx- then set target from env
 if [ -z "$target" ] && [ -n "$wrapped" ]; then
   target=$(xx-info triple)
+fi
+
+if [ -n "$downloadLD" ]; then
+  if [ -z "$target" ]; then
+    target=$(xx-info triple)
+  fi
+  download_ld
+  if [ -n "$linker" ]; then
+    exit 0
+  else
+    exit 1
+  fi
 fi
 
 # if print & target then setup and print current target
