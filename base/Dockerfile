@@ -258,8 +258,9 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} &
 
 RUN xx-apk add --no-cache musl-dev gcc g++ zlib-dev
 FROM binutils-base0 AS binutils-base
+ARG TARGETOS TARGETARCH TARGETVARIANT
 # BINUTILS_TARGET defines platform that binutils binaries will target when run
-ARG BINUTILS_TARGET
+ARG BINUTILS_TARGET=${TARGETOS}-${TARGETARCH}${TARGETVARIANT}
 # BINUTILS_CFLAGS defines C compiler flags when building binutils
 ARG BINUTILS_CFLAGS="-Wl,-s -Os"
 # BINUTILS_CONFIG defines extra options passed to binutils configure script
@@ -276,26 +277,28 @@ RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$BINUTILS_CFLAGS" CXXFLAGS="$BINUT
 
 FROM binutils-base0 AS ld-base
 RUN xx-apk add --no-cache zlib-static
+ARG TARGETOS TARGETARCH TARGETVARIANT
 # LD_TARGET defines platform that binutils binaries will target when run
-ARG LD_TARGET
+ARG LD_TARGET=${TARGETOS}-${TARGETARCH}${TARGETVARIANT}
 # LD_CFLAGS defines C compiler flags when building binutils
 ARG LD_CFLAGS="-Wl,-s -Os"
 # BINUTILS_CONFIG defines extra options passed to binutils configure script
 ARG BINUTILS_CONFIG=
-RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$LD_CFLAGS --static" CXXFLAGS="$LD_CFLAGS" LD_TARGET=$(TARGETPLATFORM= TARGETPAIR=$LD_TARGET xx-info) && \
+RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$LD_CFLAGS --static" CXXFLAGS="$LD_CFLAGS" LD_TARGET_TRIPLE=$(TARGETPLATFORM= TARGETPAIR=$LD_TARGET xx-info) XX_CC_PREFER_LINKER=ld && \
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/ --disable-multilib --enable-deterministic-archives --target=$LD_TARGET --host $(xx-clang --print-target-triple) --disable-nls --disable-gold --enable-relro --disable-plugins --with-pic --with-mmap --with-system-zlib --disable-gas --disable-elfcpp --disable-binutils --disable-gprof $BINUTILS_CONFIG && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/ --disable-multilib --enable-deterministic-archives --target=$LD_TARGET_TRIPLE --host $(xx-clang --print-target-triple) --disable-nls --disable-gold --enable-relro --disable-plugins --with-pic --with-mmap --with-system-zlib --disable-gas --disable-elfcpp --disable-binutils --disable-gprof $BINUTILS_CONFIG && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
-    xx-verify --static /$LD_TARGET/bin/ld && \
-    mkdir -p /out/usr/bin && mv /$LD_TARGET/bin/ld /out/usr/bin/$LD_TARGET-ld && \
-    mkdir -p /out/$LD_TARGET/lib/ldscripts && mv /$LD_TARGET/lib/ldscripts/* /out/$LD_TARGET/lib/ldscripts/
+    xx-verify --static /$LD_TARGET_TRIPLE/bin/ld && \
+    mkdir -p /out && mv /$LD_TARGET_TRIPLE/bin/ld /out/$LD_TARGET-ld && \
+    mkdir -p /out/ldscripts && mv /$LD_TARGET_TRIPLE/lib/ldscripts/* /out/ldscripts/
 
 FROM ld-base AS ld-tgz-base
 ARG TARGETOS TARGETARCH TARGETVARIANT
+ARG LD_TARGET
 WORKDIR /out
 RUN mkdir /out-tgz && tar cvzf /out-tgz/$LD_TARGET-ld-$TARGETOS-$TARGETARCH$TARGETVARIANT.tar.gz *
 
