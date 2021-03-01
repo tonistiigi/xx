@@ -157,7 +157,7 @@ setup() {
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
       # lld has no support for s390x
-      if [ "${target%s390x}" != "${target}" ]; then
+      if [ "${target#s390x}" = "${target}" ]; then
         linker="lld"
       fi
     fi
@@ -166,8 +166,8 @@ setup() {
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
     if [ -z "${linker}" ]; then
       ld=$(which $target-gold 2>/dev/null || true)
-      if [ $? = 0 ]; then
-        linker=ld
+      if [ -n  "$ld" ]; then
+        linker=${ld}
       fi
     fi
     if [ -z "${linker}" ] && [ -f "/${target}/bin/gold" ]; then
@@ -176,8 +176,9 @@ setup() {
   fi
 
   if [ -z "${linker}" ]; then
-    if which $target-ld >/dev/null 2>/dev/null; then
-      linker=ld
+    ld=$(which $target-ld 2>/dev/null || true)
+    if [ -n "$ld" ]; then
+      linker=${ld}
     fi
   fi
   if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ]; then
@@ -211,7 +212,7 @@ setup() {
   if [ -z "$linker" ]; then
     if which lld >/dev/null 2>/dev/null; then
       # lld has no support for s390x
-      if [ "${target%s390x}" != "${target}" ]; then
+      if [ "${target#s390x-}" = "${target}" ]; then
         linker="lld"
       fi
     fi

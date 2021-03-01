@@ -136,6 +136,7 @@ RUN --mount=from=libtapi-static,source=/opt/libtapi,target=/opt/libtapi \
     make -j $(nproc) -C ld64 && \
     xx-verify --static ld64/src/ld/ld
 
+
 FROM scratch AS ld64-static
 COPY --from=ld64-static-base /work/cctools-port/cctools/ld64/src/ld/ld /ld64
 
@@ -187,10 +188,22 @@ COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
 FROM --platform=$BUILDPLATFORM tonistiigi/osxcross:11.1 AS darwinsdk
 
-FROM tonistiigi/osxcross:11.1 AS os-extras-darwin
+FROM scratch AS ld64-signed-static
 COPY --from=ld64-static / /usr/bin
 COPY --from=sigtool / /usr/bin
 COPY ld64.signed /usr/bin
+
+FROM --platform=$BUILDPLATFORM alpine AS ld64-tgz-build
+WORKDIR /work
+ARG TARGETOS TARGETARCH TARGETVARIANT
+RUN --mount=from=ld64-signed-static \
+    mkdir /out-tgz && tar cvzf /out-tgz/ld64-signed-$TARGETOS-$TARGETARCH$TARGETVARIANT.tar.gz *
+
+FROM scratch AS ld64-tgz
+COPY --from=ld64-tgz-build /out-tgz/ /
+
+FROM tonistiigi/osxcross:11.1 AS os-extras-darwin
+COPY --from=ld64-signed-static / /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
 COPY --from=os-extras-darwin / /
