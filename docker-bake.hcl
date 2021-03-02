@@ -37,6 +37,14 @@ target "base-all" {
     inherits = ["base", "_all-platforms"]
 }
 
+target "ld64-tgz" {
+    context = "base"
+    target = "ld64-tgz"
+    output = ["./ld64-tgz"]
+    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/arm/v6", "linux/386"]
+    cache-to = ["type=inline"]
+}
+
 variable "BINUTILS_VERSION_ONLY" {
     default = ""
 }

@@ -86,12 +86,15 @@ RUN export INSTALLPREFIX=/opt/libtapi/ \
     cd .. && rm -rf build
     #xx-verify --static ./build/lib/libtapi.a
 
+#FROM --platform=${BUILDPLATFORM} tonistiigi/xx:binutils-2.36.1-${TARGETOS}-${TARGETARCH}${TARGETVARIANT}-alpine AS binutils-release
+
 FROM --platform=${BUILDPLATFORM} alpine AS cctools-base
-RUN apk add --no-cache git clang lld make binutils
+RUN apk add --no-cache git clang lld make llvm
 COPY --from=base / /
 WORKDIR /work
+ARG CCTOOLS_REPO=https://github.com/tpoechtrager/cctools-port
 ARG CCTOOLS_VERSION=949.0.1-ld64-530
-RUN git clone https://github.com/tpoechtrager/cctools-port -b ${CCTOOLS_VERSION}
+RUN git clone $CCTOOLS_REPO -b ${CCTOOLS_VERSION}
 WORKDIR ./cctools-port/cctools
 ARG TARGETPLATFORM
 RUN xx-apk add --no-cache musl-dev gcc g++
@@ -189,9 +192,9 @@ COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 FROM --platform=$BUILDPLATFORM tonistiigi/osxcross:11.1 AS darwinsdk
 
 FROM scratch AS ld64-signed-static
-COPY --from=ld64-static / /usr/bin
-COPY --from=sigtool / /usr/bin
-COPY ld64.signed /usr/bin
+COPY --from=ld64-static / /
+COPY --from=sigtool / /
+COPY ld64.signed /
 
 FROM --platform=$BUILDPLATFORM alpine AS ld64-tgz-build
 WORKDIR /work
