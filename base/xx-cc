@@ -8,6 +8,18 @@ if [ -n "$XX_MIRROR" ]; then
   mirrors="$XX_MIRROR"
 fi
 
+ensurewget() {
+  # wget is almost always installed but just in case
+  if ! which wget >/dev/null 2>/dev/null; then
+    if which apt >/dev/null 2>/dev/null; then
+      apt update && apt install -y --no-install-recommends wget
+    fi
+    if which apk >/dev/null 2>/dev/null; then
+      apk add wget
+    fi
+  fi
+}
+
 writexcrun() {
   cat <<'EOF' >/usr/bin/xcrun
 #!/usr/bin/env sh
@@ -171,13 +183,14 @@ download_ld64() {
   if [ -n "$XX_NO_DOWNLOAD" ]; then
     return
   fi
+  ensurewget
   shas=$(
     cat <<'EOT'
-ld64-signed-linux-386 4e273e86846a8214d70503db8b73563fea3b1f6b
-ld64-signed-linux-amd64 23340f0d494accdaa50e00c6c8a0ef64f23a04ef
-ld64-signed-linux-arm64 68f2baefb65269cd64fc99056e5ea3d22da2d2ee
-ld64-signed-linux-armv6 a207253df3b3acda9ac7d0de8d9f680a24847f1b
-ld64-signed-linux-armv7 d6fbbf33e4779ba72d06566bf3a96ca76828cb54
+ld64-signed-linux-386 7b664761928f6d5dd8d505e533b45e67a86ff1d4
+ld64-signed-linux-amd64 a218662887a1c9daf94a57fb4569455315f8ef7f
+ld64-signed-linux-arm64 3257520368b3e32fa1b413151c79f75bd0c77bed
+ld64-signed-linux-armv6 df770289f82a1ce50fd069cef48a3e79185bd508
+ld64-signed-linux-armv7 1dbf5be507a73768bb1ee72d3325020640cca614
 EOT
   )
 
@@ -191,7 +204,11 @@ EOT
   tmpdir=$(mktemp -d)
 
   for m in $mirrors; do
+    # busybox wget
     if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+      continue
+    fi
+    if ! wget --no-check-certificate $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
       continue
     fi
     if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then
@@ -218,6 +235,7 @@ download_ld() {
   if [ -n "$XX_NO_DOWNLOAD" ]; then
     return
   fi
+  ensurewget
   # for f in *; do echo -n "${f%.tar.gz} " ; shasum -a 1 -b $f | cut -d' ' -f1 ; done | pbcopy
   shas=$(
     cat <<'EOT'
@@ -304,7 +322,11 @@ EOT
   tmpdir=$(mktemp -d)
 
   for m in $mirrors; do
+    # busybox wget
     if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+      continue
+    fi
+    if ! wget --no-check-certificate $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
       continue
     fi
     if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then

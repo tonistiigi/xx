@@ -24,7 +24,7 @@ for f in "$@"; do
     isout=
     out="$f"
   fi
-  if [ "$f" == "-o" ]; then
+  if [ "$f" = "-o" ]; then
     isout=1
   fi
 done
