@@ -189,7 +189,18 @@ FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
-FROM --platform=$BUILDPLATFORM tonistiigi/osxcross:11.1 AS darwinsdk
+FROM --platform=darwin/amd64 tonistiigi/osxcross:xx-sdk-11.1 AS os-extras-darwin-amd64
+FROM tonistiigi/osxcross:xx-sdk-11.1 AS os-extras-darwin
+
+FROM --platform=$BUILDPLATFORM alpine AS extras-base
+RUN mkdir /xx-sdk
+
+FROM scratch AS os-extras-linux
+COPY --from=extras-base /xx-sdk /xx-sdk
+
+FROM os-extras-linux AS os-extras-windows
+
+FROM sdk-extras-${TARGETOS} AS sdk-extras
 
 FROM scratch AS ld64-signed-static
 COPY --from=ld64-static / /
@@ -205,11 +216,8 @@ RUN --mount=from=ld64-signed-static \
 FROM scratch AS ld64-tgz
 COPY --from=ld64-tgz-build /out-tgz/ /
 
-FROM tonistiigi/osxcross:11.1 AS os-extras-darwin
-COPY --from=ld64-signed-static / /
-
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
-COPY --from=os-extras-darwin / /
+COPY --from=os-extras-darwin-amd64 / /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwinfalse
 
@@ -312,14 +320,13 @@ FROM scratch AS ld-static-tgz
 COPY --from=ld-tgz-base /out-tgz/ /
 
 FROM --platform=$BUILDPLATFORM alpine AS compiler-rt-build
-RUN apk add --no-cache git cmake clang lld make ninja python3 binutils
+RUN apk add --no-cache git cmake clang lld make ninja python3 llvm
 WORKDIR /work
 COPY --from=base / /
 ARG LLVM_VERSION=llvmorg-11.0.1
 RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
 WORKDIR llvm-project/compiler-rt
-ARG COMPILER_RT_TARGET
-ENV TARGETPLATFORM=${COMPILER_RT_TARGET}
+ARG TARGETPLATFORM
 RUN xx-apk add gcc g++
 RUN mkdir build && cd build && \
     cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_LIPO=/usr/bin/llvm-lipo -G Ninja .. && \

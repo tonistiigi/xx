@@ -2,6 +2,12 @@
 
 set -e
 
+mirrors="https://github.com/tonistiigi/xx/releases/download/prebuilt%2Fld-1"
+
+if [ -n "$XX_MIRROR" ]; then
+  mirrors="$XX_MIRROR"
+fi
+
 writexcrun() {
   cat <<'EOF' >/usr/bin/xcrun
 #!/usr/bin/env sh
@@ -9,6 +15,23 @@ writexcrun() {
 sdk=
 show_sdk=
 show_version=
+
+macos_sdk_path=/xx-sdk/MacOSX11.1.sdk
+macos_sdk_version=11.1
+
+detectMacOSSDK() {
+  if [ -d "/xx-sdk" ]; then
+    for f in /xx-sdk/MacOSX*.sdk; do
+      macos_sdk_path="$f"
+      trim="${sdk_path#/xx-sdk/MacOSX}"
+      trim="${trim%.sdk}"
+      if [ -n "$trim" ]; then
+        macos_sdk_version=$trim
+      fi
+      break
+    done
+  fi
+}
 
 usage() {
   cat <<EOT >&2
@@ -62,12 +85,14 @@ if [ -n "$sdk" ] && [ "$sdk" != "macosx" ] && [ "$sdk" != "macosx11.1" ]; then
 fi
 
 if [ -n "$show_sdk" ]; then
-  echo "/SDK/MacOSX11.1.sdk"
+  detectMacOSSDK
+  echo $macos_sdk_path
   exit 0
 fi
 
 if [ -n "$show_version" ]; then
-  echo "11.1"
+  detectMacOSSDK
+  echo $macos_sdk_version
   exit 0
 fi
 
@@ -81,14 +106,58 @@ EOF
   chmod +x /usr/bin/xcrun
 }
 
-macos_sdk_path=/SDK/MacOSX11.1.sdk
+macos_sdk_path=/xx-sdk/MacOSX11.1.sdk
 macos_sdk_version=11.1
 
+detectTargetOSArch() {
+  targetos=""
+  if [ "${target#*-linux-}" != "${target}" ]; then
+    targetos="linux"
+  elif [ "${target#*-apple-macos}" != "${target}" ]; then
+    targetos="darwin"
+  elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
+    targetos="windows"
+  fi
+
+  if [ -z "$targetos" ]; then
+    targetos=$(xx-info os)
+  fi
+
+  arch=$(echo $target | cut -d- -f1)
+  targetarch=""
+  targetvariant=""
+
+  if [ "$arch" == "aarch64" ] || [ "$arch" == "arm64" ]; then
+    targetarch="arm64"
+  elif [ "$arch" == "x86_64" ]; then
+    targetarch="amd64"
+  elif [ "$arch" == "armv7" ] || [ "$arch" == "arm" ]; then
+    targetarch="arm"
+    targetvariant="v7"
+  elif [ "$arch" == "armv6" ]; then
+    targetarch="arm"
+    targetvariant="v6"
+  elif [ "$arch" == "i386" ] || [ "$arch" == "i586" ] || [ "$arch" == "i686" ]; then
+    targetarch="386"
+  elif [ "$arch" == "riscv64" ]; then
+    targetarch="riscv64"
+  elif [ "$arch" == "s390x" ]; then
+    targetarch="s390x"
+  elif [ "$arch" == "powerpc64le" ]; then
+    targetarch="ppc64le"
+  fi
+
+  if [ -z "$targetarch" ]; then
+    targetarch=$(xx-info arch)
+    targetvariant=$(xx-info variant)
+  fi
+}
+
 detectMacOSSDK() {
-  if [ -d "/SDK" ]; then
-    for f in /SDK/MacOSX*.sdk; do
+  if [ -d "/xx-sdk" ]; then
+    for f in /xx-sdk/MacOSX*.sdk; do
       macos_sdk_path="$f"
-      trim="${sdk_path#/SDK/MacOSX}"
+      trim="${sdk_path#/xx-sdk/MacOSX}"
       trim="${trim%.sdk}"
       if [ -n "$trim" ]; then
         macos_sdk_version=$trim
@@ -98,7 +167,57 @@ detectMacOSSDK() {
   fi
 }
 
+download_ld64() {
+  if [ -n "$XX_NO_DOWNLOAD" ]; then
+    return
+  fi
+  shas=$(
+    cat <<'EOT'
+ld64-signed-linux-386 4e273e86846a8214d70503db8b73563fea3b1f6b
+ld64-signed-linux-amd64 23340f0d494accdaa50e00c6c8a0ef64f23a04ef
+ld64-signed-linux-arm64 68f2baefb65269cd64fc99056e5ea3d22da2d2ee
+ld64-signed-linux-armv6 a207253df3b3acda9ac7d0de8d9f680a24847f1b
+ld64-signed-linux-armv7 d6fbbf33e4779ba72d06566bf3a96ca76828cb54
+EOT
+  )
+
+  file="ld64-signed-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info variant)"
+  sha=$(echo $shas | grep $file | cut -d' ' -f2 || true)
+
+  if [ -z "$sha" ]; then
+    return
+  fi
+
+  tmpdir=$(mktemp -d)
+
+  for m in $mirrors; do
+    if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+      continue
+    fi
+    if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then
+      sha2="$(sha1sum $tmpdir/$file.tar.gz | cut -d' ' -f2)"
+      if [ "$sha" != "$sha2" ]; then
+        echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
+        rm $tmpdir/$file.tar.gz
+        continue
+      fi
+    fi
+    tar xzf $tmpdir/$file.tar.gz -C /usr/bin
+    ln -s ld64.signed /usr/bin/$target-ld
+    rm $tmpdir/$file.tar.gz
+    break
+  done
+
+  rm -r $tmpdir
+  if [ -f "/usr/bin/$target-ld" ]; then
+    linker="/usr/bin/$target-ld"
+  fi
+}
+
 download_ld() {
+  if [ -n "$XX_NO_DOWNLOAD" ]; then
+    return
+  fi
   # for f in *; do echo -n "${f%.tar.gz} " ; shasum -a 1 -b $f | cut -d' ' -f1 ; done | pbcopy
   shas=$(
     cat <<'EOT'
@@ -175,53 +294,11 @@ windows-amd64-ld-linux-s390x 92777b3e15b6bdde0c106a86466abc9d0d9cdb94
 EOT
   )
 
-  os=""
-  if [ "${target#*-linux-}" != "${target}" ]; then
-    os="linux"
-  elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
-    os="windows"
-  fi
-
-  if [ -z "$os" ]; then
-    return
-  fi
-
-  arch=$(echo $target | cut -d- -f1)
-  archv=""
-
-  if [ "$arch" == "aarch64" ] || [ "$arch" == "arm64" ]; then
-    archv="arm64"
-  elif [ "$arch" == "x86_64" ]; then
-    archv="amd64"
-  elif [ "$arch" == "armv7" ] || [ "$arch" == "arm" ]; then
-    archv="armv7"
-  elif [ "$arch" == "armv6" ]; then
-    archv="armv6"
-  elif [ "$arch" == "i386" ] || [ "$arch" == "i586" ] || [ "$arch" == "i686" ]; then
-    archv="386"
-  elif [ "$arch" == "riscv64" ]; then
-    archv="riscv64"
-  elif [ "$arch" == "s390x" ]; then
-    archv="s390x"
-  elif [ "$arch" == "powerpc64le" ]; then
-    archv="ppc64le"
-  fi
-
-  if [ -z "$archv" ]; then
-    return
-  fi
-
-  file="$os-$archv-ld-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)"
+  file="$targetos-$targetarch$targetvariant-ld-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info variant)"
   sha=$(echo $shas | grep $file | cut -d' ' -f2 || true)
 
   if [ -z "$sha" ]; then
     return
-  fi
-
-  mirrors="https://github.com/tonistiigi/xx/releases/download/prebuilt%2Fld-1"
-
-  if [ -n "$XX_MIRROR" ]; then
-    mirrors="$XX_MIRROR"
   fi
 
   tmpdir=$(mktemp -d)
@@ -239,7 +316,7 @@ EOT
       fi
     fi
     tar xzf $tmpdir/$file.tar.gz -C /usr/bin
-    ln -s "$os-$archv-ld" /usr/bin/$target-ld
+    ln -s "$targetos-$targetarch$targetvariant-ld" /usr/bin/$target-ld
     rm $tmpdir/$file.tar.gz
     break
   done
@@ -293,16 +370,21 @@ setup() {
     exit 1
   fi
 
+  detectTargetOSArch
+
   linker=
 
-  if [ "$(xx-info os)" = "darwin" ]; then
+  if [ "$targetos" = "darwin" ]; then
     if which ld64.signed >/dev/null 2>/dev/null; then
       linker=$(which ld64.signed)
     else
-      if ! which ld64 >/dev/null 2>/dev/null; then
-        echo >&2 "error: building for darwin requires ld64 linker"
+      download_ld64
+      if [ -z "$linker" ]; then
+        if ! which ld64 >/dev/null 2>/dev/null; then
+          echo >&2 "error: building for darwin requires ld64 linker"
+        fi
+        linker=ld64
       fi
-      linker=ld64
     fi
   fi
 
@@ -339,9 +421,12 @@ setup() {
 
   if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
     support=$(ld -V 2>/dev/null || true)
-    exp=$(echo $target | cut -d- -f 1)
-    if [ "$exp" = "armv7" ] || [ "$exp" = "armv6" ] || [ "$exp" = "armv5" ]; then
-      exp="arm"
+    exp=$targetarch
+    if [ "$exp" = "amd64" ]; then
+      exp="x86_64"
+    fi
+    if [ "$exp" = "arm64" ]; then
+      exp="aarch64"
     fi
     if [ "$exp" = "powerpc64le" ]; then
       exp="ppc"
@@ -351,9 +436,6 @@ setup() {
     fi
     if [ "$exp" = "riscv64" ]; then
       exp="riscv"
-    fi
-    if [ "$exp" = "i586" ]; then
-      exp="i386"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
       linker="ld"
@@ -425,12 +507,12 @@ EOT
   done
 
   config="--target=${target} -fuse-ld=${linker}"
-  nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= xx-info triple)
+  nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= TARGETPAIR= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
-    if [ "${target#*-apple-macos}" != "${target}" ]; then
+    if [ "$targetos" = "darwin" ]; then
       detectMacOSSDK
       config="${config} -isysroot ${macos_sdk_path} -stdlib=libc++"
-    elif [ "${target#*-w64-mingw32}" != "${target}" ]; then
+    elif [ "$targetos" = "windows" ]; then
       config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
     elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
@@ -442,7 +524,7 @@ exec pkg-config "\$@"
 EOT
       chmod +x /usr/bin/${target}-pkg-config
     fi
-  elif [ ! -f /usr/bin/${target}-pkg-config ]; then
+  elif [ ! -f /usr/bin/${target}-pkg-config ] && [ ! -h /usr/bin/${target}-pkg-config ]; then
     ln -s pkg-config /usr/bin/${target}-pkg-config
   fi
   f=$(dirname $(readlink -f $(which /usr/bin/clang)))/${target}.cfg
@@ -451,7 +533,7 @@ EOT
     ln -s ${f} /usr/bin/${target}.cfg
   fi
 
-  if [ "${target#*-apple-macos}" != "${target}" ]; then
+  if [ "${targetos}" = "darwin" ]; then
     if ! which xcrun 2>/dev/null >/dev/null; then
       writexcrun
     fi

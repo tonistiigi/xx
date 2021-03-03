@@ -75,6 +75,7 @@ testBuildHello() {
 }
 
 @test "nolinker" {
+  export XX_NO_DOWNLOAD=1
   if [ -f /etc/debian_version ]; then skip; fi # clang has dependency on ld in debian
   del lld 2>/dev/null || true
   add clang
@@ -82,6 +83,7 @@ testBuildHello() {
   assert_failure
   assert_output --partial "no suitable linker"
   [ ! -f /etc/llvm/xx-default.cfg ]
+  unset XX_NO_DOWNLOAD
 }
 
 @test "native-c" {
@@ -236,13 +238,14 @@ testBuildHello() {
   clean
   export TARGETARCH=amd64
   export TARGETOS=darwin
+  export XX_NO_DOWNLOAD=1
   xx-clang --setup-target-triple
   [ -f /usr/bin/x86_64-apple-macos10.6-clang ]
   [ -f /usr/bin/x86_64-apple-macos10.6-clang++ ]
 
   run cat /usr/bin/x86_64-apple-macos10.6.cfg
   assert_success
-  assert_output "--target=x86_64-apple-macos10.6 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
+  assert_output "--target=x86_64-apple-macos10.6 -fuse-ld=ld64 -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
 
   export TARGETARCH=arm64
   xx-clang --setup-target-triple
@@ -251,7 +254,7 @@ testBuildHello() {
 
   run cat /usr/bin/arm64-apple-macos10.16.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
 
   touch /usr/bin/ld64.signed
   chmod +x /usr/bin/ld64.signed
@@ -264,20 +267,20 @@ testBuildHello() {
 
   run cat /usr/bin/arm64-apple-macos10.16.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.1.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
 
   clean
 
-  mkdir -p /SDK/MacOSX11.2.sdk
+  mkdir -p /xx-sdk/MacOSX11.2.sdk
   xx-clang --setup-target-triple
   [ -f /usr/bin/arm64-apple-macos10.16-clang ]
   [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
 
   run cat /usr/bin/arm64-apple-macos10.16.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /SDK/MacOSX11.2.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.2.sdk -stdlib=libc++"
 
-  rm -r /SDK/MacOSX11.2.sdk
+  rm -r /xx-sdk/MacOSX11.2.sdk
   rm /usr/bin/ld64.signed
 
   unset TARGETOS
