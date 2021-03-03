@@ -193,12 +193,14 @@ FROM --platform=darwin/amd64 tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwi
 FROM tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwin
 
 FROM --platform=$BUILDPLATFORM alpine AS extras-base
-RUN mkdir /xx-sdk
+RUN mkdir --p /out/Files/xx-sdk /out/xx-sdk
 
 FROM scratch AS sdk-extras-linux
-COPY --from=extras-base /xx-sdk /xx-sdk
+COPY --from=extras-base /out/Files /xx-sdk
 
-FROM sdk-extras-linux AS sdk-extras-windows
+FROM scratch AS sdk-extras-windows
+COPY --from=extras-base /out /
+
 FROM sdk-extras-linux AS sdk-extras-freebsd
 
 FROM sdk-extras-${TARGETOS} AS sdk-extras
