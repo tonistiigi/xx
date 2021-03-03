@@ -180,7 +180,9 @@ for f in "$@"; do
       ;;
     "386")
       expArch="Intel 80386"
-      expArch2="32-bit LSB"
+      if [ "$TARGETOS" != "windows" ]; then
+        expArch2="32-bit LSB"
+      fi
       ;;
   esac
 
