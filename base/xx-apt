@@ -17,10 +17,20 @@ for l in $(xx-info env); do
   export $l
 done
 
-if [ "$XX_OS" != "linux" ]; then
+if [ "${TARGETOS}" != "linux" ]; then
   echo >&2 "skipping packages installation on ${XX_OS}"
   exit 0
 fi
+
+# these are not supported yet
+case "${TARGETARCH}" in
+  riscv* | mips*)
+    echo >&2 "skipping packages installation on ${XX_ARCH}"
+    exit 0
+    ;;
+  *) ;;
+
+esac
 
 packages=
 parsed=
