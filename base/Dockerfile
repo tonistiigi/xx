@@ -189,16 +189,17 @@ FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
-FROM --platform=darwin/amd64 tonistiigi/osxcross:xx-sdk-11.1 AS os-extras-darwin-amd64
-FROM tonistiigi/osxcross:xx-sdk-11.1 AS os-extras-darwin
+FROM --platform=darwin/amd64 tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwin-amd64
+FROM tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwin
 
 FROM --platform=$BUILDPLATFORM alpine AS extras-base
 RUN mkdir /xx-sdk
 
-FROM scratch AS os-extras-linux
+FROM scratch AS sdk-extras-linux
 COPY --from=extras-base /xx-sdk /xx-sdk
 
-FROM os-extras-linux AS os-extras-windows
+FROM sdk-extras-linux AS sdk-extras-windows
+FROM sdk-extras-linux AS sdk-extras-freebsd
 
 FROM sdk-extras-${TARGETOS} AS sdk-extras
 
@@ -217,7 +218,7 @@ FROM scratch AS ld64-tgz
 COPY --from=ld64-tgz-build /out-tgz/ /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
-COPY --from=os-extras-darwin-amd64 / /
+COPY --from=sdk-extras-darwin-amd64 / /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwinfalse
 

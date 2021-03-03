@@ -37,6 +37,13 @@ target "base-all" {
     inherits = ["base", "_all-platforms"]
 }
 
+target "sdk-extras" {
+    context = "base"
+    target = "sdk-extras"
+    tags = ["${XX_REPO}:sdk-extras"]
+    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/arm/v6", "linux/ppc64le", "linux/s390x", "linux/386", "linux/riscv64", "windows/amd64", "windows/arm", "windows/386", "windows/arm64", "linux/mips64", "linux/mips64le", "darwin/amd64", "darwin/arm64", "freebsd/amd64"]
+}
+
 target "ld64-tgz" {
     context = "base"
     target = "ld64-tgz"

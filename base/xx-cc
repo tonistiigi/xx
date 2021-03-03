@@ -127,23 +127,23 @@ detectTargetOSArch() {
   targetarch=""
   targetvariant=""
 
-  if [ "$arch" == "aarch64" ] || [ "$arch" == "arm64" ]; then
+  if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then
     targetarch="arm64"
-  elif [ "$arch" == "x86_64" ]; then
+  elif [ "$arch" = "x86_64" ]; then
     targetarch="amd64"
-  elif [ "$arch" == "armv7" ] || [ "$arch" == "arm" ]; then
+  elif [ "$arch" = "armv7" ] || [ "$arch" = "arm" ]; then
     targetarch="arm"
     targetvariant="v7"
-  elif [ "$arch" == "armv6" ]; then
+  elif [ "$arch" = "armv6" ]; then
     targetarch="arm"
     targetvariant="v6"
-  elif [ "$arch" == "i386" ] || [ "$arch" == "i586" ] || [ "$arch" == "i686" ]; then
+  elif [ "$arch" = "i386" ] || [ "$arch" = "i586" ] || [ "$arch" = "i686" ]; then
     targetarch="386"
-  elif [ "$arch" == "riscv64" ]; then
+  elif [ "$arch" = "riscv64" ]; then
     targetarch="riscv64"
-  elif [ "$arch" == "s390x" ]; then
+  elif [ "$arch" = "s390x" ]; then
     targetarch="s390x"
-  elif [ "$arch" == "powerpc64le" ]; then
+  elif [ "$arch" = "powerpc64le" ]; then
     targetarch="ppc64le"
   fi
 
