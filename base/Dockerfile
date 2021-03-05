@@ -41,7 +41,9 @@ ARG TEST_BASE_TYPE
 ARG TEST_CMDS
 RUN [ "${TEST_CMDS:-info}" = "${TEST_CMDS#*info}" ] && exit 0; ./test-info-common.bats && ./test-info-$(echo $TEST_BASE_TYPE | cut -d: -f1).bats
 RUN --mount=type=cache,target=/pkg-cache \
-    [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-apk.bats
+    [ "${TEST_CMDS:-windres}" = "${TEST_CMDS#*windres}" ] && exit 0; ./test-windres.bats
+RUN --mount=type=cache,target=/pkg-cache \
+    [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-apk.bat
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-apt}" = "${TEST_CMDS#*apt}" ] && exit 0; [ ! -f /etc/debian_version ] || ./test-apt.bats
 RUN --mount=type=cache,target=/pkg-cache \

@@ -1,0 +1,373 @@
+#!/usr/bin/env sh
+
+set -e
+
+# llvm-cvtres -h
+# OVERVIEW: Resource Converter
+# USAGE: llvm-cvtres [options] file...
+# OPTIONS:
+#   /DEFINE:symbol
+#   /FOLDDUPS:
+#   /MACHINE:{ARM|ARM64|EBC|IA64|X64|X86}
+#   /NOLOGO
+#   /OUT:filename
+#   /READONLY
+#   /TIMESTAMP:<value> Timestamp for coff header, defaults to current time
+#   /VERBOSE
+# llvm-rc -h
+# OVERVIEW: Resource Converter
+# USAGE: rc [options] file...
+# OPTIONS:
+#   /?          Display this help and exit.
+#   /C <value>  Set the codepage used for input strings.
+#   /dry-run    Don't compile the input; only try to parse it.
+#   /D <value>  Define a symbol for the C preprocessor.
+#   /FO <value> Change the output file location.
+#   /H          Display this help and exit.
+#   /I <value>  Add an include path.
+#   /LN <value> Set the default language name.
+#   /L <value>  Set the default language identifier.
+#   /N          Null-terminate all strings in the string table.
+#   /U <value>  Undefine a symbol for the C preprocessor.
+#   /V          Be verbose.
+#   /X          Ignore 'include' variable.
+#   /Y          Suppress warnings on duplicate resource IDs.
+
+usage() {
+  cat <<EOT >&2
+Usage: $0 [option(s)] [input-file] [output-file]
+ The options are:
+  -i --input=<file>            Name input file
+  -o --output=<file>           Name output file
+  -J --input-format=<format>   Specify input format
+  -O --output-format=<format>  Specify output format
+  -F --target=<target>         Specify COFF target
+     --preprocessor=<program>  Program to use to preprocess rc file
+     --preprocessor-arg=<arg>  Additional preprocessor argument
+  -I --include-dir=<dir>       Include directory when preprocessing rc file
+  -D --define <sym>[=<val>]    Define SYM when preprocessing rc file
+  -U --undefine <sym>          Undefine SYM when preprocessing rc file
+  -v --verbose                 Verbose - tells you what it's doing
+  -c --codepage=<codepage>     Specify default codepage
+  -l --language=<val>          Set language when reading rc file
+     --use-temp-file           Use a temporary file instead of popen to read
+                               the preprocessor output
+     --no-use-temp-file        Use popen (default)
+  -r                           Ignored for compatibility with rc
+  -h --help                    Print this help message
+  -V --version                 Print version information
+FORMAT is one of rc, res, or coff, and is deduced from the file name
+extension if not specified.  A single file name is an input file.
+No input-file is stdin, default rc.  No output-file is stdout, default rc.
+EOT
+}
+
+tmpfile=
+newtmp() {
+  if [ -n "$XX_TMP_FILE_FIXED" ]; then
+    tmpfile="$XX_TMP_FILE_FIXED"
+    XX_TMP_FILE_FIXED=${XX_TMP_FILE_FIXED}_
+  else
+    tmpfile=$(mktemp)
+  fi
+}
+
+run() {
+  if [ -n "$XX_WINDRES_DRYRUN" ]; then
+    echo "$@"
+  else
+    "$@"
+  fi
+}
+
+output=
+input=
+inputf=
+outputf=
+target=
+preprocessor=
+preprocessorargs=
+rcargs=
+
+isnextarg() {
+  if [ -z "$2" ]; then
+    echo >&2 "error: argument to $1 is missing"
+    exit 1
+  fi
+}
+
+while :; do
+  case $1 in
+    -h | --help)
+      usage
+      exit
+      ;;
+    -V | --version)
+      "xx-windres 0.1"
+      ;;
+    -o | --output)
+      isnextarg $1 $2
+      output=$2
+      shift
+      ;;
+    --output=*)
+      output=${1#--output=}
+      ;;
+    -o*)
+      output=${1#-o}
+      ;;
+    -i | --input)
+      isnextarg $1 $2
+      input=$2
+      shift
+      ;;
+    --input=*)
+      input=${1#--input=}
+      ;;
+    -i*)
+      input=${1#-i}
+      ;;
+    -J | --input-format)
+      isnextarg $1 $2
+      inputf=$2
+      shift
+      ;;
+    --input-format=*)
+      inputf=${1#--input-format=}
+      ;;
+    -J*)
+      inputf=${1#-J}
+      ;;
+    -O | --output-format)
+      isnextarg $1 $2
+      outputf=$2
+      shift
+      ;;
+    --output-format=*)
+      outputf=${1#--output-format=}
+      ;;
+    -O*)
+      outputf=${1#-O}
+      ;;
+    -F | --target)
+      isnextarg $1 $2
+      target=$2
+      shift
+      ;;
+    --target=*)
+      target=${1#--target=}
+      ;;
+    -F*)
+      target=${1#-F}
+      ;;
+    --preprocessor)
+      isnextarg $1 $2
+      preprocessor=$2
+      shift
+      ;;
+    --preprocessor=*)
+      preprocessor=${1#--preprocessor=}
+      ;;
+    --preprocessor-arg)
+      isnextarg $1 $2
+      preprocessorargs="$preprocessorargs $2"
+      shift
+      ;;
+    --preprocessor-arg=*)
+      preprocessorargs="$preprocessorargs ${1#--preprocessor-arg=}"
+      ;;
+    -I | --include-path)
+      isnextarg $1 $2
+      preprocessorargs="$preprocessorargs -I$2"
+      shift
+      ;;
+    --include-path=*)
+      preprocessorargs="$preprocessorargs -I${1#--include-path=}"
+      ;;
+    -I*)
+      preprocessorargs="$preprocessorargs -I${1#-I}"
+      ;;
+    -l | --language)
+      isnextarg $1 $2
+      rcargs="$rcargs -L $2"
+      shift
+      ;;
+    --language=*)
+      rcargs="$rcargs -L ${1#--language=}"
+      ;;
+    -l*)
+      rcargs="$rcargs -L ${1#-l}"
+      ;;
+    -c | --codepage)
+      isnextarg $1 $2
+      rcargs="$rcargs -C $2"
+      shift
+      ;;
+    --codepage=*)
+      rcargs="$rcargs -C ${1#--codepage=}"
+      ;;
+    -c*)
+      rcargs="$rcargs -C ${1#-c}"
+      ;;
+    -D | --define)
+      isnextarg $1 $2
+      preprocessorargs="$preprocessorargs -D $2"
+      shift
+      ;;
+    --define=*)
+      preprocessorargs="$preprocessorargs -D ${1#--define=}"
+      ;;
+    -D*)
+      preprocessorargs="$preprocessorargs -D ${1#-D}"
+      ;;
+    -U | --undefine)
+      isnextarg $1 $2
+      preprocessorargs="$preprocessorargs -U $2"
+      shift
+      ;;
+    --undefine=*)
+      preprocessorargs="$preprocessorargs -U ${1#--undefine=}"
+      ;;
+    -U*)
+      preprocessorargs="$preprocessorargs -U ${1#-U}"
+      ;;
+    -r | --use-temp-file | --no-use-temp-file | -v | --verbose) ;;
+    --)
+      shift
+      break
+      ;;
+    -?*)
+      echo >&2 "invalid option $1"
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
+if [ -n "$1" ]; then
+  input=$1
+  shift
+fi
+
+if [ -n "$1" ]; then
+  output=$1
+  shift
+fi
+
+if [ -n "$1" ]; then
+  echo >&2 "too many arguments"
+  exit 1
+fi
+
+if [ -z "$target" ]; then
+  target=$(xx-info)
+fi
+
+if [ -z "$input" ]; then
+  input=/dev/stdin
+fi
+
+if [ -z "$output" ]; then
+  stdout=/dev/stdout
+fi
+
+if [ -z "$inputf" ]; then
+  if [ "${input%.res}" != "${input}" ]; then
+    inputf="res"
+  fi
+fi
+
+if [ -z "$inputf" ]; then
+  inputf="rc"
+fi
+
+if [ "$inputf" != "res" ] && [ "$inputf" != "rc" ]; then
+  echo >&2 "invalid input format $inputf"
+fi
+
+if [ -z "$outputf" ]; then
+  if [ "${output%.res}" != "${output}" ]; then
+    outputf="res"
+  fi
+fi
+
+if [ -z "$outputf" ]; then
+  outputf="coff"
+fi
+
+if [ "$outputf" != "coff" ] && [ "$outputf" != "res" ]; then
+  echo >&2 "invalid output format $outputf"
+fi
+
+machine=
+case $target in
+  *i686* | *i386* | *i586*)
+    machine="X86"
+    ;;
+  x86_64* | *x86-64*)
+    machine="X64"
+    ;;
+  arm*)
+    machine="ARM"
+    ;;
+  aarch64* | arm64*)
+    machine="ARM64"
+    ;;
+  *)
+    echo >&2 "invalid target $target for xx-windres"
+    ;;
+esac
+
+resfile=
+
+if [ "$inputf" = "rc" ]; then
+  if [ -z "$preprocessor" ]; then
+    preprocessor=$CC
+  fi
+  if [ -z "$preprocessor" ]; then
+    if which clang >/dev/null 2>/dev/null; then
+      preprocessor="clang"
+    else
+      preprocessor="gcc"
+    fi
+  fi
+
+  if ! which llvm-rc 2>/dev/null >/dev/null; then
+    echo >&2 "llvm-rc not installed"
+    exit 1
+  fi
+
+  newtmp
+  run "$preprocessor" -E -xc -D RC_INVOKED=1 $preprocessorargs -o $tmpfile $input
+
+  ptmp=$tmpfile
+  newtmp
+
+  run llvm-rc $rcargs -fo $tmpfile -I $(dirname $input) $ptmp
+
+  if [ -f $ptmp ]; then
+    rm $ptmp
+  fi
+
+  resfile=$tmpfile
+else
+  resfile=$input
+fi
+
+if [ "$outputf" = "res" ]; then
+  run cp $resfile $output
+else
+  if ! which llvm-cvtres 2>/dev/null >/dev/null; then
+    echo >&2 "llvm-cvtres not installed"
+    exit 1
+  fi
+
+  run llvm-cvtres -machine:$machine -out:$output $resfile
+fi
+
+if [ -f "$tmpfile" ]; then
+  rm "$tmpfile"
+fi

@@ -528,6 +528,18 @@ EOT
     fi
   done
 
+  if [ "$targetos" = "windows" ]; then
+    if which llvm-rc 2>/dev/null >/dev/null; then
+      if [ ! -f /usr/bin/${target}-windres ] && [ ! -h /usr/bin/${target}-windres ]; then
+        cat <<EOT >/usr/bin/${target}-windres
+#!/usr/bin/env sh
+exec xx-windres --target=${target} "\$@"
+EOT
+        chmod +x /usr/bin/${target}-windres
+      fi
+    fi
+  fi
+
   config="--target=${target} -fuse-ld=${linker}"
   nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= TARGETPAIR= xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
