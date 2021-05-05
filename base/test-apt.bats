@@ -51,11 +51,11 @@ load 'assert'
 
   run xx-apt info file
   assert_success
-  assert_line "Package: file:aarch64"
+  assert_line "Package: file:arm64"
 
   run xx-apt info libc6-dev
   assert_success
-  assert_line "Package: libc6-dev:aarch64"
+  assert_line "Package: libc6-dev:arm64"
 
   export XX_APT_PREFER_CROSS=1
   run xx-apt info libc6-dev
