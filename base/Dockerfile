@@ -43,7 +43,7 @@ RUN [ "${TEST_CMDS:-info}" = "${TEST_CMDS#*info}" ] && exit 0; ./test-info-commo
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-windres}" = "${TEST_CMDS#*windres}" ] && exit 0; ./test-windres.bats
 RUN --mount=type=cache,target=/pkg-cache \
-    [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-apk.bat
+    [ "${TEST_CMDS:-apk}" = "${TEST_CMDS#*apk}" ] && exit 0; [ ! -f /etc/alpine-release ] || ./test-apk.bats
 RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-apt}" = "${TEST_CMDS#*apt}" ] && exit 0; [ ! -f /etc/debian_version ] || ./test-apt.bats
 RUN --mount=type=cache,target=/pkg-cache \
