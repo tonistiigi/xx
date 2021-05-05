@@ -460,7 +460,8 @@ setup() {
       exp="riscv"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
-      linker="ld"
+      ln -s $(which ld) /usr/bin/${target}-ld
+      linker="/usr/bin/${target}-ld"
     fi
   fi
 

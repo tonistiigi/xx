@@ -136,6 +136,7 @@ testBuildHello() {
   clean
   del lld
   add binutils
+  export XX_NO_DOWNLOAD=1
   run sh -c 'xx-clang --print-target-triple | sed s/unknown-//'
   assert_success
   assert_output $(xx-info triple)
@@ -144,7 +145,7 @@ testBuildHello() {
   run cat /etc/llvm/xx-default.cfg
   assert_success
 
-  assert_output "-fuse-ld=ld"
+  assert_output "-fuse-ld=/usr/bin/$(xx-info triple)-ld"
   [ -f /usr/bin/$(xx-info triple)-clang ]
   run sh -c "/usr/bin/$(xx-info triple)-clang --print-target-triple | sed s/unknown-//"
   assert_success
@@ -153,7 +154,7 @@ testBuildHello() {
   [ -f /usr/bin/$(xx-info triple).cfg ]
   run cat /usr/bin/$(xx-info triple).cfg
   assert_success
-  assert_output "--target=$(xx-info triple) -fuse-ld=ld"
+  assert_output "--target=$(xx-info triple) -fuse-ld=/usr/bin/$(xx-info triple)-ld"
   testBuildHello
   del binutils
 }
