@@ -553,7 +553,7 @@ EOT
 
       cat <<EOT >/usr/bin/${target}-pkg-config
 #!/usr/bin/env sh
-export PKG_CONFIG_PATH=/${target}/usr/lib/pkgconfig
+export PKG_CONFIG_SYSROOT_DIR=/${target}
 exec pkg-config "\$@"
 EOT
       chmod +x /usr/bin/${target}-pkg-config
