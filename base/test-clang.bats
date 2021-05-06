@@ -16,7 +16,7 @@ testHelloCLLD() {
   clean
   add clang lld
   xxadd xx-c-essentials
-  run sh -c 'xx-clang --print-target-triple | sed s/unknown-//'
+  run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
   assert_output $(xx-info triple)
   [ -f /etc/llvm/xx-default.cfg ]
@@ -42,7 +42,7 @@ testHelloCLLD() {
 
 testHelloCPPLLD() {
   clean
-  run sh -c 'xx-clang++ --print-target-triple | sed s/unknown-//'
+  run sh -c 'xx-clang++ --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
   assert_output $(xx-info triple)
 
@@ -101,7 +101,7 @@ testBuildHello() {
 
   [ "$nativeTriple" != "$crossTriple" ]
 
-  run sh -c "clang --print-target-triple | sed s/unknown-//"
+  run sh -c "clang --print-target-triple | sed s/unknown-// | sed s/pc-//"
   assert_success
   assert_output "$nativeTriple"
 
@@ -123,7 +123,7 @@ testBuildHello() {
   run xx-clang --unwrap
   assert_success
 
-  run sh -c "clang --print-target-triple | sed s/unknown-//"
+  run sh -c "clang --print-target-triple | sed s/unknown-// | sed s/pc-//"
   assert_success
   assert_output "$nativeTriple"
 
@@ -137,7 +137,7 @@ testBuildHello() {
   del lld
   add binutils
   export XX_NO_DOWNLOAD=1
-  run sh -c 'xx-clang --print-target-triple | sed s/unknown-//'
+  run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
   assert_output $(xx-info triple)
 
@@ -147,7 +147,7 @@ testBuildHello() {
 
   assert_output "-fuse-ld=/usr/bin/$(xx-info triple)-ld"
   [ -f /usr/bin/$(xx-info triple)-clang ]
-  run sh -c "/usr/bin/$(xx-info triple)-clang --print-target-triple | sed s/unknown-//"
+  run sh -c "/usr/bin/$(xx-info triple)-clang --print-target-triple | sed s/unknown-// | sed s/pc-//"
   assert_success
   assert_output $(xx-info triple)
   [ -f /usr/bin/$(xx-info triple)-clang++ ]
