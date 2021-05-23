@@ -14,13 +14,13 @@ if [ -n "$XX_DEBUG_VERIFY" ]; then
 fi
 
 for l in $(xx-info env); do
-  export $l
+  export "${l?}"
 done
 
 setup() {
   if ! which file >/dev/null 2>/dev/null; then
     if which apk >/dev/null; then
-      apk add --no-cache file >$1
+      apk add --no-cache file >"$1"
     elif which apt >/dev/null; then
       apt update && apt install -y file
     else
@@ -32,7 +32,7 @@ setup() {
 
 usage() {
   cat >&2 <<EOT
-Usage: $(basename $0) [--static] FILE [FILE]...
+Usage: $(basename "$0") [--static] FILE [FILE]...
 
 EOT
   exit 1
@@ -78,9 +78,7 @@ for f in "$@"; do
     exit 1
   fi
 
-  out=$(file -L -b "${f}" 2>&1)
-
-  if [ $? != 0 ]; then
+  if ! out=$(file -L -b "${f}" 2>&1); then
     echo >&2 "failed to run file for ${f}: $out"
     exit 1
   fi
@@ -103,7 +101,7 @@ for f in "$@"; do
     exit 1
   fi
 
-  if ! echo $out | grep "$expOS" >/dev/null; then
+  if ! echo "$out" | grep "$expOS" >/dev/null; then
     echo >&2 "file ${f} does not match expected target OS ${TARGETOS}: $out"
     exit 1
   fi
@@ -191,20 +189,20 @@ for f in "$@"; do
     exit 1
   fi
 
-  if ! echo $out | grep "$expArch" >/dev/null; then
+  if ! echo "$out" | grep "$expArch" >/dev/null; then
     echo >&2 "file ${f} does not match expected target architecture ${TARGETARCH}: $out"
     exit 1
   fi
 
   if [ -n "$expArch2" ]; then
-    if ! echo $out | grep "$expArch2" >/dev/null; then
+    if ! echo "$out" | grep "$expArch2" >/dev/null; then
       echo >&2 "file ${f} does not match expected endianness for ${TARGETARCH}: $out"
       exit 1
     fi
   fi
 
   if [ -n "$static" ] && [ "$TARGETOS" = "linux" ]; then
-    if ! echo $out | grep "statically linked" >/dev/null; then
+    if ! echo "$out" | grep "statically linked" >/dev/null; then
       echo >&2 "file ${f} is not statically linked: $out"
       exit 1
     fi

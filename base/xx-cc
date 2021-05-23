@@ -119,7 +119,6 @@ EOF
 }
 
 macos_sdk_path=/xx-sdk/MacOSX11.1.sdk
-macos_sdk_version=11.1
 
 detectTargetOSArch() {
   targetos=""
@@ -135,7 +134,7 @@ detectTargetOSArch() {
     targetos=$(xx-info os)
   fi
 
-  arch=$(echo $target | cut -d- -f1)
+  arch=$(echo "$target" | cut -d- -f1)
   targetarch=""
   targetvariant=""
 
@@ -169,11 +168,6 @@ detectMacOSSDK() {
   if [ -d "/xx-sdk" ]; then
     for f in /xx-sdk/MacOSX*.sdk; do
       macos_sdk_path="$f"
-      trim="${sdk_path#/xx-sdk/MacOSX}"
-      trim="${trim%.sdk}"
-      if [ -n "$trim" ]; then
-        macos_sdk_version=$trim
-      fi
       break
     done
   fi
@@ -194,8 +188,8 @@ ld64-signed-linux-armv7 1dbf5be507a73768bb1ee72d3325020640cca614
 EOT
   )
 
-  file="ld64-signed-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info variant)"
-  sha=$(echo $shas | grep $file | cut -d' ' -f2 || true)
+  file="ld64-signed-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info os)-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info arch)$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info variant)"
+  sha=$(echo "$shas" | grep "$file" | cut -d' ' -f2 || true)
 
   if [ -z "$sha" ]; then
     return
@@ -205,27 +199,27 @@ EOT
 
   for m in $mirrors; do
     # busybox wget
-    if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
       continue
     fi
-    if ! wget --no-check-certificate $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+    if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
       continue
     fi
-    if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then
-      sha2="$(sha1sum $tmpdir/$file.tar.gz | cut -d' ' -f2)"
+    if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
+      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f2)"
       if [ "$sha" != "$sha2" ]; then
         echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
-        rm $tmpdir/$file.tar.gz
+        rm "$tmpdir/$file.tar.gz"
         continue
       fi
     fi
-    tar xzf $tmpdir/$file.tar.gz -C /usr/bin
-    ln -s ld64.signed /usr/bin/$target-ld
-    rm $tmpdir/$file.tar.gz
+    tar xzf "$tmpdir/$file.tar.gz" -C /usr/bin
+    ln -s ld64.signed "/usr/bin/$target-ld"
+    rm "$tmpdir/$file.tar.gz"
     break
   done
 
-  rm -r $tmpdir
+  rm -r "$tmpdir"
   if [ -f "/usr/bin/$target-ld" ]; then
     linker="/usr/bin/$target-ld"
   fi
@@ -312,8 +306,8 @@ windows-amd64-ld-linux-s390x 92777b3e15b6bdde0c106a86466abc9d0d9cdb94
 EOT
   )
 
-  file="$targetos-$targetarch$targetvariant-ld-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info os)-$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info arch)$(TARGETPLATFORM= TARGETPAIR= TARGETOS= TARGETARCH= TARGETVARIANT= xx-info variant)"
-  sha=$(echo $shas | grep $file | cut -d' ' -f2 || true)
+  file="$targetos-$targetarch$targetvariant-ld-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info os)-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info arch)$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info variant)"
+  sha=$(echo "$shas" | grep "$file" | cut -d' ' -f2 || true)
 
   if [ -z "$sha" ]; then
     return
@@ -323,36 +317,36 @@ EOT
 
   for m in $mirrors; do
     # busybox wget
-    if ! wget $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
       continue
     fi
-    if ! wget --no-check-certificate $m/$file.tar.gz -q -O $tmpdir/$file.tar.gz; then
+    if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
       continue
     fi
-    if [ -z "XX_DOWNLOAD_NO_VALIDATE" ]; then
-      sha2="$(sha1sum $tmpdir/$file.tar.gz | cut -d' ' -f2)"
+    if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
+      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f2)"
       if [ "$sha" != "$sha2" ]; then
         echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
-        rm $tmpdir/$file.tar.gz
+        rm "$tmpdir/$file.tar.gz"
         continue
       fi
     fi
-    tar xzf $tmpdir/$file.tar.gz -C /usr/bin
-    ln -s "$targetos-$targetarch$targetvariant-ld" /usr/bin/$target-ld
-    rm $tmpdir/$file.tar.gz
+    tar xzf "$tmpdir/$file.tar.gz" -C /usr/bin
+    ln -s "$targetos-$targetarch$targetvariant-ld" "/usr/bin/$target-ld"
+    rm "$tmpdir/$file.tar.gz"
     break
   done
 
-  rm -r $tmpdir
+  rm -r "$tmpdir"
   if [ -f "/usr/bin/$target-ld" ]; then
     linker="/usr/bin/$target-ld"
   fi
 }
 
-basename=$(basename $0)
+basename=$(basename "$0")
 name=${basename#xx-}
 
-: ${XX_CC_PREFER_LINKER=lld}
+: "${XX_CC_PREFER_LINKER=lld}"
 
 if [ "$name" = "cc" ]; then
   name="clang"
@@ -421,7 +415,7 @@ setup() {
 
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
     if [ -z "${linker}" ]; then
-      ld=$(which $target-gold 2>/dev/null || true)
+      ld=$(which "$target-gold" 2>/dev/null || true)
       if [ -n "$ld" ]; then
         linker=${ld}
       fi
@@ -432,7 +426,7 @@ setup() {
   fi
 
   if [ -z "${linker}" ]; then
-    ld=$(which $target-ld 2>/dev/null || true)
+    ld=$(which "$target-ld" 2>/dev/null || true)
     if [ -n "$ld" ]; then
       linker=${ld}
     fi
@@ -442,7 +436,6 @@ setup() {
   fi
 
   if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
-    support=$(ld -V 2>/dev/null || true)
     exp=$targetarch
     if [ "$exp" = "amd64" ]; then
       exp="x86_64"
@@ -460,7 +453,7 @@ setup() {
       exp="riscv"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
-      ln -s $(which ld) /usr/bin/${target}-ld
+      ln -s "$(which ld)" "/usr/bin/${target}-ld"
       linker="/usr/bin/${target}-ld"
     fi
   fi
@@ -500,13 +493,13 @@ setup() {
     if [ -f /usr/bin/$f ]; then
       # there seems to be a bug in llvm that prevents config to be loaded if target contains a dot , like macos10.4
       if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
-        cat <<EOT >/usr/bin/${target}-$f
+        cat <<EOT >"/usr/bin/${target}-$f"
 #!/usr/bin/env sh
 $f --config /usr/bin/${target}.cfg "\$@"
 EOT
-        chmod +x /usr/bin/${target}-$f
+        chmod +x "/usr/bin/${target}-$f"
       else
-        ln -s $f /usr/bin/${target}-$f
+        ln -s $f "/usr/bin/${target}-$f"
       fi
     else
       echo >&2 "/usr/bin/$f not found: skipping"
@@ -517,13 +510,13 @@ EOT
     if ! which "${target}-${f}" >/dev/null 2>/dev/null; then
       if [ -f "/usr/bin/llvm-${f}" ]; then
         if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
-          cat <<EOT >/usr/bin/${target}-$f
+          cat <<EOT >"/usr/bin/${target}-$f"
 #!/usr/bin/env sh
 llvm-$f "\$@"
 EOT
-          chmod +x /usr/bin/${target}-$f
+          chmod +x "/usr/bin/${target}-$f"
         else
-          ln -s llvm-$f /usr/bin/${target}-$f
+          ln -s "llvm-$f" "/usr/bin/${target}-$f"
         fi
       fi
     fi
@@ -531,18 +524,18 @@ EOT
 
   if [ "$targetos" = "windows" ]; then
     if which llvm-rc 2>/dev/null >/dev/null; then
-      if [ ! -f /usr/bin/${target}-windres ] && [ ! -h /usr/bin/${target}-windres ]; then
-        cat <<EOT >/usr/bin/${target}-windres
+      if [ ! -f "/usr/bin/${target}-windres" ] && [ ! -h "/usr/bin/${target}-windres" ]; then
+        cat <<EOT >"/usr/bin/${target}-windres"
 #!/usr/bin/env sh
 exec xx-windres --target=${target} "\$@"
 EOT
-        chmod +x /usr/bin/${target}-windres
+        chmod +x "/usr/bin/${target}-windres"
       fi
     fi
   fi
 
   config="--target=${target} -fuse-ld=${linker}"
-  nativeTarget=$(TARGETPLATFORM= TARGETARCH= TARGETOS= TARGETPAIR= xx-info triple)
+  nativeTarget=$(TARGETPLATFORM='' TARGETARCH='' TARGETOS='' TARGETPAIR='' xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
     if [ "$targetos" = "darwin" ]; then
       detectMacOSSDK
@@ -552,20 +545,20 @@ EOT
     elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
 
-      cat <<EOT >/usr/bin/${target}-pkg-config
+      cat <<EOT >"/usr/bin/${target}-pkg-config"
 #!/usr/bin/env sh
 export PKG_CONFIG_SYSROOT_DIR=/${target}
 exec pkg-config "\$@"
 EOT
-      chmod +x /usr/bin/${target}-pkg-config
+      chmod +x "/usr/bin/${target}-pkg-config"
     fi
-  elif [ ! -f /usr/bin/${target}-pkg-config ] && [ ! -h /usr/bin/${target}-pkg-config ]; then
-    ln -s pkg-config /usr/bin/${target}-pkg-config
+  elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
+    ln -s pkg-config "/usr/bin/${target}-pkg-config"
   fi
-  f=$(dirname $(readlink -f $(which /usr/bin/clang)))/${target}.cfg
-  echo $config >${f}
+  f="$(dirname "$(readlink -f "$(which /usr/bin/clang)")")/${target}.cfg"
+  echo "$config" >"${f}"
   if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
-    ln -s ${f} /usr/bin/${target}.cfg
+    ln -s "${f}" "/usr/bin/${target}.cfg"
   fi
 
   if [ "${targetos}" = "darwin" ]; then
@@ -657,13 +650,13 @@ fi
 # if print & target then setup and print current target
 if [ -n "${target}" ] && [ -n "${printTarget}" ]; then
   setup
-  echo ${target}
+  echo "${target}"
   exit 0
 fi
 
 if [ -n "${printCmake}" ]; then
   setup
-  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE=$(xx-clang --print-prog-name=pkg-config) -DCMAKE_C_COMPILER_TARGET=$(xx-clang --print-target-triple) -DCMAKE_CXX_COMPILER_TARGET=$(xx-clang++ --print-target-triple) -DCMAKE_ASM_COMPILER_TARGET=$(xx-clang --print-target-triple)
+  echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE="$(xx-clang --print-prog-name=pkg-config)" -DCMAKE_C_COMPILER_TARGET="$(xx-clang --print-target-triple)" -DCMAKE_CXX_COMPILER_TARGET="$(xx-clang++ --print-target-triple)" -DCMAKE_ASM_COMPILER_TARGET="$(xx-clang --print-target-triple)"
   exit 0
 fi
 
@@ -691,7 +684,7 @@ fi
 if [ -z "$target" ] && [ -f /etc/llvm/xx-default.cfg ]; then
   exec /usr/bin/$name --config /etc/llvm/xx-default.cfg "$@"
 elif [ -f "/usr/bin/${target}.cfg" ]; then
-  exec /usr/bin/$name --config /usr/bin/${target}.cfg "$@"
+  exec /usr/bin/$name --config "/usr/bin/${target}.cfg" "$@"
 else
   exec /usr/bin/$name "$@"
 fi

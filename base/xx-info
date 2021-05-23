@@ -1,23 +1,23 @@
 #!/usr/bin/env sh
 
-: ${TARGETPLATFORM=}
-: ${TARGETOS=}
-: ${TARGETARCH=}
-: ${TARGETVARIANT=}
-: ${MACOSX_VERSION_MIN=}
+: "${TARGETPLATFORM=}"
+: "${TARGETOS=}"
+: "${TARGETARCH=}"
+: "${TARGETVARIANT=}"
+: "${MACOSX_VERSION_MIN=}"
 
-: ${XX_MARCH=unknown}
+: "${XX_MARCH=unknown}"
 # https://pkgs.alpinelinux.org/packages
-: ${XX_ALPINE_ARCH=unknown}
+: "${XX_ALPINE_ARCH=unknown}"
 # https://www.debian.org/ports/
-: ${XX_DEBIAN_ARCH=unknown}
-: ${XX_TRIPLE=unknown-unknown-none}
-: ${XX_VENDOR=unknown}
-: ${XX_LIBC=}
+: "${XX_DEBIAN_ARCH=unknown}"
+: "${XX_TRIPLE=unknown-unknown-none}"
+: "${XX_VENDOR=unknown}"
+: "${XX_LIBC=}"
 
 usage() {
   cat >&2 <<EOT
-Usage: $(basename $0) [COMMAND]
+Usage: $(basename "$0") [COMMAND]
 
 Commands:
   alpine-arch    Print target architecture for Alpine package repositories
@@ -43,8 +43,8 @@ set -e
 # This format is recommended to be used in image and binary names where slashes are not allowed.
 # Architecture and variant component are not separated with a dash to automatically handle empty value.
 if [ -n "$TARGETPAIR" ]; then
-  os="$(echo $TARGETPAIR | cut -d"-" -f1)"
-  arch="$(echo $TARGETPAIR | cut -d"-" -f2)"
+  os="$(echo "$TARGETPAIR" | cut -d"-" -f1)"
+  arch="$(echo "$TARGETPAIR" | cut -d"-" -f2)"
   if [ "${arch#armv}" != "${arch}" ]; then
     variant="${arch#arm}"
     arch="arm"
@@ -85,6 +85,7 @@ if [ -n "$TARGETPLATFORM" ]; then
 fi
 
 # detect distro vendor
+# shellcheck disable=SC1091
 if . /etc/os-release 2>/dev/null; then
   XX_VENDOR=$ID
 fi

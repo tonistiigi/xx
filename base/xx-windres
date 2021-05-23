@@ -106,7 +106,7 @@ while :; do
       "xx-windres 0.1"
       ;;
     -o | --output)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       output=$2
       shift
       ;;
@@ -117,7 +117,7 @@ while :; do
       output=${1#-o}
       ;;
     -i | --input)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       input=$2
       shift
       ;;
@@ -128,7 +128,7 @@ while :; do
       input=${1#-i}
       ;;
     -J | --input-format)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       inputf=$2
       shift
       ;;
@@ -139,7 +139,7 @@ while :; do
       inputf=${1#-J}
       ;;
     -O | --output-format)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       outputf=$2
       shift
       ;;
@@ -150,7 +150,7 @@ while :; do
       outputf=${1#-O}
       ;;
     -F | --target)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       target=$2
       shift
       ;;
@@ -161,7 +161,7 @@ while :; do
       target=${1#-F}
       ;;
     --preprocessor)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       preprocessor=$2
       shift
       ;;
@@ -169,7 +169,7 @@ while :; do
       preprocessor=${1#--preprocessor=}
       ;;
     --preprocessor-arg)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs $2"
       shift
       ;;
@@ -177,7 +177,7 @@ while :; do
       preprocessorargs="$preprocessorargs ${1#--preprocessor-arg=}"
       ;;
     -I | --include-path)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs -I$2"
       shift
       ;;
@@ -188,7 +188,7 @@ while :; do
       preprocessorargs="$preprocessorargs -I${1#-I}"
       ;;
     -l | --language)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       rcargs="$rcargs -L $2"
       shift
       ;;
@@ -199,7 +199,7 @@ while :; do
       rcargs="$rcargs -L ${1#-l}"
       ;;
     -c | --codepage)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       rcargs="$rcargs -C $2"
       shift
       ;;
@@ -210,7 +210,7 @@ while :; do
       rcargs="$rcargs -C ${1#-c}"
       ;;
     -D | --define)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs -D $2"
       shift
       ;;
@@ -221,7 +221,7 @@ while :; do
       preprocessorargs="$preprocessorargs -D ${1#-D}"
       ;;
     -U | --undefine)
-      isnextarg $1 $2
+      isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs -U $2"
       shift
       ;;
@@ -271,7 +271,7 @@ if [ -z "$input" ]; then
 fi
 
 if [ -z "$output" ]; then
-  stdout=/dev/stdout
+  output=/dev/stdout
 fi
 
 if [ -z "$inputf" ]; then
@@ -310,11 +310,11 @@ case $target in
   x86_64* | *x86-64*)
     machine="X64"
     ;;
-  arm*)
-    machine="ARM"
-    ;;
   aarch64* | arm64*)
     machine="ARM64"
+    ;;
+  arm*)
+    machine="ARM"
     ;;
   *)
     echo >&2 "invalid target $target for xx-windres"
@@ -341,15 +341,17 @@ if [ "$inputf" = "rc" ]; then
   fi
 
   newtmp
+  # shellcheck disable=SC2086
   run "$preprocessor" -E -xc -D RC_INVOKED=1 $preprocessorargs -o $tmpfile $input
 
   ptmp=$tmpfile
   newtmp
 
-  run llvm-rc $rcargs -fo $tmpfile -I $(dirname $input) $ptmp
+  # shellcheck disable=SC2086
+  run llvm-rc $rcargs -fo $tmpfile -I "$(dirname $input)" $ptmp
 
-  if [ -f $ptmp ]; then
-    rm $ptmp
+  if [ -f "$ptmp" ]; then
+    rm "$ptmp"
   fi
 
   resfile=$tmpfile

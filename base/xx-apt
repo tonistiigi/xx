@@ -14,7 +14,7 @@ if [ -n "$XX_DEBUG_APT" ]; then
 fi
 
 for l in $(xx-info env); do
-  export $l
+  export "${l?}"
 done
 
 if [ "${TARGETOS}" != "linux" ]; then
@@ -34,9 +34,9 @@ esac
 
 packages=
 parsed=
-args=
-
+n=$#
 for p in "$@"; do
+  if [ $# = $n ]; then set --; fi
   arg=
   case "$p" in
     -*)
@@ -59,11 +59,7 @@ for p in "$@"; do
       ;;
   esac
   if [ -n "$arg" ]; then
-    if [ -z "$args" ]; then
-      args="$arg"
-    else
-      args="${args} ${arg}"
-    fi
+    set -- "$@" "$arg"
   fi
 done
 
@@ -90,13 +86,13 @@ packages2=
 for p in ${packages}; do
   if [ "${p}" = "xx-c-essentials" ]; then
     p="libc6-dev"
-    if apt info libgcc-10-dev:${XX_PKG_ARCH}; then
+    if apt info "libgcc-10-dev:${XX_PKG_ARCH}"; then
       p="$p libgcc-10-dev"
     else
       p="$p libgcc-8-dev"
     fi
   elif [ "${p}" = "xx-cxx-essentials" ]; then
-    if apt info libstdc++-10-dev:${XX_PKG_ARCH}; then
+    if apt info "libstdc++-10-dev:${XX_PKG_ARCH}"; then
       p="libstdc++-10-dev"
     else
       p="libstdc++-8-dev"
@@ -109,24 +105,19 @@ for p in ${packages}; do
   fi
 done
 
-new=
 for p in ${packages2}; do
   n=
   if [ -n "$nocross" ]; then
     n=${p}
-  elif apt info ${p}-${suffix} >/dev/null 2>/dev/null; then
+  elif apt info "${p}-${suffix}" >/dev/null 2>/dev/null; then
     n="${p}-${suffix}"
-  elif [ -n "${XX_APT_PREFER_CROSS}" ] && apt info ${p}-${XX_PKG_ARCH}-cross >/dev/null 2>/dev/null; then
+  elif [ -n "${XX_APT_PREFER_CROSS}" ] && apt info "${p}-${XX_PKG_ARCH}-cross" >/dev/null 2>/dev/null; then
     n="${p}-${XX_PKG_ARCH}-cross"
   else
     n="${p}:${XX_PKG_ARCH}"
   fi
-  if [ -z "$new" ]; then
-    new="$n"
-  else
-    new="${new} ${n}"
-  fi
+  set -- "$@" "$n"
 done
 
-echo >&2 "+ apt ${args} ${new}"
-exec apt ${args} ${new}
+echo >&2 "+ apt " "$@"
+exec apt "$@"
