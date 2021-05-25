@@ -1,0 +1,123 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_APT_NOLOCK" ]; then
+  lock="/var/lock/xx-apt"
+  exec 9>$lock
+  flock -x 9
+  export XX_APT_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_APT" ]; then
+  set -x
+fi
+
+for l in $(xx-info env); do
+  export "${l?}"
+done
+
+if [ "${TARGETOS}" != "linux" ]; then
+  echo >&2 "skipping packages installation on ${XX_OS}"
+  exit 0
+fi
+
+# these are not supported yet
+case "${TARGETARCH}" in
+  riscv* | mips*)
+    echo >&2 "skipping packages installation on ${XX_ARCH}"
+    exit 0
+    ;;
+  *) ;;
+
+esac
+
+packages=
+parsed=
+n=$#
+for p in "$@"; do
+  if [ $# = $n ]; then set --; fi
+  arg=
+  case "$p" in
+    -*)
+      arg="$p"
+      ;;
+    "install" | "remove" | "search" | "show" | "list" | "info")
+      parsed=1
+      arg="$p"
+      ;;
+    *)
+      if [ -n "$parsed" ]; then
+        if [ -z "${packages}" ]; then
+          packages="$p"
+        else
+          packages="${packages} ${p}"
+        fi
+      else
+        arg="$p"
+      fi
+      ;;
+  esac
+  if [ -n "$arg" ]; then
+    set -- "$@" "$arg"
+  fi
+done
+
+if [ -z "${parsed}" ]; then
+  exec apt "$@"
+fi
+
+if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
+  dpkg --add-architecture "$XX_PKG_ARCH"
+  apt-get update
+fi
+
+suffix=$XX_TRIPLE
+if [ "$suffix" = "x86_64-linux-gnu" ]; then
+  suffix="x86-64-linux-gnu"
+fi
+
+nocross=
+if ! xx-info is-cross; then
+  nocross=1
+fi
+
+packages2=
+for p in ${packages}; do
+  if [ "${p}" = "xx-c-essentials" ]; then
+    p="libc6-dev"
+    if apt info "libgcc-10-dev:${XX_PKG_ARCH}"; then
+      p="$p libgcc-10-dev"
+    else
+      p="$p libgcc-8-dev"
+    fi
+  elif [ "${p}" = "xx-cxx-essentials" ]; then
+    if apt info "libstdc++-10-dev:${XX_PKG_ARCH}"; then
+      p="libstdc++-10-dev"
+    else
+      p="libstdc++-8-dev"
+    fi
+  fi
+  if [ -z "$packages2" ]; then
+    packages2="$p"
+  else
+    packages2="${packages2} $p"
+  fi
+done
+
+for p in ${packages2}; do
+  n=
+  if [ -n "$nocross" ]; then
+    n=${p}
+  elif apt info "${p}-${suffix}" >/dev/null 2>/dev/null; then
+    n="${p}-${suffix}"
+  elif [ -n "${XX_APT_PREFER_CROSS}" ] && apt info "${p}-${XX_PKG_ARCH}-cross" >/dev/null 2>/dev/null; then
+    n="${p}-${XX_PKG_ARCH}-cross"
+  else
+    n="${p}:${XX_PKG_ARCH}"
+  fi
+  set -- "$@" "$n"
+done
+
+echo >&2 "+ apt " "$@"
+exec apt "$@"

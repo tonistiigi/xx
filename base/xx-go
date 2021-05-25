@@ -1,0 +1,116 @@
+#!/usr/bin/env sh
+
+set -e
+
+for l in $(xx-info env); do
+  export "${l?}"
+done
+
+export GOOS=${TARGETOS}
+export GOARCH=${TARGETARCH}
+
+if [ "$TARGETARCH" = "arm" ]; then
+  if [ -n "$TARGETVARIANT" ]; then
+    case "$TARGETVARIANT" in
+      "v5")
+        export GOARM="5"
+        ;;
+      "v6")
+        export GOARM="6"
+        ;;
+      *)
+        export GOARM="7"
+        ;;
+    esac
+  else
+    export GOARM="7"
+  fi
+fi
+
+if [ "$GOOS" = "wasi" ]; then
+  export GOOS="js"
+fi
+
+c_set=
+cxx_set=
+ar_set=
+pkgconfig_set=
+
+if which "$XX_TRIPLE-gcc" >/dev/null 2>/dev/null; then
+  export CC=$XX_TRIPLE-gcc
+  c_set=1
+fi
+
+if which "$XX_TRIPLE-g++" >/dev/null 2>/dev/null; then
+  export CXX=$XX_TRIPLE-g++
+  cxx_set=1
+fi
+
+if which clang >/dev/null 2>/dev/null; then
+  triple=$(xx-clang --print-target-triple || true)
+  if [ -n "$triple" ]; then
+    export CC=$triple-clang
+    export CXX=$triple-clang++
+    c_set=1
+    cxx_set=1
+  fi
+fi
+
+if which "$XX_TRIPLE-ar" >/dev/null 2>/dev/null; then
+  export AR=$XX_TRIPLE-ar
+  ar_set=1
+fi
+
+if which "$XX_TRIPLE-pkg-config" >/dev/null 2>/dev/null; then
+  export PKG_CONFIG=$XX_TRIPLE-pkg-config
+  pkgconfig_set=1
+fi
+
+if [ -z "$GOBIN" ] && [ -n "$GOPATH" ] && [ -n "$GOARCH" ] && [ -n "$GOOS" ]; then
+  export PATH=${GOPATH}/bin/${GOOS}_${GOARCH}:${PATH}
+fi
+
+wrap() {
+  f=$(go env GOENV)
+  if [ -z "$f" ]; then
+    return
+  fi
+  mkdir -p "$(dirname "$f")"
+  echo "GOOS=$GOOS" >"$f"
+  echo "GOARCH=$GOARCH" >>"$f"
+  if [ -n "$GOARM" ]; then
+    echo "GOARM=$GOARM" >>"$f"
+  fi
+  if [ -n "$c_set" ]; then
+    echo "CC=$CC" >>"$f"
+  fi
+  if [ -n "$cxx_set" ]; then
+    echo "CXX=$CXX" >>"$f"
+  fi
+  if [ -n "$ar_set" ]; then
+    echo "AR=$AR" >>"$f"
+  fi
+  if [ -n "$pkgconfig_set" ]; then
+    echo "PKG_CONFIG=$PKG_CONFIG" >>"$f"
+  fi
+}
+
+unwrap() {
+  f=$(go env GOENV)
+  if [ -n "$f" ] && [ -f "$f" ]; then
+    rm "$f"
+  fi
+}
+
+case "$1" in
+  "--wrap")
+    wrap
+    exit 0
+    ;;
+  "--unwrap")
+    unwrap
+    exit 0
+    ;;
+esac
+
+exec go "$@"

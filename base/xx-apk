@@ -1,0 +1,113 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_APK_NOLOCK" ]; then
+  lock="/var/lock/xx-apk"
+  exec 9>$lock
+  flock -x 9
+  export XX_APK_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_APK" ]; then
+  set -x
+fi
+
+for l in $(xx-info env); do
+  export "${l?}"
+done
+
+if [ "${TARGETOS}" != "linux" ]; then
+  echo >&2 "skipping packages installation on ${XX_OS}"
+  exit 0
+fi
+
+# these are not supported yet
+case "${TARGETARCH}" in
+  riscv* | mips*)
+    echo >&2 "skipping packages installation on ${XX_ARCH}"
+    exit 0
+    ;;
+  *) ;;
+esac
+
+setup() {
+  if ! xx-info is-cross; then
+    return
+  fi
+  done_file="/${XX_TRIPLE}/.xx-setup"
+  if [ -f "$done_file" ]; then
+    return
+  fi
+  apk_dir="/${XX_TRIPLE}/etc/apk"
+  mkdir -p "$apk_dir"
+  cp /etc/apk/repositories "$apk_dir/"
+  mkdir "$apk_dir/keys"
+  mkdir "$apk_dir/protected_paths.d"
+  echo "$XX_PKG_ARCH" >"$apk_dir/arch"
+  apk add --no-cache --initdb -p "/${XX_TRIPLE}" --allow-untrusted alpine-keys
+
+  if [ -d "/etc/apk/cache" ]; then
+    mkdir -p "/etc/apk/cache/_$XX_PKG_ARCH"
+    ln -s "/etc/apk/cache/_$XX_PKG_ARCH" "$apk_dir/cache"
+  fi
+
+  touch "$done_file"
+}
+
+clean() {
+  if ! xx-info is-cross; then
+    return
+  fi
+  # safety first
+  if [ -z "${XX_TRIPLE}" ]; then
+    echo >&2 "invalid triple root $XX_TRIPLE"
+    exit 1
+  fi
+  rm -rf "/${XX_TRIPLE:?}"
+}
+
+cmd() {
+  setup
+  root="/"
+  if xx-info is-cross; then
+    root="/${XX_TRIPLE}"
+  fi
+  n=$#
+  for a in "$@"; do
+    if [ $# = $n ]; then set --; fi
+    case "$a" in
+      "xx-c-essentials")
+        set -- "$@" musl-dev gcc
+        ;;
+      "xx-cxx-essentials")
+        set -- "$@" g++
+        ;;
+      *)
+        set -- "$@" "$a"
+        ;;
+    esac
+  done
+  if [ "$#" != "0" ]; then
+    set -- "--root" "$root" "$@"
+    echo "+ apk " "$@"
+  fi
+  apk "$@"
+  if xx-info is-cross; then
+    if [ -z "$XX_APK_KEEP_BINARIES" ]; then
+      rm -rf "/${XX_TRIPLE:?}/usr/bin/*"
+    fi
+  fi
+}
+
+case "$1" in
+  "setup")
+    setup
+    ;;
+  "clean")
+    clean
+    ;;
+  *)
+    cmd "$@"
+    ;;
+esac

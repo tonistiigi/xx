@@ -1,0 +1,40 @@
+name: bats-assert
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v2'
+    paths:
+      - '.github/workflows/bats-assert.yml'
+      - 'util/bats-assert/**'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '.github/workflows/bats-assert.yml'
+      - 'util/bats-assert/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/setup-qemu-action@v1
+      - uses: docker/setup-buildx-action@v1
+      -
+        name: Test
+        working-directory: ./util/bats-assert
+        run: docker buildx bake test
+      -
+        name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Publish
+        if: github.ref == 'pull_refs/heads/master'
+        working-directory: ./util/bats-assert
+        run: docker buildx bake all --push

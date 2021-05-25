@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+docker buildx build \
+  --output "type=cacheonly" \
+  --file "./hack/dockerfiles/shellcheck.Dockerfile" \
+  .
