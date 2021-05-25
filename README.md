@@ -45,7 +45,7 @@ Go builds that don't depend on system packages can additionally target Linux Ris
 
 ### xx-info - Information about the build context
 
-`xx-info` command returns normalized information about the current build context. It allows you to get various information about your build target and configuration and avoid the need for converting from one format to another in your own code.
+`xx-info` command returns normalized information about the current build context. It allows you to get various information about your build target and configuration and avoid the need for converting from one format to another in your own code. Invoking `xx-info` without any additional arguments will invoke `xx-info triple`.
 
 #### Parsing current target
 
@@ -66,7 +66,7 @@ These commands return architecture names as used by specific tools to avoid conv
 
 Target triple is the target format taken as input in various gcc and llvm based compilers.
 
-- `xx-info triple` - Target triple in arch[-vendor]-os-abi form
+- `xx-info triple` - Target triple in arch[-vendor]-os-abi form. This command is the default.
 - `xx-info vendor` - Vendor component of target triple
 - `xx-info libc` - Used libc (musl or gnu)
 
@@ -109,7 +109,7 @@ Installing two meta-libraries, `xx-c-essentials`, `xx-cxx-essentials` is also al
 
 ### xx-verify - Verifying compilation results
 
-`xx-verify` allows verifying that the cross-compile toolchain was correctly configured and outputted binaries for the expected target platform. `xx-verify` works by calling `file` utility and comparing the expected output. Optionally `--static` option can be passed to verify that the compiler produced a static binary that can be safely copied to another Dockerfile stage without runtime libraries. If the binary does not match the expected value `xx-verify` returns with a non-zero exit code and error message.
+`xx-verify` allows verifying that the cross-compile toolchain was correctly configured and outputted binaries for the expected target platform. `xx-verify` works by calling `file` utility and comparing the expected output. Optionally `--static` option can be passed to verify that the compiler produced a static binary that can be safely copied to another Dockerfile stage without runtime libraries. If the binary does not match the expected value, `xx-verify` returns with a non-zero exit code and error message.
 
 ```
 ARG TARGETPLATFORM
@@ -119,13 +119,218 @@ RUN xx-clang --static -o /out/myapp app.c && \
 
 ### C/C++
 
+The recommended method for C-based build is to use `clang` via `xx-clang` wrapper. Clang is natively a cross-compiler, but in order to use it, you also need a linker, compiler-rt or libgcc, and a C library(musl or glibc). All these are available as packages in Alpine and Debian based distros. Clang and linker are binaries and should be installed for your build architecture, while libgcc and C library should be installed for your target architecture.
+
+The recommended linker is `lld,` but there are some caveats. `lld` is not supported on S390x, and based on our experience, sometimes has issues with preparing static binaries for Ppc64le. In these cases, `ld` from `binutils` is required. As separate `ld` binary needs to be built for each architecture, distros often do not provide it as a package. Therefore `xx` loads [prebuilt](https://github.com/tonistiigi/xx/releases/tag/prebuilt%2Fld-1) `ld` binaries when needed. `XX_CC_PREFER_LINKER=ld` can be defined if you want to always use `ld`, even when `lld` is available on the system. Building MacOS binaries happens through a prebuilt `ld64` linker that also adds ad-hoc code-signature to the resulting binary.
+
+`xx-clang` can be called with any arguments `clang` binary accepts and will internally call the native `clang` binary with additional configuration for correct cross-compilation. On first invocation, `xx-clang` will also set up alias commands for the current target triple that can be later called directly. This helps with tooling that looks for programs with a target triple prefix from your `PATH`. This setup phase can be manually invoked by calling `xx-clang --setup-target-triple` that is a special flag that `clang` itself does not implement.
+
+Alias commands include:
+
+- `triple-clang`, `triple-clang++` if `clang` is installed
+- `triple-ld` if `ld` is used as linker
+- `triple-pkg-config` if `pkg-config` is installed
+- `triple-addr2line`, `triple-ar`, `triple-as`, `triple-ranlib`, `triple-nm`, `triple-dlltool`, `triple-strip` if cross-compilation capable tools are available though `llvm` package
+- `triple-windres` if `llvm-rc` is installed and compiling for Windows
+
+Alias commands can be called directly and always build the configuration specified by their name, even if `TARGETPLATFORM` value has changed.
+
+#### Building on Alpine
+
+On Alpine, there is no special package for `libgcc` so you need to install `gcc` package with `xx-apk` even though the build happens through clang. To use compiler-rt instead of `libgcc` `--rtlib` needs to be passed manually. We will probably add default detection/loading for compiler-rt in the future to simplify this part. Default libc used in Alpine is [Musl](https://www.musl-libc.org/) that can be installed with `musl-dev` package.
+
+```
+...
+RUN apk add clang lld
+# copy source
+ARG TARGETPLATFORM
+RUN xx-apk add gcc musl-dev
+RUN xx-clang -o hello hello.c && \
+    xx-verify hello
+```
+
+Clang binary can also be called directly with `--target` flag if you want to avoid `xx-` prefixes. `--print-target-triple` is a built-in flag in clang that can be used to query to correct default value.
+
+```
+...
+RUN xx-apk add g++
+RUN clang++ --target=$(xx-clang --print-target-triple) -o hello hello.cc
+```
+
+On the first invocation, aliases with `triple-` prefix are set up so the following also works:
+
+```
+...
+RUN $(xx-clang --print-target-triple)-clang -o hello hello.c
+```
+
+If you prefer aliases to be created as a separate step on a separate layer, you can use `--setup-target-triple`.
+
+```
+...
+RUN xx-clang --setup-target-triple
+RUN $(xx-info)-clang -o hello hello.c
+```
+
+#### Building on Debian
+
+Building on Debian is very similar. The only required dependency that needs to be installed with `xx-apt` is `libc6-dev` or `libstdc++-N-dev` for C++.
+
+```
+...
+RUN apt-get update && apt-get instal -y clang lld
+# copy source
+ARG TARGETPLATFORM
+RUN xx-apt install -y libc6-dev
+RUN xx-clang -o hello hello.c
+```
+
+Refer to the previous section for other variants.
+
+If you wish to build with GCC instead of Clang you need to install `gcc` and `binutils` packages additionally with `xx-apt`. `xx-apt` will automatically install the packages that generate binaries for the current target architecture. You can then call GCC directly with the correct target triple. Note that Debian currently only provides GCC cross-compilation packages if your native platform is amd64 or arm64.
+
+```
+...
+# copy source
+ARG TARGETPLATFORM
+RUN xx-apt install -y binutils gcc libc6-dev
+RUN $(xx-info)-gcc -o hello hello.c
+```
+
+#### Wrapping as default
+
+Special flags `xx-clang --wrap` and `xx-clang --unwarp` can be used to override the default behavior of `clang` with `xx-clang` in the extreme cases where your build scripts have no way to point to alternative compiler names.
+
+```
+# export TARGETPLATFORM=linux/amd64
+# xx-clang --print-target-triple
+x86_64-alpine-linux-musl
+# clang --print-target-triple
+x86_64-alpine-linux-musl
+# 
+# xx-clang --wrap
+# clang --print-target-triple
+x86_64-alpine-linux-musl
+# xx-clang --unwrap
+# clang --print-target-triple
+aarch64-alpine-linux-musl
+```
+
+
 ### Autotools
+
+Autotools has [built-in support](https://www.gnu.org/software/automake/manual/html_node/Cross_002dCompilation.html) for cross-compilation that works by passing `--host`, `--build`, and `--target` flags to the configure script. `--host` defines the target architecture of the build result, `--build` defines compilers native architecture(used for compiling helper tools etc.), and `--target` defines an architecture that the binary returns if it is running as a compiler of other binaries. Usually, only `--host` is needed.
+
+```
+...
+ARG TARGETPLATFORM
+RUN ./configure --host=$(xx-clang --print-target-triple) && make
+```
+
+If you need to pass `--build`, you can temporarily reset the `TARGETPLATFORM` variable to get the system value.
+
+```
+ARG TARGETPLATFORM
+RUN ./configure --host=$(xx-clang --print-target-triple) --build=$(TARGETPLATFORM= xx-clang --print-target-triple) && make
+```
+
+Sometimes `configure` scripts misbehave and don't work correctly unless the name of the C compiler is passed directly. In these cases, you can use overrides like:
+
+```
+RUN CC=xx-clang ./configure ...
+```
+
+```
+RUN ./configure --with-cc=xx-clang ...
+```
+
+```
+RUN ./configure --with-cc=$(xx-clang --print-target-triple)-clang ...
+```
+
 
 ### CMake
 
+In order to make cross-compiling with CMake easier, `xx-clang` has a special flag `xx-clang --print-cmake-defines`. Running that command returns the following Cmake definitions:
+
+```
+-DCMAKE_C_COMPILER=clang
+-DCMAKE_CXX_COMPILER=clang++
+-DCMAKE_ASM_COMPILER=clang
+-DPKG_CONFIG_EXECUTABLE="$(xx-clang --print-prog-name=pkg-config)"
+-DCMAKE_C_COMPILER_TARGET="$(xx-clang --print-target-triple)"
+-DCMAKE_CXX_COMPILER_TARGET="$(xx-clang++ --print-target-triple)"
+-DCMAKE_ASM_COMPILER_TARGET="$(xx-clang --print-target-triple)"
+```
+
+Usually, this should be enough to pick up the correct configuration.
+
+```
+RUN apk add cmake clang lld
+ARG TARGETPLATFORM
+RUN xx-apk musl-dev gcc
+RUN mkdir build && cd build && \
+    cmake $(xx-clang --print-cmake-defines) ..
+```
+
 ### Go / Cgo
 
+Building Go can be achieved with the `xx-go` wrapper that automatically sets up values for `GOOS`, `GOARCH`, `GOARM` etc. It also sets up `pkg-config` and C compiler if building with CGo. Note that by default, CGo is enabled in Go when compiling for native architecture and disabled when cross-compiling. This can easily produce unexpected results; therefore, you should always define either `CGO_ENABLED=1` or `CGO_ENABLED=0` depending on if you expect your compilation to use CGo or not.
+
+```
+FROM --platform=$BUILDPLATFORM golang:alpine
+...
+ARG TARGETPLATFORM
+ENV CGO_ENABLED=0
+RUN xx-go build -o hello ./hello.go && \
+    xx-verify hello
+```
+
+```
+FROM --platform=$BUILDPLATFORM golang:alpine
+RUN apk add clang lld
+...
+ARG TARGETPLATFORM
+RUN xx-apk add musl-dev gcc
+ENV CGO_ENABLED=1
+RUN xx-go build -o hello ./hello.go && \
+    xx-verify hello
+```
+
+If you want to make `go` compiler cross-compile by default, you can use `xx-go --wrap` and `xx-go --unwrap`
+
+```
+...
+RUN xx-go --wrap
+RUN go build -o hello hello.go && \
+    xx-verify hello
+```
+
 ### External SDK support
+
+In addition to Linux targets, `xx` can also build binaries for MacOS and Windows. When building MacOS binaries from C, external MacOS SDK is needed in `/xx-sdk` directory. Such SDK can be built, for example, with [gen_sdk_package script in osxcross project](https://github.com/tpoechtrager/osxcross/blob/master/tools/gen_sdk_package.sh). Please consult XCode license terms when making such an image. `RUN --mount` syntax can be used in Dockerfile in order to avoid copying SDK files. No special tooling such as `ld64` linker is required in the image itself.
+
+Building Windows binaries from C/CGo is currently a work in progress and not functional.
+
+```
+#syntax=docker/dockerfile:1.2
+...
+RUN apk add clang lld
+ARG TARGETPLATFORM
+RUN --mount=from=my/sdk-image,target=/xx-sdk,src=/xx-sdk \
+    xx-clang -o /hello hello.c && \
+    xx-verify /hello
+
+FROM scratch
+COPY --from=build /hello /
+```
+
+```
+docker buildx build --platform=darwin/amd64,darwin/arm64 -o bin .
+```
+
+`-o/--output` flag can be used to export binaries out from the builder without creating a container image.
+
 
 ### Used by
 
@@ -137,3 +342,5 @@ These projects, as well as [xx Dockerfile](https://github.com/tonistiigi/xx/blob
 - [Docker Buildx](https://github.com/docker/buildx/blob/4fec647b9d8f34f8569141124d8462c912858144/Dockerfile)
 
 ### Issues
+
+`xx` project welcomes contributions if you notice any issues or want to extend the capabilities with new features. We are also interested in cases where a popular project does not compile easily with `xx` so it can be improved, and tests can be added that try building these projects when `xx` gets updated. If you want to add support for a new architecture or language, please open an issue first to verify that the proposal matches the scope or `xx`.
