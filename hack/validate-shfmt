@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-
-set -e
-
-docker buildx build \
-  --target validate \
-  --output "type=cacheonly" \
-  --file ./hack/dockerfiles/shfmt.Dockerfile \
-  .

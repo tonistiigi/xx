@@ -18,7 +18,7 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Run
-        run: |
-          ./hack/validate-shfmt
-          ./hack/shellcheck
+        name: Validate
+        uses: docker/bake-action@v1
+        with:
+          targets: validate

@@ -19,6 +19,27 @@ target "test-debian" {
     }
 }
 
+group "validate" {
+    targets = ["shfmt-validate", "shellcheck"]
+}
+
+target "shfmt-validate" {
+    dockerfile = "./hack/dockerfiles/shfmt.Dockerfile"
+    target = "validate"
+    output = ["type=cacheonly"]
+}
+
+target "shfmt" {
+    dockerfile = "./hack/dockerfiles/shfmt.Dockerfile"
+    target = "update"
+    output = ["."]
+}
+
+target "shellcheck" {
+    dockerfile = "./hack/dockerfiles/shellcheck.Dockerfile"
+    output = ["type=cacheonly"]
+}
+
 group "default" {
     targets = ["base-all"]
 }
