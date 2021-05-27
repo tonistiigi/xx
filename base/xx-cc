@@ -206,7 +206,7 @@ EOT
       continue
     fi
     if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
-      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f2)"
+      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f1)"
       if [ "$sha" != "$sha2" ]; then
         echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
         rm "$tmpdir/$file.tar.gz"
@@ -324,7 +324,7 @@ EOT
       continue
     fi
     if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
-      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f2)"
+      sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f1)"
       if [ "$sha" != "$sha2" ]; then
         echo >&2 "checksum mismatch for $file.tar.gz $sha $sha2"
         rm "$tmpdir/$file.tar.gz"
