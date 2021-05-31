@@ -2,6 +2,11 @@ variable "XX_REPO" {
     default = "tonistiigi/xx"
 }
 
+// Special target: https://github.com/docker/metadata-action#bake-definition
+target "meta-helper" {
+    tags = ["${XX_REPO}:test"]
+}
+
 group "test" {
     targets = ["test-alpine", "test-debian"]
 }
@@ -49,9 +54,9 @@ target "_all-platforms" {
 }
 
 target "base" {
+    inherits = ["meta-helper"]
     context = "base"
     target = "base"
-    tags = ["${XX_REPO}"]
 }
 
 target "base-all" {
