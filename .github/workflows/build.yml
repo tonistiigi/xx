@@ -46,6 +46,12 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
         name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
@@ -71,5 +77,5 @@ jobs:
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
-          targets: base
+          targets: base-all
           push: ${{ github.event_name != 'pull_request' }}
