@@ -19,10 +19,7 @@ testHelloCLLD() {
   run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
   assert_output $(xx-info triple)
-  [ -f /etc/llvm/xx-default.cfg ]
-  run cat /etc/llvm/xx-default.cfg
-  assert_success
-  assert_output "-fuse-ld=lld"
+
   [ -f /usr/bin/$(xx-info triple)-clang ]
   [ -f /usr/bin/$(xx-info triple)-clang++ ]
   [ -f /usr/bin/$(xx-info triple).cfg ]
@@ -30,11 +27,16 @@ testHelloCLLD() {
   assert_success
   if ! xx-info is-cross; then
     assert_output "--target=$(xx-info triple) -fuse-ld=lld"
+    [ -f /etc/llvm/xx-default.cfg ]
+    run cat /etc/llvm/xx-default.cfg
+    assert_success
+    assert_output "-fuse-ld=lld"
   else
+    if [ -z "$expectedLinker"]; then expectedLinker="lld"; fi
     if [ -f /etc/alpine-release ]; then
-      assert_output "--target=$(xx-info triple) -fuse-ld=lld --sysroot=/$(xx-info triple)/"
+      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker --sysroot=/$(xx-info triple)/"
     else
-      assert_output "--target=$(xx-info triple) -fuse-ld=lld"
+      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker"
     fi
   fi
   testBuildHello
@@ -193,6 +195,19 @@ testBuildHello() {
 #   testHelloCLLD
 # }
 
+@test "riscv64-c-ld" {
+  if ! supportRiscV; then
+    skip "RISC-V not supported"
+  fi
+  export TARGETARCH=riscv64
+  expectedLinker="/usr/bin/riscv64-alpine-linux-musl-ld"
+  if [ ! -f "/etc/alpine-release" ]; then
+    expectedLinker="/usr/bin/riscv64-linux-gnu-ld"
+  fi
+  testHelloCLLD # actually runs with ld
+  expectedLinker=
+}
+
 @test "ppc64le-c-lld" {
   export TARGETARCH=ppc64le
   testHelloCLLD
@@ -228,6 +243,14 @@ testBuildHello() {
 @test "ppc64le-c++-lld" {
   export TARGETARCH=ppc64le
   testHelloCPPLLD
+}
+
+@test "riscv64-c++-ld" {
+  if ! supportRiscV; then
+    skip "RISC-V not supported"
+  fi
+  export TARGETARCH=riscv64
+  testHelloCPPLLD # actually runs with ld
 }
 
 @test "386-c++-lld" {

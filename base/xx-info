@@ -300,6 +300,7 @@ case "$1" in
     ;;
   "env")
     echo "XX_OS=${TARGETOS}"
+    echo "XX_ARCH=${TARGETARCH}"
     echo "XX_MARCH=${XX_MARCH}"
     echo "XX_VENDOR=${XX_VENDOR}"
     if [ "$TARGETOS" = "linux" ]; then

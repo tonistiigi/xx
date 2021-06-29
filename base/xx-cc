@@ -12,7 +12,7 @@ ensurewget() {
   # wget is almost always installed but just in case
   if ! which wget >/dev/null 2>/dev/null; then
     if which apt >/dev/null 2>/dev/null; then
-      apt update && apt install -y --no-install-recommends wget
+      apt update >/dev/null 2>/dev/null && apt install -y --no-install-recommends wget >/dev/null 2>/dev/null
     fi
     if which apk >/dev/null 2>/dev/null; then
       apk add wget
@@ -199,11 +199,10 @@ EOT
 
   for m in $mirrors; do
     # busybox wget
-    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
-      continue
-    fi
-    if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
-      continue
+    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+      if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+        continue
+      fi
     fi
     if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
       sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f1)"
@@ -317,11 +316,10 @@ EOT
 
   for m in $mirrors; do
     # busybox wget
-    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
-      continue
-    fi
-    if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz"; then
-      continue
+    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+      if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+        continue
+      fi
     fi
     if [ -z "$XX_DOWNLOAD_NO_VALIDATE" ]; then
       sha2="$(sha1sum "$tmpdir/$file.tar.gz" | cut -d' ' -f1)"
@@ -389,6 +387,16 @@ setup() {
   detectTargetOSArch
 
   linker=
+  prefer_lld=1
+
+  # lld has no support for s390x
+  if [ "${target#s390x}" != "${target}" ]; then
+    prefer_lld=
+  fi
+  # lld fails with: relocation R_RISCV_ALIGN requires unimplemented linker relaxation; recompile with -mno-relax
+  if [ "${target#riscv64}" != "${target}" ]; then
+    prefer_lld=
+  fi
 
   if [ "$targetos" = "darwin" ]; then
     if which ld64.signed >/dev/null 2>/dev/null; then
@@ -404,12 +412,9 @@ setup() {
     fi
   fi
 
-  if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
+  if [ -z "$linker" ] && [ -n "$prefer_lld" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
-      # lld has no support for s390x
-      if [ "${target#s390x}" = "${target}" ]; then
-        linker="lld"
-      fi
+      linker="lld"
     fi
   fi
 
@@ -458,15 +463,11 @@ setup() {
     fi
   fi
 
-  if [ -z "$linker" ]; then
+  if [ -z "$linker" ] && [ -n "$prefer_lld" ]; then
     if which lld >/dev/null 2>/dev/null; then
-      # lld has no support for s390x
-      if [ "${target#s390x-}" = "${target}" ]; then
-        linker="lld"
-      fi
+      linker="lld"
     fi
   fi
-
   if [ -z "${linker}" ] || [ "$XX_CC_PREFER_LINKER" = "ld" ]; then
     download_ld
   fi
@@ -476,10 +477,15 @@ setup() {
     exit 1
   fi
 
-  if [ ! -f /etc/llvm/xx-default.cfg ]; then
-    mkdir -p /etc/llvm
-    echo "-fuse-ld=${linker}" >/etc/llvm/xx-default.cfg
+  nativeTarget=$(TARGETPLATFORM='' TARGETARCH='' TARGETOS='' TARGETPAIR='' xx-info triple)
 
+  if [ ! -f /etc/llvm/xx-default.cfg ]; then
+    if [ "$nativeTarget" = "$target" ]; then
+      mkdir -p /etc/llvm
+      echo "-fuse-ld=${linker}" >/etc/llvm/xx-default.cfg
+    fi
+  fi
+  if [ ! -e /usr/local/bin/clang ]; then
     # TODO: support installations other than hardcoded /usr/bin and /usr/local/bin
     ln -s /usr/bin/xx-clang /usr/local/bin/clang 2>/dev/null || true
     ln -s /usr/bin/xx-clang++ /usr/local/bin/clang++ 2>/dev/null || true
@@ -535,7 +541,6 @@ EOT
   fi
 
   config="--target=${target} -fuse-ld=${linker}"
-  nativeTarget=$(TARGETPLATFORM='' TARGETARCH='' TARGETOS='' TARGETPAIR='' xx-info triple)
   if [ "${nativeTarget}" != "${target}" ]; then
     if [ "$targetos" = "darwin" ]; then
       detectMacOSSDK

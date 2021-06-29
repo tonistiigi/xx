@@ -148,6 +148,11 @@ testHelloGO() {
   testHelloGO
 }
 
+@test "riscv64-hellogo" {
+  export TARGETARCH=riscv64
+  testHelloGO
+}
+
 @test "386-hellogo" {
   export TARGETARCH=386
   testHelloGO
@@ -196,6 +201,14 @@ testHelloCGO() {
 
 @test "ppc64le-hellocgo" {
   export TARGETARCH=ppc64le
+  testHelloCGO
+}
+
+@test "riscv64-hellocgo" {
+  if ! supportRiscVCGo; then
+    skip "RISC-V CGO not supported"
+  fi
+  export TARGETARCH=riscv64
   testHelloCGO
 }
 
