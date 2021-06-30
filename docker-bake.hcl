@@ -11,13 +11,17 @@ group "test" {
     targets = ["test-alpine", "test-debian"]
 }
 
-target "test-alpine" {
+target "test-base" {
     context = "base"
     target = "test"
 }
 
+target "test-alpine" {
+    inherits = ["test-base"]
+}
+
 target "test-debian" {
-    inherits = ["test-alpine"]
+    inherits = ["test-base"]
     args = {
         TEST_BASE_TYPE = "debian"
         TEST_BASE_IMAGE = "debian:bullseye"
