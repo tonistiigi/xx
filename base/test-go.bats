@@ -212,7 +212,7 @@ testHelloCGO() {
   rm -rf /usr/bin/$(xx-info triple)* || true
 
   add llvm
-  add pkgconfig || add pkg-config
+  add pkg-config || add pkgconf
   xxadd xx-c-essentials
   run xx-go env
   assert_success

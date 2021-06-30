@@ -39,10 +39,9 @@ jobs:
           -
             image: alpine:edge
             typ: alpine
-          # buster is supported but tests need some hacks to install clang-11 and not clang that defaults to clang-7 and is too old
-          # -
-          #   image: debian:buster-backports
-          #   typ: debian
+          -
+            image: debian:buster-backports
+            typ: debian
           -
             image: debian:bullseye
             typ: debian
