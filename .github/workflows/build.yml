@@ -26,6 +26,29 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          -
+            image: alpine:3.13
+            typ: alpine
+          -
+            image: alpine:3.14
+            typ: alpine
+          -
+            image: alpine:edge
+            typ: alpine
+          # buster is supported but tests need some hacks to install clang-11 and not clang that defaults to clang-7 and is too old
+          # -
+          #   image: debian:buster-backports
+          #   typ: debian
+          -
+            image: debian:bullseye
+            typ: debian
+          -
+            image: debian:sid
+            typ: debian
     steps:
       -
         name: Checkout
@@ -34,7 +57,9 @@ jobs:
         name: Test
         uses: docker/bake-action@v1
         with:
-          targets: test
+          targets: test-${{ matrix.typ }}
+          set: |
+            test-${{ matrix.typ }}.args.TEST_BASE_IMAGE=${{ matrix.image }}
 
   build:
     runs-on: ubuntu-latest
