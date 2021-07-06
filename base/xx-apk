@@ -44,9 +44,10 @@ setup() {
 
   cp /etc/apk/repositories "$apk_dir/"
 
-  # riscv only supported in edge/main atm
+  # riscv only supported in edge atm
   if [ "$TARGETARCH" = "riscv64" ]; then
     echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >"$apk_dir/repositories"
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >>"$apk_dir/repositories"
   fi
   mkdir "$apk_dir/keys"
   mkdir "$apk_dir/protected_paths.d"
