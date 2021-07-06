@@ -24,9 +24,15 @@ fi
 
 # these are not supported yet
 case "${TARGETARCH}" in
-  riscv* | mips*)
+  mips*)
     echo >&2 "skipping packages installation on ${XX_ARCH}"
     exit 0
+    ;;
+  riscv*)
+    if ! grep "sid main" /etc/apt/sources.list >/dev/null; then
+      echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 currently only supported on sid"
+      exit 0
+    fi
     ;;
   *) ;;
 
@@ -65,6 +71,12 @@ done
 
 if [ -z "${parsed}" ]; then
   exec apt "$@"
+fi
+
+if [ "$TARGETARCH" = "riscv64" ]; then
+  apt-get update
+  apt-get install -y debian-ports-archive-keyring
+  echo "deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main" >>/etc/apt/sources.list.d/riscv64-sid.list
 fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then

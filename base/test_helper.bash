@@ -66,3 +66,21 @@ xxrun() {
     ln -s /usr/lib/go-1.15/bin/go /usr/bin/go
   fi
 }
+
+supportRiscV() {
+  if [ -f /etc/debian_version ]; then
+    if grep "sid main" /etc/apt/sources.list 2>/dev/null >/dev/null; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+  return 0
+}
+
+supportRiscVCGo() {
+  if ! supportRiscV; then
+    return 1
+  fi
+  go version | egrep "1.16|1.17|1.18" >/dev/null 2>&1
+}
