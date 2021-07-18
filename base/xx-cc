@@ -434,10 +434,12 @@ setup() {
     ld=$(which "$target-ld" 2>/dev/null || true)
     if [ -n "$ld" ]; then
       linker=${ld}
+      XX_CC_PREFER_LINKER=
     fi
   fi
   if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ]; then
     linker="/${target}/bin/ld"
+    XX_CC_PREFER_LINKER=
   fi
 
   if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
@@ -460,6 +462,7 @@ setup() {
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
       ln -s "$(which ld)" "/usr/bin/${target}-ld"
       linker="/usr/bin/${target}-ld"
+      XX_CC_PREFER_LINKER=
     fi
   fi
 
