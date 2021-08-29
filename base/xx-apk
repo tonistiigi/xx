@@ -13,6 +13,8 @@ if [ -n "$XX_DEBUG_APK" ]; then
   set -x
 fi
 
+unset XX_VENDOR # vendor for installing packages is always alpine
+
 for l in $(xx-info env); do
   export "${l?}"
 done

@@ -15,7 +15,7 @@
 : "${XX_RHEL_ARCH=unknown}"
 : "${XX_OS_VERSION=unknown}"
 : "${XX_TRIPLE=unknown-unknown-none}"
-: "${XX_VENDOR=unknown}"
+: "${XX_VENDOR=}"
 : "${XX_LIBC=}"
 
 usage() {
@@ -105,27 +105,33 @@ if [ -n "$TARGETPLATFORM" ]; then
   fi
 fi
 
+distro=""
 # detect distro vendor
-if [ "$TARGETOS" = "darwin" ]; then
-  XX_VENDOR="apple"
-elif [ -f /etc/os-release ]; then
-  # shellcheck disable=SC1091
-  if . /etc/os-release 2>/dev/null; then
-    XX_VENDOR=$ID
-    XX_OS_VERSION=$VERSION_ID
-  fi
+# shellcheck disable=SC1091
+if . /etc/os-release 2>/dev/null; then
+  distro=$ID
 fi
 
 vendor=""
-case "$XX_VENDOR" in
-  unknown | debian | ubuntu | rhel | fedora | centos | rocky | ol) ;;
-  *)
+if [ -z "$XX_VENDOR" ]; then
+  if [ -n "$distro" ]; then
+    XX_VENDOR="$distro"
+  fi
+  if [ "$TARGETOS" = "darwin" ]; then
+    XX_VENDOR="apple"
+  fi
+  if [ -z "$XX_VENDOR" ]; then
+    XX_VENDOR="unknown"
+  fi
+  if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
     vendor="-${XX_VENDOR}"
-    ;;
-esac
+  fi
+else
+  vendor="-${XX_VENDOR}"
+fi
 
 if [ -z "$XX_LIBC" ]; then
-  if [ "$XX_VENDOR" = "alpine" ]; then
+  if [ "$distro" = "alpine" ]; then
     XX_LIBC="musl"
   else
     XX_LIBC="gnu"
@@ -389,7 +395,6 @@ case "$1" in
     echo "XX_OS_VERSION=${XX_OS_VERSION}"
     echo "XX_ARCH=${TARGETARCH}"
     echo "XX_MARCH=${XX_MARCH}"
-    echo "XX_VENDOR=${XX_VENDOR}"
     if [ "$TARGETOS" = "linux" ]; then
       echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
     fi

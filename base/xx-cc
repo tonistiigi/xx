@@ -588,6 +588,7 @@ export PKG_CONFIG_LIBDIR=/${target}/usr/lib/pkgconfig/
 exec pkg-config "\$@"
 EOT
       chmod +x "/usr/bin/${target}-pkg-config"
+
     fi
   elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
     ln -s pkg-config "/usr/bin/${target}-pkg-config"
@@ -596,6 +597,17 @@ EOT
   echo "$config" >"${f}"
   if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
     ln -s "${f}" "/usr/bin/${target}.cfg"
+  fi
+
+  if [ -f /etc/alpine-release ]; then
+    # if vendor is not alpine then sysroot needs to be linked to the custom vendor
+    alpinetriple=$(echo "$target" | sed s/-[[:alpha:]][[:alpha:]]*-/-alpine-/)
+    if [ "$target" != "$alpinetriple" ]; then
+      # shellcheck disable=SC2044
+      for f in $(find / -type d -name "$alpinetriple"); do
+        ln -s "$alpinetriple" "$(dirname "$f")/$target"
+      done
+    fi
   fi
 
   if [ "${targetos}" = "darwin" ]; then
