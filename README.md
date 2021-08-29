@@ -9,7 +9,7 @@ Cross-compilation can be achieved in Dockerfiles by using multi-stage builds and
 After compilation, the resulting assets can be copied into another stage that will become the result of the build. Usually, this stage does not use `FROM --platform` so that every stage is based on the expected target architecture.
 
 ```
-FROM --from=$BUILDPLATFORM alpine AS xbuild
+FROM --platform=$BUILDPLATFORM alpine AS xbuild
 ARG TARGETPLATFORM
 RUN ./compile --target=$TARGETPLATFORM -o /out/myapp
 
