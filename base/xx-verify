@@ -202,7 +202,7 @@ for f in "$@"; do
   fi
 
   if [ -n "$static" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
-    if ! echo "$out" | grep "statically linked" >/dev/null; then
+    if ! echo "$out" | grep -E "statically linked|static-pie" >/dev/null; then
       echo >&2 "file ${f} is not statically linked: $out"
       exit 1
     fi
