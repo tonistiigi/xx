@@ -84,6 +84,7 @@ cmd() {
   fi
   n=$#
   iscompilerrt=
+  isrustlib=
   for a in "$@"; do
     if [ $# = $n ]; then set --; fi
     case "$a" in
@@ -96,6 +97,10 @@ cmd() {
       "compiler-rt" | "compiler-rt-static")
         iscompilerrt=1
         set -- "$@" "$a"
+        ;;
+      "rust-stdlib")
+        set -- "$@" rust-stdlib
+        isrustlib=1
         ;;
       *)
         set -- "$@" "$a"
@@ -120,6 +125,10 @@ cmd() {
           ln -s "$f" "${ff}"
         fi
       done
+    fi
+    # rust stdlib is accessed from the real root
+    if [ -n "$isrustlib" ] && [ -d "$root/usr/lib/rustlib/$(xx-info)" ]; then
+      ln -s "$root/usr/lib/rustlib/$(xx-info)" "/usr/lib/rustlib/$(xx-info)" || true
     fi
   fi
 }
