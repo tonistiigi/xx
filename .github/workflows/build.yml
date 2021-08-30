@@ -26,6 +26,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allow-failure }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,21 +34,31 @@ jobs:
           -
             image: alpine:3.13
             typ: alpine
+            allow-failure: false
           -
             image: alpine:3.14
             typ: alpine
+            allow-failure: false
           -
             image: alpine:edge
             typ: alpine
+            allow-failure: true
           -
             image: debian:buster-backports
             typ: debian
+            allow-failure: false
           -
             image: debian:bullseye
             typ: debian
+            allow-failure: false
+          -
+            image: debian:bookworm
+            typ: debian
+            allow-failure: false
           -
             image: debian:sid
             typ: debian
+            allow-failure: true
     steps:
       -
         name: Checkout
