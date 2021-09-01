@@ -1,0 +1,83 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ -z "$XX_CARGO_NOLOCK" ]; then
+  lock="/var/lock/xx-cargo"
+  exec 9>$lock
+  flock -x 9
+  export XX_CARGO_NOLOCK=1
+fi
+
+if [ -n "$XX_DEBUG_CARGO" ]; then
+  set -x
+fi
+
+setuponly=
+printtarget=
+n=$#
+for a in "$@"; do
+  if [ $# = $n ]; then set --; fi
+  case "$a" in
+    "--setup-target-triple")
+      setuponly=1
+      ;;
+    "--print-target")
+      printtarget=1
+      ;;
+    *)
+      set -- "$@" "$a"
+      ;;
+  esac
+done
+
+done_file="/.xx-cargo.$(xx-info arch)"
+
+export RISCV64_TARGET_ARCH=riscv64gc
+
+rustup=
+if which rustup >/dev/null 2>&1; then
+  rustup=1
+fi
+
+if [ -n "$rustup" ] || [ ! -f /etc/alpine-release ]; then
+  export XX_VENDOR="unknown"
+fi
+
+if [ ! -f "$done_file" ]; then
+  xx-clang --setup-target-triple
+  if [ ! -d "$(rustc --print sysroot)/lib/rustlib/$(xx-info)" ]; then
+    if [ -n "$rustup" ]; then
+      rustup target add "$(xx-info)" 2>/dev/null >/dev/null
+    elif [ -f /etc/alpine-release ]; then
+      xx-apk add rust-stdlib 2>/dev/null >/dev/null
+    else
+      xx-apt install -y libstd-rust-dev 2>/dev/null >/dev/null
+    fi
+  fi
+  touch "$done_file"
+fi
+
+export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(xx-info)-clang"
+if [ -n "$XX_RUSTFLAGS" ]; then
+  export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUSTFLAGS=$XX_RUSTFLAGS"
+fi
+export "CC_$(xx-info | tr - _)=$(xx-info)-clang"
+
+if which "qemu-$(RISCV64_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1; then
+  export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' xx-info march)"
+  if [ -f /etc/alpine-release ]; then
+    export "QEMU_LD_PREFIX=/$(RISCV64_TARGET_ARCH='' xx-info)/"
+  else
+    export "QEMU_LD_PREFIX=/lib/$(RISCV64_TARGET_ARCH='' XX_VENDOR='' xx-info)/"
+  fi
+fi
+
+if [ -n "$printtarget" ]; then
+  xx-info
+  exit 0
+fi
+
+if [ -z "$setuponly" ]; then
+  cargo "$@" --target="$(xx-info)"
+fi
