@@ -567,7 +567,7 @@ EOT
     fi
   fi
 
-  config="--target=${target} -fuse-ld=${linker}"
+  config="--target=$(echo "${target}" | sed s/^riscv64gc-/riscv64-/) -fuse-ld=${linker}"
   if [ "${nativeTarget}" != "${target}" ]; then
     if [ "$targetos" = "darwin" ]; then
       detectMacOSSDK
@@ -601,7 +601,7 @@ EOT
 
   if [ -f /etc/alpine-release ]; then
     # if vendor is not alpine then sysroot needs to be linked to the custom vendor
-    alpinetriple=$(echo "$target" | sed s/-[[:alpha:]][[:alpha:]]*-/-alpine-/)
+    alpinetriple=$(echo "$target" | sed s/-[[:alpha:]][[:alpha:]]*-/-alpine-/ | sed s/^riscv64gc-/riscv64-/)
     if [ "$target" != "$alpinetriple" ]; then
       # shellcheck disable=SC2044
       for f in $(find / -type d -name "$alpinetriple"); do
