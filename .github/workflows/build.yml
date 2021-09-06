@@ -26,7 +26,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.allow-failure }}
     strategy:
       fail-fast: false
       matrix:
@@ -65,6 +64,7 @@ jobs:
         uses: actions/checkout@v2
       -
         name: Test
+        continue-on-error: ${{ matrix.allow-failure }}
         uses: docker/bake-action@v1
         with:
           targets: test-${{ matrix.typ }}
