@@ -8,15 +8,29 @@ if [ -n "$XX_MIRROR" ]; then
   mirrors="$XX_MIRROR"
 fi
 
+_wget() {
+  if ! wget "$@"; then
+    if [ "$(wget --help 2>&1 | head -n1 | cut -d' ' -f1)" = "GNU" ]; then
+      return 1
+    fi
+    installwget
+    wget "$@"
+  fi
+}
+
 ensurewget() {
   # wget is almost always installed but just in case
   if ! which wget >/dev/null 2>/dev/null; then
-    if which apt >/dev/null 2>/dev/null; then
-      apt update >/dev/null 2>/dev/null && apt install -y --no-install-recommends wget >/dev/null 2>/dev/null
-    fi
-    if which apk >/dev/null 2>/dev/null; then
-      apk add wget
-    fi
+    installwget
+  fi
+}
+
+installwget() {
+  if which apt >/dev/null 2>/dev/null; then
+    apt update >/dev/null 2>/dev/null && apt install -y --no-install-recommends wget >/dev/null 2>/dev/null
+  fi
+  if which apk >/dev/null 2>/dev/null; then
+    apk add wget >/dev/null 2>/dev/null
   fi
 }
 
@@ -198,9 +212,8 @@ EOT
   tmpdir=$(mktemp -d)
 
   for m in $mirrors; do
-    # busybox wget
-    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
-      if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+    if ! _wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+      if ! _wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
         continue
       fi
     fi
@@ -315,9 +328,8 @@ EOT
   tmpdir=$(mktemp -d)
 
   for m in $mirrors; do
-    # busybox wget
-    if ! wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
-      if ! wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+    if ! _wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
+      if ! _wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
         continue
       fi
     fi
