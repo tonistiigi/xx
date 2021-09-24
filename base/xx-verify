@@ -85,7 +85,7 @@ for f in "$@"; do
 
   expOS=""
   case "$TARGETOS" in
-    "linux")
+    "linux" | "freebsd")
       expOS="ELF"
       ;;
     "darwin")
@@ -111,7 +111,7 @@ for f in "$@"; do
   case "$TARGETARCH" in
     "arm64")
       case "$TARGETOS" in
-        "linux")
+        "linux" | "freebsd")
           expArch="ARM aarch64"
           expArch2="64-bit LSB"
           ;;
@@ -125,7 +125,7 @@ for f in "$@"; do
       ;;
     "amd64")
       case "$TARGETOS" in
-        "linux")
+        "linux" | "freebsd")
           expArch="x86-64"
           expArch2="64-bit LSB"
           ;;
@@ -139,7 +139,7 @@ for f in "$@"; do
       ;;
     "arm")
       case "$TARGETOS" in
-        "linux")
+        "linux" | "freebsd")
           expArch="ARM,"
           expArch2="32-bit LSB"
           ;;
@@ -201,7 +201,7 @@ for f in "$@"; do
     fi
   fi
 
-  if [ -n "$static" ] && [ "$TARGETOS" = "linux" ]; then
+  if [ -n "$static" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
     if ! echo "$out" | grep "statically linked" >/dev/null; then
       echo >&2 "file ${f} is not statically linked: $out"
       exit 1
