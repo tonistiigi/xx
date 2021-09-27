@@ -20,16 +20,16 @@ _wget() {
 
 ensurewget() {
   # wget is almost always installed but just in case
-  if ! which wget >/dev/null 2>/dev/null; then
+  if ! command -v wget >/dev/null 2>/dev/null; then
     installwget
   fi
 }
 
 installwget() {
-  if which apt >/dev/null 2>/dev/null; then
+  if command -v apt >/dev/null 2>/dev/null; then
     apt update >/dev/null 2>/dev/null && apt install -y --no-install-recommends wget >/dev/null 2>/dev/null
   fi
-  if which apk >/dev/null 2>/dev/null; then
+  if command -v apk >/dev/null 2>/dev/null; then
     apk add wget >/dev/null 2>/dev/null
   fi
 }
@@ -411,12 +411,12 @@ setup() {
   fi
 
   if [ "$targetos" = "darwin" ]; then
-    if which ld64.signed >/dev/null 2>/dev/null; then
-      linker=$(which ld64.signed)
+    if command -v ld64.signed >/dev/null 2>/dev/null; then
+      linker=$(command -v ld64.signed)
     else
       download_ld64
       if [ -z "$linker" ]; then
-        if ! which ld64 >/dev/null 2>/dev/null; then
+        if ! command -v ld64 >/dev/null 2>/dev/null; then
           echo >&2 "error: building for darwin requires ld64 linker"
         fi
         linker=ld64
@@ -425,14 +425,14 @@ setup() {
   fi
 
   if [ -z "$linker" ] && [ -n "$prefer_lld" ] && [ "${XX_CC_PREFER_LINKER}" = "lld" ]; then
-    if which lld >/dev/null 2>/dev/null; then
+    if command -v lld >/dev/null 2>/dev/null; then
       linker="lld"
     fi
   fi
 
   if [ -z "$linker" ] && [ "${XX_CC_PREFER_LINKER}" = "gold" ]; then
     if [ -z "${linker}" ]; then
-      ld=$(which "$target-gold" 2>/dev/null || true)
+      ld=$(command -v "$target-gold" 2>/dev/null || true)
       if [ -n "$ld" ]; then
         linker=${ld}
       fi
@@ -443,7 +443,7 @@ setup() {
   fi
 
   if [ -z "${linker}" ]; then
-    ld=$(which "$target-ld" 2>/dev/null || true)
+    ld=$(command -v "$target-ld" 2>/dev/null || true)
     if [ -n "$ld" ]; then
       linker=${ld}
       XX_CC_PREFER_LINKER=
@@ -454,7 +454,7 @@ setup() {
     XX_CC_PREFER_LINKER=
   fi
 
-  if [ -z "${linker}" ] && which ld >/dev/null 2>/dev/null; then
+  if [ -z "${linker}" ] && command -v ld >/dev/null 2>/dev/null; then
     exp=$targetarch
     if [ "$exp" = "amd64" ]; then
       exp="x86_64"
@@ -472,14 +472,14 @@ setup() {
       exp="riscv"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
-      ln -s "$(which ld)" "/usr/bin/${target}-ld"
+      ln -s "$(command -v ld)" "/usr/bin/${target}-ld"
       linker="/usr/bin/${target}-ld"
       XX_CC_PREFER_LINKER=
     fi
   fi
 
   if [ -z "$linker" ] && [ -n "$prefer_lld" ]; then
-    if which lld >/dev/null 2>/dev/null; then
+    if command -v lld >/dev/null 2>/dev/null; then
       linker="lld"
     fi
   fi
@@ -528,7 +528,7 @@ EOT
   done
 
   for f in addr2line ar as ranlib nm dlltool strip; do
-    if ! which "${target}-${f}" >/dev/null 2>/dev/null; then
+    if ! command -v "${target}-${f}" >/dev/null 2>/dev/null; then
       if [ -f "/usr/bin/llvm-${f}" ]; then
         if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
           cat <<EOT >"/usr/bin/${target}-$f"
@@ -544,7 +544,7 @@ EOT
   done
 
   if [ "$targetos" = "windows" ]; then
-    if which llvm-rc 2>/dev/null >/dev/null; then
+    if command -v llvm-rc 2>/dev/null >/dev/null; then
       if [ ! -f "/usr/bin/${target}-windres" ] && [ ! -h "/usr/bin/${target}-windres" ]; then
         cat <<EOT >"/usr/bin/${target}-windres"
 #!/usr/bin/env sh
@@ -576,14 +576,14 @@ EOT
   elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
     ln -s pkg-config "/usr/bin/${target}-pkg-config"
   fi
-  f="$(dirname "$(readlink -f "$(which /usr/bin/clang)")")/${target}.cfg"
+  f="$(dirname "$(readlink -f "$(command -v /usr/bin/clang)")")/${target}.cfg"
   echo "$config" >"${f}"
   if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
     ln -s "${f}" "/usr/bin/${target}.cfg"
   fi
 
   if [ "${targetos}" = "darwin" ]; then
-    if ! which xcrun 2>/dev/null >/dev/null; then
+    if ! command -v xcrun 2>/dev/null >/dev/null; then
       writexcrun
     fi
   fi

@@ -24,7 +24,7 @@ testEnv() {
 }
 
 @test "native-env" {
-  if which apk >/dev/null 2>/dev/null; then
+  if command -v apk >/dev/null 2>/dev/null; then
     add go
   else
     add golang
@@ -270,7 +270,7 @@ testHelloCGO() {
   done
   del clang lld llvm
   del pkgconfig || del pkg-config
-  if which apk >/dev/null 2>/dev/null; then
+  if command -v apk >/dev/null 2>/dev/null; then
     del go
   else
     del golang

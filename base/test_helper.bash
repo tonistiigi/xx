@@ -57,12 +57,12 @@ xxrun() {
       ln -s clang-11 /usr/bin/clang
       ln -s clang++-11 /usr/bin/clang++
     fi
-    if [ ! -f /usr/bin/clang-11 ] && [ "clang11" = "$(readlink $(which clang))" ]; then
+    if [ ! -f /usr/bin/clang-11 ] && [ "clang11" = "$(readlink $(command -v clang))" ]; then
       rm /usr/bin/clang
       rm /usr/bin/clang++
     fi
   fi
-  if [ -n "$wasgolang" ] && ! which go 2>/dev/null >/dev/null; then
+  if [ -n "$wasgolang" ] && ! command -v go 2>/dev/null >/dev/null; then
     ln -s /usr/lib/go-1.15/bin/go /usr/bin/go
   fi
 }
