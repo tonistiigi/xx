@@ -59,3 +59,10 @@ load "assert"
   assert_equal "riscv64-linux-gnu" "$(TARGETPLATFORM=linux/riscv64 xx-info triple)"
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
 }
+
+@test "sysroot" {
+  assert_equal "/" "$(xx-info sysroot)"
+  assert_equal "/" "$(TARGETPLATFORM=linux/amd64 xx-info sysroot)"
+  assert_equal "/" "$(TARGETPLATFORM=linux/arm64 xx-info sysroot)"
+  assert_equal "/" "$(TARGETPLATFORM=linux/riscv64 xx-info sysroot)"
+}
