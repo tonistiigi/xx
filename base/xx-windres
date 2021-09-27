@@ -328,14 +328,14 @@ if [ "$inputf" = "rc" ]; then
     preprocessor=$CC
   fi
   if [ -z "$preprocessor" ]; then
-    if which clang >/dev/null 2>/dev/null; then
+    if command -v clang >/dev/null 2>/dev/null; then
       preprocessor="clang"
     else
       preprocessor="gcc"
     fi
   fi
 
-  if ! which llvm-rc 2>/dev/null >/dev/null; then
+  if ! command -v llvm-rc 2>/dev/null >/dev/null; then
     echo >&2 "llvm-rc not installed"
     exit 1
   fi
@@ -362,7 +362,7 @@ fi
 if [ "$outputf" = "res" ]; then
   run cp $resfile $output
 else
-  if ! which llvm-cvtres 2>/dev/null >/dev/null; then
+  if ! command -v llvm-cvtres 2>/dev/null >/dev/null; then
     echo >&2 "llvm-cvtres not installed"
     exit 1
   fi

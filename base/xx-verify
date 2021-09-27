@@ -18,10 +18,10 @@ for l in $(xx-info env); do
 done
 
 setup() {
-  if ! which file >/dev/null 2>/dev/null; then
-    if which apk >/dev/null; then
+  if ! command -v file >/dev/null 2>/dev/null; then
+    if command -v apk >/dev/null; then
       apk add --no-cache file >"$1"
-    elif which apt >/dev/null; then
+    elif command -v apt >/dev/null; then
       apt update && apt install -y file
     else
       echo >&2 "file not installed and no package manager not found"
