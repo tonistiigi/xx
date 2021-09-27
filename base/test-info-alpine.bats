@@ -69,3 +69,15 @@ load 'assert'
   assert_equal "x86_64-apple-macos10.15" "$(TARGETPLATFORM=darwin/amd64 MACOSX_VERSION_MIN=10.15 xx-info triple)"
   assert_equal "apple" "$(TARGETPLATFORM=darwin/amd64 xx-info vendor)"
 }
+
+@test "sysroot" {
+  assert_equal "/" "$(xx-info sysroot)"
+  if [ "$(xx-info arch)" != "amd64" ]; then
+    assert_equal "/x86_64-alpine-linux-musl/" "$(TARGETPLATFORM=linux/amd64 xx-info sysroot)"
+  fi
+  if [ "$(xx-info arch)" != "arm64" ]; then
+    assert_equal "/aarch64-alpine-linux-musl/" "$(TARGETPLATFORM=linux/arm64 xx-info sysroot)"
+  fi
+  assert_equal "/xx-sdk/MacOSX11.1.sdk/" "$(TARGETPLATFORM=darwin/amd64 xx-info sysroot)"
+  assert_equal "/xx-sdk/MacOSX11.1.sdk/" "$(TARGETPLATFORM=darwin/arm64 xx-info sysroot)"
+}

@@ -29,6 +29,7 @@ Commands:
   march          Print target machine architecture, uname -m
   os             Print target operating system (linux,darwin,windows,wasi)
   pkg-arch       Print either alpine-arch or debian-arch
+  sysroot        Print sysroot directory for target architecture
   triple         Print target triple in arch[-vendor]-os-abi form
   vendor         Print vendor part of target triple
   variant        Print target variant if architecture is arm (eg. v7)
@@ -38,6 +39,16 @@ EOT
 }
 
 set -e
+
+macos_sdk_path=/xx-sdk/MacOSX11.1.sdk
+detectMacOSSDK() {
+  if [ -d "/xx-sdk" ]; then
+    for f in /xx-sdk/MacOSX*.sdk; do
+      macos_sdk_path="$f"
+      break
+    done
+  fi
+}
 
 # TARGETPAIR is an optional alternative format $TARGETOS-$TARGETARCH$TARGETVARIANT, eg linux-amd64, linux-armv7
 # This format is recommended to be used in image and binary names where slashes are not allowed.
@@ -311,6 +322,19 @@ case "$1" in
     echo "TARGETOS=${TARGETOS}"
     echo "TARGETARCH=${TARGETARCH}"
     echo "TARGETVARIANT=${TARGETVARIANT}"
+    ;;
+  "sysroot")
+    sysroot="/"
+    if [ -f /etc/alpine-release ] && [ "$XX_MARCH" != "$(uname -m)" ] && [ "$TARGETOS" = "linux" ]; then
+      sysroot="/${XX_TRIPLE}/"
+    fi
+    if [ "$TARGETOS" = "darwin" ]; then
+      detectMacOSSDK
+      if [ -n "$macos_sdk_path" ]; then
+        sysroot="${macos_sdk_path}/"
+      fi
+    fi
+    echo "$sysroot"
     ;;
   "--help")
     usage
