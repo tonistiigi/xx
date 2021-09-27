@@ -38,6 +38,13 @@ case "${TARGETARCH}" in
 
 esac
 
+arg0="$(basename "$0")"
+if [ "$arg0" = "xx-apt-get" ]; then
+  arg0="apt-get"
+else
+  arg0="apt"
+fi
+
 packages=
 parsed=
 n=$#
@@ -98,13 +105,13 @@ packages2=
 for p in ${packages}; do
   if [ "${p}" = "xx-c-essentials" ]; then
     p="libc6-dev"
-    if apt info "libgcc-10-dev:${XX_PKG_ARCH}"; then
+    if "$arg0" info "libgcc-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
       p="$p libgcc-10-dev"
     else
       p="$p libgcc-8-dev"
     fi
   elif [ "${p}" = "xx-cxx-essentials" ]; then
-    if apt info "libstdc++-10-dev:${XX_PKG_ARCH}"; then
+    if "$arg0" info "libstdc++-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
       p="libstdc++-10-dev"
     else
       p="libstdc++-8-dev"
@@ -121,7 +128,7 @@ for p in ${packages2}; do
   n=
   if [ -n "$nocross" ]; then
     n=${p}
-  elif apt info "${p}-${suffix}" >/dev/null 2>/dev/null; then
+  elif "$arg0" info "${p}-${suffix}" >/dev/null 2>/dev/null; then
     n="${p}-${suffix}"
   elif [ -n "${XX_APT_PREFER_CROSS}" ] && apt info "${p}-${XX_PKG_ARCH}-cross" >/dev/null 2>/dev/null; then
     n="${p}-${XX_PKG_ARCH}-cross"
@@ -131,5 +138,5 @@ for p in ${packages2}; do
   set -- "$@" "$n"
 done
 
-echo >&2 "+ apt " "$@"
-exec apt "$@"
+echo >&2 "+ $arg0 " "$@"
+exec "$arg0" "$@"

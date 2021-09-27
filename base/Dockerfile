@@ -9,7 +9,8 @@ FROM --platform=$BUILDPLATFORM alpine AS scripts
 COPY xx-* /out/
 RUN ln -s xx-cc /out/xx-clang && \
     ln -s xx-cc /out/xx-clang++ && \
-    ln -s xx-cc /out/xx-c++ 
+    ln -s xx-cc /out/xx-c++ && \
+    ln -s xx-apt /out/xx-apt-get
 
 FROM scratch AS base
 COPY --from=scripts /out/ /usr/bin/

@@ -34,7 +34,7 @@ ARG TARGETPLATFORM
 RUN xx-info env
 ```
 
-`xx` currently contains `xx-info`, `xx-apk`, `xx-apt`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
+`xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
 
 ### Supported targets
 
@@ -89,9 +89,9 @@ TARGETVARIANT=
 ```
 
 
-### xx-apk, xx-apt - Installing packages for target architecture
+### xx-apk, xx-apt, xx-apt-get - Installing packages for target architecture
 
-These scripts allow managing packages (most commonly installing new packages) from either Alpine or Debian repositories. They can be invoked with any arguments regular `apk` or `apt` commands accept. If cross-compiling for non-native architectures, the repositories for the target architecture are added automatically, and packages are installed from there. On Alpine, installing packages for a different architecture under the same root is not allowed, so `xx-apt` installs packages under a secondary root `/${triple}`. These scripts are meant for installing headers and libraries that compilers may need. To avoid unnecessary garbage, the non-native binaries under `*/bin` are skipped on installation.
+These scripts allow managing packages (most commonly installing new packages) from either Alpine or Debian repositories. They can be invoked with any arguments regular `apk` or `apt/apt-get` commands accept. If cross-compiling for non-native architectures, the repositories for the target architecture are added automatically, and packages are installed from there. On Alpine, installing packages for a different architecture under the same root is not allowed, so `xx-apk` installs packages under a secondary root `/${triple}`. These scripts are meant for installing headers and libraries that compilers may need. To avoid unnecessary garbage, the non-native binaries under `*/bin` are skipped on installation.
 
 ```
 # alpine
@@ -102,7 +102,7 @@ RUN xx-apk add --no-cache musl-dev zlib-dev
 ```
 # debian
 ARG TARGETPLATFORM
-RUN xx-apt install -y libc6-dev zlib1g-dev
+RUN xx-apt-get install -y libc6-dev zlib1g-dev
 ```
 
 Installing two meta-libraries, `xx-c-essentials`, `xx-cxx-essentials` is also allowed that expand the minimum necessary packages for either base image.
@@ -187,13 +187,13 @@ RUN xx-clang -o hello hello.c
 
 Refer to the previous section for other variants.
 
-If you wish to build with GCC instead of Clang you need to install `gcc` and `binutils` packages additionally with `xx-apt`. `xx-apt` will automatically install the packages that generate binaries for the current target architecture. You can then call GCC directly with the correct target triple. Note that Debian currently only provides GCC cross-compilation packages if your native platform is amd64 or arm64.
+If you wish to build with GCC instead of Clang you need to install `gcc` and `binutils` packages additionally with `xx-apt-get`. `xx-apt-get` will automatically install the packages that generate binaries for the current target architecture. You can then call GCC directly with the correct target triple. Note that Debian currently only provides GCC cross-compilation packages if your native platform is amd64 or arm64.
 
 ```
 ...
 # copy source
 ARG TARGETPLATFORM
-RUN xx-apt install -y binutils gcc libc6-dev
+RUN xx-apt-get install -y binutils gcc libc6-dev
 RUN $(xx-info)-gcc -o hello hello.c
 ```
 
