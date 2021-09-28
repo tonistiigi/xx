@@ -356,7 +356,10 @@ EOT
 basename=$(basename "$0")
 name=${basename#xx-}
 
+# XX_CC_PREFER_LINKER defines the linker to use if the compiler supports it
 : "${XX_CC_PREFER_LINKER=lld}"
+# XX_CC_PREFER_STATIC_LINKER prefers ld to lld in ppc64le and 386. This is recommended for building static binaries.
+: "${XX_CC_PREFER_STATIC_LINKER=}"
 
 if [ "$name" = "cc" ]; then
   name="clang"
@@ -407,6 +410,10 @@ setup() {
   fi
   # lld fails with: relocation R_RISCV_ALIGN requires unimplemented linker relaxation; recompile with -mno-relax
   if [ "${target#riscv64}" != "${target}" ]; then
+    prefer_lld=
+  fi
+
+  if [ -n "${XX_CC_PREFER_STATIC_LINKER}" ] && { [ "${target#386}" != "${target}" ] || [ "${target#powerpc64le}" != "${target}" ]; }; then
     prefer_lld=
   fi
 

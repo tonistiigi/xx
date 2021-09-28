@@ -161,6 +161,39 @@ testBuildHello() {
   del binutils
 }
 
+@test "prefer-static-linker" {
+  clean
+  add clang lld
+  export XX_NO_DOWNLOAD=1
+  export XX_CC_PREFER_STATIC_LINKER=1
+
+  export TARGETPLATFORM="linux/ppc64le"
+
+  touch /usr/bin/$(xx-info triple)-ld
+
+  run xx-clang --setup-target-triple
+  assert_success
+
+  run cat /usr/bin/$(xx-info).cfg
+  assert_success
+  assert_output --partial "-fuse-ld=/usr/bin/powerpc64le-"
+  assert_output --partial "-ld"
+
+  clean
+  add clang lld
+  unset XX_CC_PREFER_STATIC_LINKER
+
+  run xx-clang --setup-target-triple
+  assert_success
+
+  run cat /usr/bin/$(xx-info).cfg
+  assert_success
+  assert_output --partial "-fuse-ld=lld"
+
+  unset TARGETPLATFORM
+  rm /usr/bin/$(xx-info triple)-ld
+}
+
 @test "native-c++" {
   add clang
   unset TARGETARCH
