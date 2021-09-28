@@ -34,9 +34,9 @@ testHelloCLLD() {
   else
     if [ -z "$expectedLinker"]; then expectedLinker="lld"; fi
     if [ -f /etc/alpine-release ]; then
-      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker --sysroot=/$(xx-info triple)/"
+      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker --sysroot=/$(xx-info triple)/$expectedSuffix"
     else
-      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker"
+      assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker$expectedSuffix"
     fi
   fi
   testBuildHello
@@ -203,9 +203,12 @@ testBuildHello() {
   expectedLinker="/usr/bin/riscv64-alpine-linux-musl-ld"
   if [ ! -f "/etc/alpine-release" ]; then
     expectedLinker="/usr/bin/riscv64-linux-gnu-ld"
+  else
+    expectedSuffix=" -Wl,-rpath-link,/riscv64-alpine-linux-musl/usr/lib"
   fi
   testHelloCLLD # actually runs with ld
   expectedLinker=
+  expectedSuffix=
 }
 
 @test "ppc64le-c-lld" {
