@@ -85,8 +85,11 @@ for f in "$@"; do
 
   expOS=""
   case "$TARGETOS" in
-    "linux" | "freebsd")
+    "linux")
       expOS="ELF"
+      ;;
+    "freebsd")
+      expOS="ELF.*FreeBSD-style"
       ;;
     "darwin")
       expOS="Mach-O"
