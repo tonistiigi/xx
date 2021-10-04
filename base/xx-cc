@@ -400,6 +400,7 @@ setup() {
 
   linker=
   prefer_lld=1
+  is_bfd=
 
   # lld has no support for s390x
   if [ "${target#s390x}" != "${target}" ]; then
@@ -447,11 +448,13 @@ setup() {
     if [ -n "$ld" ]; then
       linker=${ld}
       XX_CC_PREFER_LINKER=
+      is_bfd=1
     fi
   fi
   if [ -z "${linker}" ] && [ -f "/${target}/bin/ld" ]; then
     linker="/${target}/bin/ld"
     XX_CC_PREFER_LINKER=
+    is_bfd=1
   fi
 
   if [ -z "${linker}" ] && command -v ld >/dev/null 2>/dev/null; then
@@ -475,6 +478,7 @@ setup() {
       ln -s "$(command -v ld)" "/usr/bin/${target}-ld"
       linker="/usr/bin/${target}-ld"
       XX_CC_PREFER_LINKER=
+      is_bfd=1
     fi
   fi
 
@@ -485,6 +489,7 @@ setup() {
   fi
   if [ -z "${linker}" ] || [ "$XX_CC_PREFER_LINKER" = "ld" ]; then
     download_ld
+    is_bfd=1
   fi
 
   if [ -z "${linker}" ]; then
@@ -564,6 +569,10 @@ EOT
       config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
     elif [ -f /etc/alpine-release ]; then
       config="${config} --sysroot=/${target}/"
+
+      if [ -n "$is_bfd" ]; then
+        config="${config} -Wl,-rpath-link,/${target}/usr/lib"
+      fi
 
       cat <<EOT >"/usr/bin/${target}-pkg-config"
 #!/usr/bin/env sh
