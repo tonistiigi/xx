@@ -73,14 +73,20 @@ set +e
 for f in "$@"; do
   if [ "${f#-}" != "${f}" ]; then continue; fi
 
-  if [ ! -f "${f}" ]; then
-    echo >&2 "file not found: ${f}"
-    exit 1
-  fi
+  if [ -z "${XX_VERIFY_FILE_CMD_OUTPUT}" ]; then
 
-  if ! out=$(file -L -b "${f}" 2>&1); then
-    echo >&2 "failed to run file for ${f}: $out"
-    exit 1
+    if [ ! -f "${f}" ]; then
+      echo >&2 "file not found: ${f}"
+      exit 1
+    fi
+
+    if ! out=$(file -L -b "${f}" 2>&1); then
+      echo >&2 "failed to run file for ${f}: $out"
+      exit 1
+    fi
+
+  else
+    out="${XX_VERIFY_FILE_CMD_OUTPUT}"
   fi
 
   expOS=""
@@ -202,10 +208,15 @@ for f in "$@"; do
   fi
 
   if [ -n "$static" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
-    if ! echo "$out" | grep "statically linked" >/dev/null; then
-      echo >&2 "file ${f} is not statically linked: $out"
-      exit 1
+    if echo "$out" | grep -E "statically linked|static-pie" >/dev/null; then
+      exit 0
     fi
+    if echo "$out" | grep " pie " | grep -v ", interpreter " >/dev/null; then
+      exit 0
+    fi
+
+    echo >&2 "file ${f} is not statically linked: $out"
+    exit 1
   fi
 
 done
