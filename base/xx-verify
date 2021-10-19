@@ -90,9 +90,21 @@ for f in "$@"; do
   fi
 
   expOS=""
+  expOS2=""
   case "$TARGETOS" in
-    "linux" | "freebsd")
+    "linux" | "freebsd" | "netbsd" | "openbsd")
       expOS="ELF"
+      case "$TARGETOS" in
+        "freebsd")
+          expOS2="(FreeBSD)"
+          ;;
+        "netbsd")
+          expOS2="(NetBSD)"
+          ;;
+        "openbsd")
+          expOS2="(OpenBSD)"
+          ;;
+      esac
       ;;
     "darwin")
       expOS="Mach-O"
@@ -112,47 +124,69 @@ for f in "$@"; do
     exit 1
   fi
 
+  if [ -n "$expOS2" ]; then
+    if ! echo "$out" | grep "$expOS2" >/dev/null; then
+      echo >&2 "file ${f} does not match expected target OS ${TARGETOS}: $out"
+      exit 1
+    fi
+  fi
+
+  if [ "linux" = "$TARGETOS" ]; then
+    if echo "$out" | grep -E "FreeBSD|NetBSD|OpenBSD" >/dev/null; then
+      echo >&2 "file ${f} does not match expected target OS ${TARGETOS}: $out"
+      exit 1
+    fi
+  fi
+
   expArch=""
   expArch2="" # extra check for endianness
   case "$TARGETARCH" in
     "arm64")
       case "$TARGETOS" in
-        "linux" | "freebsd")
-          expArch="ARM aarch64"
-          expArch2="64-bit LSB"
-          ;;
         "darwin")
           expArch="arm64"
           ;;
         "windows")
           expArch="Aarch64"
           ;;
+        *)
+          expArch="ARM aarch64"
+          expArch2="64-bit LSB"
+          ;;
       esac
       ;;
     "amd64")
       case "$TARGETOS" in
-        "linux" | "freebsd")
-          expArch="x86-64"
-          expArch2="64-bit LSB"
-          ;;
         "darwin")
           expArch="x86_64"
           ;;
         "windows")
           expArch="x86-64"
           ;;
+        *)
+          expArch="x86-64"
+          expArch2="64-bit LSB"
+          ;;
       esac
       ;;
     "arm")
       case "$TARGETOS" in
-        "linux" | "freebsd")
-          expArch="ARM,"
-          expArch2="32-bit LSB"
-          ;;
         "windows")
           expArch="ARMv7"
           ;;
+        *)
+          expArch="ARM,"
+          expArch2="32-bit LSB"
+          ;;
       esac
+      ;;
+    "armbe")
+      expArch="ARM,"
+      expArch2="32-bit MSB"
+      ;;
+    "arm64be")
+      expArch="ARM aarch64"
+      expArch2="64-bit MSB"
       ;;
     "riscv64")
       expArch="RISC-V"
@@ -161,6 +195,10 @@ for f in "$@"; do
     "ppc64le")
       expArch="64-bit PowerPC"
       expArch2="64-bit LSB"
+      ;;
+    "ppc64")
+      expArch="64-bit PowerPC"
+      expArch2="64-bit MSB"
       ;;
     "s390x")
       expArch="IBM S/390"
