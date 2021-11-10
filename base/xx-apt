@@ -21,10 +21,12 @@ checkpkg() {
   apt show "$@"
 }
 
-if [ "${TARGETOS}" != "linux" ]; then
-  echo >&2 "skipping packages installation on ${XX_OS}"
-  exit 0
-fi
+exitnolinux() {
+  if [ "${TARGETOS}" != "linux" ]; then
+    echo >&2 "skipping packages installation on ${XX_OS}"
+    exit 0
+  fi
+}
 
 # these are not supported yet
 case "${TARGETARCH}" in
@@ -125,6 +127,7 @@ for p in "$@"; do
 done
 
 if [ -z "${parsed}" ]; then
+  exitnolinux
   exec apt "$@"
 fi
 
@@ -140,19 +143,29 @@ if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ]; then
 fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
-  if [ "$(xx-info vendor)" = "ubuntu" ] && [ -z "$nocross" ]; then
-    # ubuntu uses different repositories for amd64/386 and rest of the architectures
-    # so we need to fix the sources.list and add new ones
-    fixubuntusources
-  fi
+  if [ "$XX_OS" = "linux" ]; then
+    if [ "$(xx-info vendor)" = "ubuntu" ] && [ -z "$nocross" ]; then
+      # ubuntu uses different repositories for amd64/386 and rest of the architectures
+      # so we need to fix the sources.list and add new ones
+      fixubuntusources
+    fi
 
-  dpkg --add-architecture "$XX_PKG_ARCH"
+    dpkg --add-architecture "$XX_PKG_ARCH"
+  fi
   apt-get update
 fi
 
 suffix=$XX_TRIPLE
 if [ "$suffix" = "x86_64-linux-gnu" ]; then
   suffix="x86-64-linux-gnu"
+fi
+if [ "$XX_OS" = "windows" ]; then
+  case "$XX_ARCH" in
+    amd64) suffix="mingw-w64-x86-64" ;;
+    386) suffix="mingw-w64-i686" ;;
+    arm64) suffix="mingw-w64-aarch64" ;;
+    arm) suffix="mingw-w64-arm" ;;
+  esac
 fi
 
 packages2=
@@ -178,19 +191,27 @@ for p in ${packages}; do
   fi
 done
 
+empty=1
 for p in ${packages2}; do
   n=
   if [ -n "$nocross" ]; then
     n=${p}
   elif checkpkg "${p}-${suffix}" >/dev/null 2>/dev/null; then
     n="${p}-${suffix}"
-  elif [ -n "${XX_APT_PREFER_CROSS}" ] && checkpkg "${p}-${XX_PKG_ARCH}-cross" >/dev/null 2>/dev/null; then
+  elif [ "${XX_OS}" = "linux" ] && [ -n "${XX_APT_PREFER_CROSS}" ] && checkpkg "${p}-${XX_PKG_ARCH}-cross" >/dev/null 2>/dev/null; then
     n="${p}-${XX_PKG_ARCH}-cross"
-  else
+  elif [ "${XX_OS}" = "linux" ]; then
     n="${p}:${XX_PKG_ARCH}"
+  else
+    continue
   fi
+  empty=
   set -- "$@" "$n"
 done
+
+if [ -n "$empty" ]; then
+  exitnolinux
+fi
 
 echo >&2 "+ $arg0 " "$@"
 exec "$arg0" "$@"
