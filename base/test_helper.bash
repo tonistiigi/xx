@@ -78,9 +78,17 @@ supportRiscV() {
   return 0
 }
 
+supportRiscVGo() {
+  go version | grep -E "1.14|1.15|1.16|1.17|1.18|1.19" >/dev/null 2>&1
+}
+
 supportRiscVCGo() {
   if ! supportRiscV; then
     return 1
   fi
-  go version | egrep "1.16|1.17|1.18" >/dev/null 2>&1
+  go version | egrep -E "1.16|1.17|1.18|1.19" >/dev/null 2>&1
+}
+
+supportRC() {
+  command -v llvm-rc >/dev/null 2>&1
 }

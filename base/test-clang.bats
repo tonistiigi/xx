@@ -211,6 +211,7 @@ testBuildHello() {
 }
 
 @test "armv6-c-lld" {
+  if [ "$(xx-info vendor)" = "ubuntu" ]; then skip; fi
   export TARGETARCH=arm
   export TARGETVARIANT=v6
   testHelloCLLD
@@ -265,6 +266,7 @@ testBuildHello() {
 }
 
 @test "armv6-c++-lld" {
+  if [ "$(xx-info vendor)" = "ubuntu" ]; then skip; fi
   export TARGETARCH=arm
   export TARGETVARIANT=v6
   testHelloCPPLLD

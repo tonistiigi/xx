@@ -63,6 +63,14 @@ jobs:
             image: fedora:35
             typ: rhel
             allow-failure: false
+          -
+            image: ubuntu:20.04
+            typ: debian
+            allow-failure: false
+          -
+            image: ubuntu:21.10
+            typ: debian
+            allow-failure: false
     steps:
       -
         name: Checkout
