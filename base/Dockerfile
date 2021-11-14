@@ -32,6 +32,12 @@ RUN --mount=type=cache,target=/pkg-cache \
     apt update && apt install --no-install-recommends -y bats vim
 WORKDIR /work
 
+FROM ${TEST_BASE_IMAGE} AS test-base-rhel
+RUN --mount=type=cache,target=/pkg-cache \
+    rm -rf /var/cache/yum && \
+    ln -s /pkg-cache /var/cache/yum && \
+    yum -y install bats vim
+WORKDIR /work
 
 FROM test-base-${TEST_BASE_TYPE} AS test
 COPY --from=assert . .

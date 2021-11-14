@@ -11,6 +11,8 @@
 : "${XX_ALPINE_ARCH=unknown}"
 # https://www.debian.org/ports/
 : "${XX_DEBIAN_ARCH=unknown}"
+# https://docs.fedoraproject.org/ro/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch01s03.html
+: "${XX_RHEL_ARCH=unknown}"
 : "${XX_TRIPLE=unknown-unknown-none}"
 : "${XX_VENDOR=unknown}"
 : "${XX_LIBC=}"
@@ -29,6 +31,7 @@ Commands:
   march          Print target machine architecture, uname -m
   os             Print target operating system (linux,darwin,windows,wasi)
   pkg-arch       Print either alpine-arch or debian-arch
+  rhel-arch      Print target architecture for RPM package repositories
   sysroot        Print sysroot directory for target architecture
   triple         Print target triple in arch[-vendor]-os-abi form
   vendor         Print vendor part of target triple
@@ -107,7 +110,7 @@ fi
 
 vendor=""
 
-if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
+if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ] && [ "$XX_VENDOR" != "rhel" ] && [ "$XX_VENDOR" != "fedora" ] && [ "$XX_VENDOR" != "centos" ] && [ "$XX_VENDOR" != "rocky" ]; then
   vendor="-${XX_VENDOR}"
 fi
 
@@ -182,6 +185,7 @@ case "$TARGETARCH" in
     XX_MARCH="x86_64"
     XX_DEBIAN_ARCH="amd64"
     XX_ALPINE_ARCH="x86_64"
+    XX_RHEL_ARCH="x86_64"
     XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
     if [ "$TARGETOS" = "darwin" ]; then
       XX_TRIPLE="x86_64${vendor}-macos${MACOSX_VERSION_MIN}"
@@ -193,6 +197,7 @@ case "$TARGETARCH" in
     XX_MARCH="aarch64"
     XX_DEBIAN_ARCH="arm64"
     XX_ALPINE_ARCH="aarch64"
+    XX_RHEL_ARCH="aarch64"
     XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
     if [ "$TARGETOS" = "darwin" ]; then
       XX_MARCH="arm64"
@@ -205,6 +210,7 @@ case "$TARGETARCH" in
     XX_MARCH="armv7l"
     XX_DEBIAN_ARCH="armhf"
     XX_ALPINE_ARCH="armv7"
+    XX_RHEL_ARCH="armv7hl"
     XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabihf"
     if [ "$XX_VENDOR" = "alpine" ]; then
       XX_TRIPLE="armv7${vendor}-linux-${XX_LIBC}eabihf"
@@ -213,6 +219,7 @@ case "$TARGETARCH" in
       XX_MARCH="armv6l"
       XX_DEBIAN_ARCH="armel"
       XX_ALPINE_ARCH="armhf"
+      XX_RHEL_ARCH="armv6hl"
       XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
       if [ "$XX_VENDOR" = "alpine" ]; then
         XX_TRIPLE="armv6${vendor}-linux-${XX_LIBC}eabihf"
@@ -222,6 +229,7 @@ case "$TARGETARCH" in
       XX_MARCH="armv5l"
       XX_DEBIAN_ARCH="armel"
       XX_ALPINE_ARCH="armel" # alpine does not actually support v5
+      XX_RHEL_ARCH="armv5tel"
       XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
       if [ "$XX_VENDOR" = "alpine" ]; then
         XX_TRIPLE="armv5${vendor}-linux-${XX_LIBC}eabi"
@@ -236,24 +244,28 @@ case "$TARGETARCH" in
     XX_MARCH="riscv64"
     XX_DEBIAN_ARCH="riscv64"
     XX_ALPINE_ARCH="riscv64"
+    XX_RHEL_ARCH="riscv64"
     XX_TRIPLE="riscv64${vendor}-linux-${XX_LIBC}"
     ;;
   "ppc64le")
     XX_MARCH="ppc64le"
     XX_DEBIAN_ARCH="ppc64el"
     XX_ALPINE_ARCH="ppc64le"
+    XX_RHEL_ARCH="ppc64le"
     XX_TRIPLE="powerpc64le${vendor}-linux-${XX_LIBC}"
     ;;
   "s390x")
     XX_MARCH="s390x"
     XX_DEBIAN_ARCH="s390x"
     XX_ALPINE_ARCH="s390x"
+    XX_RHEL_ARCH="s390x"
     XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
     ;;
   "386")
     XX_MARCH="i386"
     XX_DEBIAN_ARCH="i386"
     XX_ALPINE_ARCH="x86"
+    XX_RHEL_ARCH="i386"
     XX_TRIPLE="i686${vendor}-linux-${XX_LIBC}"
     if [ "$XX_VENDOR" = "alpine" ]; then
       XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
@@ -269,6 +281,8 @@ if [ "$XX_VENDOR" = "debian" ]; then
   XX_PKG_ARCH=${XX_DEBIAN_ARCH}
 elif [ "$XX_VENDOR" = "alpine" ]; then
   XX_PKG_ARCH=${XX_ALPINE_ARCH}
+elif [ "$XX_VENDOR" = "rhel" ] || [ "$XX_VENDOR" = "fedora" ] || [ "$XX_VENDOR" = "centos" ] || [ "$XX_VENDOR" = "rocky" ]; then
+  XX_PKG_ARCH=${XX_RHEL_ARCH}
 fi
 
 case "$1" in
@@ -296,6 +310,9 @@ case "$1" in
     ;;
   "alpine-arch")
     echo $XX_ALPINE_ARCH
+    ;;
+  "rhel-arch")
+    echo $XX_RHEL_ARCH
     ;;
   "pkg-arch")
     echo $XX_PKG_ARCH

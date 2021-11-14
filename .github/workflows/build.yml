@@ -59,6 +59,10 @@ jobs:
             image: debian:sid
             typ: debian
             allow-failure: true
+          -
+            image: fedora:35
+            typ: rhel
+            allow-failure: false
     steps:
       -
         name: Checkout
