@@ -60,7 +60,8 @@ These commands return architecture names as used by specific tools to avoid conv
 - `xx-info march` - Target machine architecture that is expected to match value of `uname -m`
 - `xx-info alpine-arch`  - Target architecture for [Alpine package repositories](https://pkgs.alpinelinux.org/packages)
 - `xx-info debian-arch` - Target architecture for [Debian package repositories](https://www.debian.org/ports/)
-- `xx-info pkg-arch` - Either alpine-arch or debian-arch depending on the context
+- `xx-info rhel-arch` - Target architecture for [RPM package repositories](https://docs.fedoraproject.org/ro/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch01s03.html)
+- `xx-info pkg-arch` - Either alpine-arch, debian-arch or rhel-arch depending on the context
 
 #### Target triple
 

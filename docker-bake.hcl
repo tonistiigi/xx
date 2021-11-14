@@ -8,7 +8,7 @@ target "meta-helper" {
 }
 
 group "test" {
-    targets = ["test-alpine", "test-debian"]
+    targets = ["test-alpine", "test-debian", "test-rhel"]
 }
 
 target "test-base" {
@@ -25,6 +25,15 @@ target "test-debian" {
     args = {
         TEST_BASE_TYPE = "debian"
         TEST_BASE_IMAGE = "debian:bullseye"
+    }
+}
+
+target "test-rhel" {
+    inherits = ["test-base"]
+    args = {
+        TEST_BASE_TYPE = "rhel"
+        TEST_BASE_IMAGE = "fedora:35"
+        TEST_CMDS = "info"
     }
 }
 
