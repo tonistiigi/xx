@@ -2,8 +2,19 @@
 
 load "assert"
 
+vendor="rhel"
+if grep </etc/redhat-release "Fedora" 2>/dev/null >/dev/null; then
+  vendor="fedora"
+elif grep </etc/redhat-release "CentOS" 2>/dev/null >/dev/null; then
+  vendor="centos"
+elif grep </etc/redhat-release "Rocky Linux" 2>/dev/null >/dev/null; then
+  vendor="rocky"
+elif [ -f /etc/oracle-release ] && grep </etc/oracle-release "Oracle Linux" 2>/dev/null >/dev/null; then
+  vendor="ol"
+fi
+
 @test "vendor" {
-  assert_equal "fedora" "$(xx-info vendor)"
+  assert_equal "$vendor" "$(xx-info vendor)"
 }
 
 @test "rhel-arch" {
