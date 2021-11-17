@@ -2,8 +2,14 @@
 
 load "assert"
 
+vendor="debian"
+
+if grep "Ubuntu" /etc/issue 2>/dev/null >/dev/null; then
+  vendor="ubuntu"
+fi
+
 @test "vendor" {
-  assert_equal "debian" "$(xx-info vendor)"
+  assert_equal "$vendor" "$(xx-info vendor)"
 }
 
 @test "libc" {

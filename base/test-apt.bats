@@ -9,15 +9,15 @@ load 'assert'
 }
 
 @test "native" {
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev"
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc"
 }
@@ -26,21 +26,21 @@ load 'assert'
   export TARGETARCH=amd64
   if ! xx-info is-cross; then skip; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:amd64"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:amd64"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-amd64-cross"
   unset XX_APT_PREFER_CROSS
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-x86-64-linux-gnu"
 }
@@ -49,21 +49,21 @@ load 'assert'
   export TARGETARCH=arm64
   if ! xx-info is-cross; then return; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:arm64"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:arm64"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-arm64-cross"
   unset XX_APT_PREFER_CROSS
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-aarch64-linux-gnu"
 }
@@ -72,21 +72,21 @@ load 'assert'
   export TARGETARCH=arm
   if ! xx-info is-cross; then return; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:armhf"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:armhf"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-armhf-cross"
   unset XX_APT_PREFER_CROSS
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-arm-linux-gnueabihf"
 }
@@ -95,22 +95,23 @@ load 'assert'
   export TARGETARCH=arm
   export TARGETVARIANT=v6
   if ! xx-info is-cross; then return; fi
+  if [ "$(xx-info vendor)" = "ubuntu" ]; then skip; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:armel"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:armel"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-armel-cross"
   unset XX_APT_PREFER_CROSS
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-arm-linux-gnueabi"
   unset TARGETVARIANT
@@ -120,16 +121,16 @@ load 'assert'
   export TARGETARCH=s390x
   if ! xx-info is-cross; then return; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:s390x"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:s390x"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-s390x-cross"
   unset XX_APT_PREFER_CROSS
@@ -139,7 +140,7 @@ load 'assert'
     return
   fi
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-s390x-linux-gnu"
 }
@@ -148,16 +149,16 @@ load 'assert'
   export TARGETARCH=ppc64le
   if ! xx-info is-cross; then return; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:ppc64el"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:ppc64el"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-ppc64el-cross"
   unset XX_APT_PREFER_CROSS
@@ -167,7 +168,7 @@ load 'assert'
     return
   fi
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-powerpc64le-linux-gnu"
 }
@@ -176,21 +177,21 @@ load 'assert'
   export TARGETARCH=386
   if ! xx-info is-cross; then return; fi
 
-  run xx-apt info file
+  run xx-apt show file
   assert_success
   assert_line "Package: file:i386"
 
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev:i386"
 
   export XX_APT_PREFER_CROSS=1
-  run xx-apt info libc6-dev
+  run xx-apt show libc6-dev
   assert_success
   assert_line "Package: libc6-dev-i386-cross"
   unset XX_APT_PREFER_CROSS
 
-  run xx-apt info gcc
+  run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-i686-linux-gnu"
 }

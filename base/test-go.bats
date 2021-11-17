@@ -149,6 +149,9 @@ testHelloGO() {
 }
 
 @test "riscv64-hellogo" {
+  if ! supportRiscVGo; then
+    skip "RISC-V GO not supported"
+  fi
   export TARGETARCH=riscv64
   testHelloGO
 }

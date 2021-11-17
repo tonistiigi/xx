@@ -12,6 +12,9 @@ load 'test_helper'
 }
 
 @test "basic" {
+  if ! supportRC; then
+    skip "llvm-rc not installed" # ubuntu 18.04
+  fi
   export XX_WINDRES_DRYRUN=1
   export TARGETPLATFORM=windows/arm
   export XX_TMP_FILE_FIXED=/tmp/foo
