@@ -110,7 +110,7 @@ fi
 
 vendor=""
 
-if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ] && [ "$XX_VENDOR" != "rhel" ] && [ "$XX_VENDOR" != "fedora" ] && [ "$XX_VENDOR" != "centos" ] && [ "$XX_VENDOR" != "rocky" ] && [ "$XX_VENDOR" != "ubuntu" ]; then
+if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ] && [ "$XX_VENDOR" != "ubuntu" ] && [ "$XX_VENDOR" != "rhel" ] && [ "$XX_VENDOR" != "fedora" ] && [ "$XX_VENDOR" != "centos" ] && [ "$XX_VENDOR" != "rocky" ] && [ "$XX_VENDOR" != "ol" ]; then
   vendor="-${XX_VENDOR}"
 fi
 
@@ -281,7 +281,7 @@ if [ "$XX_VENDOR" = "debian" ] || [ "$XX_VENDOR" = "ubuntu" ]; then
   XX_PKG_ARCH=${XX_DEBIAN_ARCH}
 elif [ "$XX_VENDOR" = "alpine" ]; then
   XX_PKG_ARCH=${XX_ALPINE_ARCH}
-elif [ "$XX_VENDOR" = "rhel" ] || [ "$XX_VENDOR" = "fedora" ] || [ "$XX_VENDOR" = "centos" ] || [ "$XX_VENDOR" = "rocky" ]; then
+elif [ "$XX_VENDOR" = "rhel" ] || [ "$XX_VENDOR" = "fedora" ] || [ "$XX_VENDOR" = "centos" ] || [ "$XX_VENDOR" = "rocky" ] || [ "$XX_VENDOR" = "ol" ]; then
   XX_PKG_ARCH=${XX_RHEL_ARCH}
 fi
 

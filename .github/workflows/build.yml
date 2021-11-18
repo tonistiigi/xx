@@ -60,16 +60,32 @@ jobs:
             typ: debian
             allow-failure: true
           -
-            image: fedora:35
-            typ: rhel
-            allow-failure: false
-          -
             image: ubuntu:20.04
             typ: debian
             allow-failure: false
           -
             image: ubuntu:21.10
             typ: debian
+            allow-failure: false
+          -
+            image: redhat/ubi8
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:35
+            typ: rhel
+            allow-failure: false
+          -
+            image: centos:8
+            typ: rhel
+            allow-failure: false
+          -
+            image: rockylinux/rockylinux:8
+            typ: rhel
+            allow-failure: false
+          -
+            image: oraclelinux:8
+            typ: rhel
             allow-failure: false
     steps:
       -

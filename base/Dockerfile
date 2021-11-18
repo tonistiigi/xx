@@ -1,4 +1,5 @@
-#syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.3-labs
+
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
 ARG TEST_WITH_DARWIN=false
@@ -33,6 +34,16 @@ RUN --mount=type=cache,target=/pkg-cache \
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-rhel
+RUN <<EOT
+set -ex
+if ! yum install -y epel-release; then
+  if . /etc/os-release 2>/dev/null; then
+    if [ "$ID" != "fedora" ]; then
+      yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
+    fi
+  fi
+fi
+EOT
 RUN --mount=type=cache,target=/pkg-cache \
     rm -rf /var/cache/yum && \
     ln -s /pkg-cache /var/cache/yum && \
