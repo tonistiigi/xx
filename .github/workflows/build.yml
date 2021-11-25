@@ -40,6 +40,10 @@ jobs:
             typ: alpine
             allow-failure: false
           -
+            image: alpine:3.15
+            typ: alpine
+            allow-failure: false
+          -
             image: alpine:edge
             typ: alpine
             allow-failure: true
