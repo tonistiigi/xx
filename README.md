@@ -20,7 +20,7 @@ COPY --from=xbuild /out/myapp /bin
 
 ### Installation
 
-`xx` is distributed with a Docker image `tonistiigi/xx` that contains a collection of helper scripts that read `TARGET*` environment variables to automatically configure the compilation targets. The scripts are based on Posix Shell, so they should work on top of any image but currently `xx` is expected to work on Alpine and Debian based distros. In order to avoid unexpected changes, you may want to pin the image using an immutable digest. Although `xx` only contains shell scripts that are identical for every platform it is recommended to also import `xx` with `FROM --platform=$BUILDPLATFORM`, so that import commands are shared for all compilation targets.
+`xx` is distributed with a Docker image `tonistiigi/xx` that contains a collection of helper scripts that read `TARGET*` environment variables to automatically configure the compilation targets. The scripts are based on Posix Shell, so they should work on top of any image but currently `xx` is expected to work on Alpine and Debian/Ubuntu based distros. In order to avoid unexpected changes, you may want to pin the image using an immutable digest. Although `xx` only contains shell scripts that are identical for every platform it is recommended to also import `xx` with `FROM --platform=$BUILDPLATFORM`, so that import commands are shared for all compilation targets.
 
 ```
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
@@ -38,9 +38,11 @@ RUN xx-info env
 
 ### Supported targets
 
-`xx` supports building from and into Linux amd64, arm64, arm/v7, s390x, ppc64le and 386, and Alpine and Debian.
+`xx` supports building from and into Linux amd64, arm64, arm/v7, s390x, ppc64le and 386, and Alpine, Debian and Ubuntu. Risc-V is supported for Go builds and for newer distros that provide Risc-V packages like `alpine:edge` or `debian:sid`.
 
-Go builds that don't depend on system packages can additionally target Linux Riscv64 and MacOS and Windows on all architectures. C/C++/CGo builds are supported for MacOS targets if an external SDK image is provided. 
+Go builds that don't depend on system packages can additionally target MacOS and Windows on all architectures. C/C++/CGo builds are supported for MacOS targets when an external SDK image is provided.
+
+`xx-info` command also works on RHEL-style distros but no support is provided for package manager wrappers(eg. yum, dnf) there.
 
 
 ### xx-info - Information about the build context
@@ -175,7 +177,7 @@ RUN $(xx-info)-clang -o hello hello.c
 
 #### Building on Debian
 
-Building on Debian is very similar. The only required dependency that needs to be installed with `xx-apt` is `libc6-dev` or `libstdc++-N-dev` for C++.
+Building on Debian/Ubuntu is very similar. The only required dependency that needs to be installed with `xx-apt` is `libc6-dev` or `libstdc++-N-dev` for C++.
 
 ```
 ...
@@ -341,6 +343,7 @@ These projects, as well as [xx Dockerfile](https://github.com/tonistiigi/xx/blob
 - [Docker CLI](https://github.com/docker/cli/blob/86e1f04b5f115fb0b4bbd51e0e4a68233072d24b/Dockerfile)
 - [Binfmt (Qemu)](https://github.com/tonistiigi/binfmt/blob/8703596e93946b9e31161c060a9ac41a8b578c3f/Dockerfile)
 - [Docker Buildx](https://github.com/docker/buildx/blob/4fec647b9d8f34f8569141124d8462c912858144/Dockerfile)
+- [Containerd](https://github.com/containerd/containerd/blob/9e7910ebdcbf3bf10ebd0a282ab9996572e38749/.github/workflows/release/Dockerfile)
 
 ### Issues
 
