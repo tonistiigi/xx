@@ -47,7 +47,7 @@ EOT
 RUN --mount=type=cache,target=/pkg-cache \
     rm -rf /var/cache/yum && \
     ln -s /pkg-cache /var/cache/yum && \
-    yum -y install bats vim
+    yum update -y && yum -y install bats vim
 WORKDIR /work
 
 FROM test-base-${TEST_BASE_TYPE} AS test
