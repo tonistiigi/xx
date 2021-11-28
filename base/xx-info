@@ -109,10 +109,12 @@ if [ "$TARGETOS" = "darwin" ]; then
 fi
 
 vendor=""
-
-if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ] && [ "$XX_VENDOR" != "ubuntu" ] && [ "$XX_VENDOR" != "rhel" ] && [ "$XX_VENDOR" != "fedora" ] && [ "$XX_VENDOR" != "centos" ] && [ "$XX_VENDOR" != "rocky" ] && [ "$XX_VENDOR" != "ol" ]; then
-  vendor="-${XX_VENDOR}"
-fi
+case "$XX_VENDOR" in
+  unknown | debian | ubuntu | rhel | fedora | centos | rocky | ol) ;;
+  *)
+    vendor="-${XX_VENDOR}"
+    ;;
+esac
 
 if [ -z "$XX_LIBC" ]; then
   if [ "$XX_VENDOR" = "alpine" ]; then
@@ -277,13 +279,18 @@ case "$TARGETARCH" in
 esac
 
 XX_PKG_ARCH=$TARGETARCH
-if [ "$XX_VENDOR" = "debian" ] || [ "$XX_VENDOR" = "ubuntu" ]; then
-  XX_PKG_ARCH=${XX_DEBIAN_ARCH}
-elif [ "$XX_VENDOR" = "alpine" ]; then
-  XX_PKG_ARCH=${XX_ALPINE_ARCH}
-elif [ "$XX_VENDOR" = "rhel" ] || [ "$XX_VENDOR" = "fedora" ] || [ "$XX_VENDOR" = "centos" ] || [ "$XX_VENDOR" = "rocky" ] || [ "$XX_VENDOR" = "ol" ]; then
-  XX_PKG_ARCH=${XX_RHEL_ARCH}
-fi
+
+case "$XX_VENDOR" in
+  debian | ubuntu)
+    XX_PKG_ARCH=${XX_DEBIAN_ARCH}
+    ;;
+  alpine)
+    XX_PKG_ARCH=${XX_ALPINE_ARCH}
+    ;;
+  rhel | fedora | centos | rocky | ol)
+    XX_PKG_ARCH=${XX_RHEL_ARCH}
+    ;;
+esac
 
 case "$1" in
   "is-cross")
