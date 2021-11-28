@@ -24,7 +24,7 @@ Usage: $(basename "$0") [COMMAND]
 Commands:
   alpine-arch    Print target architecture for Alpine package repositories
   arch           Print target architecture for Docker
-  debian-arch    Print target architecture for Debian package repositories
+  debian-arch    Print target architecture for Debian/Ubuntu package repositories
   env            Print XX_* variables defining target environment
   is-cross       Exit cleanly if target is not native architecture
   libc           Print used libc (musl or gnu)
