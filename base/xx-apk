@@ -81,6 +81,7 @@ cmd() {
     root="/${XX_TRIPLE}"
   fi
   n=$#
+  iscompilerrt=
   for a in "$@"; do
     if [ $# = $n ]; then set --; fi
     case "$a" in
@@ -89,6 +90,10 @@ cmd() {
         ;;
       "xx-cxx-essentials")
         set -- "$@" g++
+        ;;
+      "compiler-rt" | "compiler-rt-static")
+        iscompilerrt=1
+        set -- "$@" "$a"
         ;;
       *)
         set -- "$@" "$a"
@@ -103,6 +108,16 @@ cmd() {
   if xx-info is-cross; then
     if [ -z "$XX_APK_KEEP_BINARIES" ]; then
       rm -rf "/${XX_TRIPLE:?}/usr/bin/*"
+    fi
+    if [ -n "$iscompilerrt" ]; then
+      # shellcheck disable=SC2044
+      for f in $(find /"$(xx-info)"/usr/lib/clang -type f -name "*clang_rt.*"); do
+        ff=${f#/$(xx-info)}
+        if [ ! -f "${ff}" ]; then
+          mkdir -p "$(dirname "${ff}")"
+          ln -s "$f" "${ff}"
+        fi
+      done
     fi
   fi
 }
