@@ -34,16 +34,19 @@ fi
 @test "arm" {
   assert_equal "arm-linux-gnueabihf" "$(TARGETPLATFORM=linux/arm xx-info triple)"
   assert_equal "armhf" "$(TARGETPLATFORM=linux/arm xx-info pkg-arch)"
+  assert_equal "v7" "$(TARGETPLATFORM=linux/arm xx-info variant)"
 }
 
 @test "armv6" {
   assert_equal "arm-linux-gnueabi" "$(TARGETPLATFORM=linux/arm/v6 xx-info triple)"
   assert_equal "armel" "$(TARGETPLATFORM=linux/arm/v6 xx-info pkg-arch)"
+  assert_equal "v6" "$(TARGETPLATFORM=linux/arm/v6 xx-info variant)"
 }
 
 @test "armv5" {
   assert_equal "arm-linux-gnueabi" "$(TARGETPLATFORM=linux/arm/v5 xx-info triple)"
   assert_equal "armel" "$(TARGETPLATFORM=linux/arm/v5 xx-info pkg-arch)"
+  assert_equal "v5" "$(TARGETPLATFORM=linux/arm/v5 xx-info variant)"
 }
 
 @test "386" {
