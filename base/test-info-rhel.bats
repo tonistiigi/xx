@@ -31,14 +31,17 @@ fi
 
 @test "arm" {
   assert_equal "armv7hl" "$(TARGETPLATFORM=linux/arm xx-info pkg-arch)"
+  assert_equal "v7" "$(TARGETPLATFORM=linux/arm xx-info variant)"
 }
 
 @test "armv6" {
   assert_equal "armv6hl" "$(TARGETPLATFORM=linux/arm/v6 xx-info pkg-arch)"
+  assert_equal "v6" "$(TARGETPLATFORM=linux/arm/v6 xx-info variant)"
 }
 
 @test "armv5" {
   assert_equal "armv5tel" "$(TARGETPLATFORM=linux/arm/v5 xx-info pkg-arch)"
+  assert_equal "v5" "$(TARGETPLATFORM=linux/arm/v5 xx-info variant)"
 }
 
 @test "386" {
