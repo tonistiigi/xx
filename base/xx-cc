@@ -56,6 +56,12 @@ detectMacOSSDK() {
       fi
       break
     done
+
+    for f in /xx-sdk/zig-$(xx-info arch)-macos*; do
+      macos_sdk_path="$f"
+      macos_sdk_version="$(echo "$f" | cut -d'.' -f2).0"
+      break
+    done
   fi
 }
 
@@ -181,6 +187,10 @@ detectTargetOSArch() {
 detectMacOSSDK() {
   if [ -d "/xx-sdk" ]; then
     for f in /xx-sdk/MacOSX*.sdk; do
+      macos_sdk_path="$f"
+      break
+    done
+    for f in /xx-sdk/zig-$targetarch-macos*; do
       macos_sdk_path="$f"
       break
     done

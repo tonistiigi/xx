@@ -73,18 +73,18 @@ RUN --mount=type=cache,target=/pkg-cache \
     [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; ./test-go.bats
 
 FROM --platform=${BUILDPLATFORM} alpine AS libtapi-base
-RUN apk add --no-cache git clang lld cmake make python3 bash
-COPY --from=base / /
+RUN apk add --no-cache git clang lld cmake python3 bash make
 ARG LIBTAPI_VERSION=1100.0.11
 RUN git clone https://github.com/tpoechtrager/apple-libtapi --depth 1 -b ${LIBTAPI_VERSION}
 WORKDIR ./apple-libtapi
 RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
     git apply /tmp/libtapi-cmake-args.patch
 RUN apk add --no-cache gcc g++
+COPY --from=base / /
 RUN NOMAKE=1 CMAKE_EXTRA_ARGS="$(xx-clang --print-cmake-defines)" ./build.sh && \
     cd build && \
-    make -j $(nproc) clang-tblgen llvm-tblgen && \
-    cp -a bin/clang-tblgen bin/llvm-tblgen /usr/bin/ && \
+    make -j $(nproc) clang-tblgen llvm-tblgen tapi && \
+    cp -a bin/clang-tblgen bin/llvm-tblgen bin/tapi /usr/bin/ && \
     cd .. && rm -rf build
 
 FROM libtapi-base AS libtapi
@@ -113,11 +113,11 @@ RUN apk add --no-cache git clang lld make llvm
 COPY --from=base / /
 WORKDIR /work
 ARG CCTOOLS_REPO=https://github.com/tpoechtrager/cctools-port
-ARG CCTOOLS_VERSION=949.0.1-ld64-530
+ARG CCTOOLS_VERSION=973.0.1-ld64-609
 RUN git clone $CCTOOLS_REPO -b ${CCTOOLS_VERSION}
 WORKDIR ./cctools-port/cctools
 ARG TARGETPLATFORM
-RUN xx-apk add --no-cache musl-dev gcc g++
+RUN xx-apk add --no-cache musl-dev gcc g++ bsd-compat-headers
 
 FROM cctools-base AS lipo-base
 ARG LIPO_CFLAGS="-Wl,-s -Os"
@@ -209,6 +209,91 @@ FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
+FROM --platform=$BUILDPLATFORM alpine AS zig-src
+RUN apk add git
+ARG ZIG_VERSION=0.9.0
+ARG ZIG_COMMIT=a18bf7a7bfa4e8c32aa25295cfa1ca768e5f5b74
+RUN <<eot
+    set -ex
+    git clone https://github.com/ziglang/zig
+    cd zig
+    git checkout "$ZIG_VERSION"
+    [ -n "$ZIG_COMMIT" ] && [ "$(git rev-parse HEAD)" = "${ZIG_COMMIT}" ]
+eot
+WORKDIR zig
+RUN <<eot
+    set -ex
+    for arch in aarch64 x86_64; do
+        for ver in 11 12; do
+            if [ ! -d "lib/libc/include/$arch-macos.$ver-gnu" ]; then continue; fi
+            if [ "$arch" = "aarch64" ]; then tarch="arm64"; fi
+            if [ "$arch" = "x86_64" ]; then tarch="amd64"; fi
+            dir=/out/zig-$tarch-macos.$ver
+            mkdir -p "$dir/usr/include"
+            mkdir -p "$dir/usr/lib"
+            cp -a "lib/libc/darwin/libSystem.$ver.tbd" "$dir/usr/lib/libSystem.tbd"
+            cp -a "lib/libc/include/any-macos-any/." "$dir/usr/include/"
+            if [ -d "lib/libc/include/any-macos.$ver-any" ]; then
+                cp -a "lib/libc/include/any-macos.$ver-any/." "$dir/usr/include/"
+            fi
+            cp -a "lib/libc/include/$arch-macos.$ver-gnu/." "$dir/usr/include/"
+            for l in libc libdbm libdl libgcc_s.1 libinfo libm libmx libpoll libproc libthread librpcsvc; do
+                ln -s libSystem.tbd "$dir/usr/lib/$l.tbd"
+            done
+        done
+    done
+eot
+
+FROM scratch AS darwin-sdk-base
+COPY --from=zig-src /out /xx-sdk/
+
+FROM --platform=$BUILDPLATFORM alpine AS mingw-build
+RUN apk add clang lld git make llvm
+COPY --from=base / /
+WORKDIR /src
+RUN git clone https://github.com/mingw-w64/mingw-w64 && cd mingw-w64 && git checkout 586baa17bb41dd78addd8cbb6415cfd24d24e925
+WORKDIR mingw-w64/mingw-w64-headers
+ARG TARGETPLATFORM
+RUN mkdir build && cd build && \
+  ../configure --prefix=/usr/$(xx-info) --enable-idl --with-default-win32-winnt=0x601 --with-default-msvcrt=ucrt && \
+  make -j $(nproc) && make install && \
+  cd .. && rm -rf build
+
+WORKDIR ../mingw-w64-crt
+RUN <<eot
+  set -ex
+  mkdir build && cd build
+  case $(xx-info arch) in
+    arm)
+      flags="--disable-lib32 --disable-lib64 --enable-libarm32"
+    ;;
+    arm64)
+      flags="--disable-lib32 --disable-lib64 --enable-libarm64"
+    ;;
+    386)
+      flags="--enable-lib32 --disable-lib64"
+    ;;
+    amd64)
+      flags="--disable-lib32 --enable-lib64"
+    ;;
+  esac
+  ../configure --host=$(xx-clang --print-target-triple) --prefix=/usr/$(xx-info)/ $flags --with-default-msvcrt=ucrt
+  make -j $(nproc)
+  make install
+eot
+
+RUN mkdir -p /out/$(xx-info) && cp -a /usr/$(xx-info)/. /out/$(xx-info)/
+
+FROM scratch AS mingw
+COPY --from=mingw-build /out /usr/
+
+FROM mingw AS windows-sdk-base
+FROM scratch AS linux-sdk-base
+
+FROM $TARGETOS-sdk-base AS sdk-base
+
+
+
 FROM --platform=darwin/amd64 tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwin-amd64
 FROM tonistiigi/osxcross:xx-sdk-11.1 AS sdk-extras-darwin
 
@@ -240,7 +325,9 @@ FROM scratch AS ld64-tgz
 COPY --from=ld64-tgz-build /out-tgz/ /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
-COPY --from=sdk-extras-darwin-amd64 / /
+COPY --from=ld64-signed-static / /usr/bin/
+# COPY --from=sdk-extras-darwin-amd64 / /
+COPY --from=zig-darwin-sdk / /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwinfalse
 
@@ -346,37 +433,99 @@ FROM --platform=$BUILDPLATFORM alpine AS compiler-rt-build
 RUN apk add --no-cache git cmake clang lld make ninja python3 llvm
 WORKDIR /work
 COPY --from=base / /
-ARG LLVM_VERSION=llvmorg-11.0.1
+ARG LLVM_VERSION=llvmorg-13.0.0
 RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
 WORKDIR llvm-project/compiler-rt
 ARG TARGETPLATFORM
-RUN xx-apk add gcc g++
-RUN mkdir build && cd build && \
-    cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_LIPO=/usr/bin/llvm-lipo -G Ninja .. && \
-    ninja && mkdir /out && cp -a lib/linux /out/ && \
-    cd .. && rm -rf build
+COPY --from=sdk-base / /
+RUN xx-apk add gcc g++ linux-headers
+RUN <<eot
+  set -ex
+  mkdir build && cd build
+  case $(xx-info arch) in
+    arm | 386)
+      dptrsize="-DCMAKE_SIZEOF_VOID_P=4"
+    ;;
+    *)
+      dptrsize="-DCMAKE_SIZEOF_VOID_P=8"
+    ;;
+  esac
+  cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_LIPO=/usr/bin/llvm-lipo -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 $dptrsize -G Ninja ..
+  ninja
+  mkdir /out && cp -a lib/$(xx-info os) /out/
+  cd .. && rm -rf build
+eot
 
 FROM scratch AS compiler-rt
 COPY --from=compiler-rt-build /out /usr/lib/clang/compiler-rt/
 
 FROM --platform=$BUILDPLATFORM alpine AS libcxx-build
-RUN apk add --no-cache git cmake clang lld make ninja python3 binutils
+RUN apk add --no-cache git cmake clang lld ninja python3 llvm
 WORKDIR /work
 COPY --from=base / /
-ARG LLVM_VERSION=llvmorg-11.0.1
+ARG LLVM_VERSION=llvmorg-13.0.0
 RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
-WORKDIR llvm-project/libcxx
-ARG LIBCXX_TARGET
-ENV TARGETPLATFORM=${LIBCXX_TARGET}
-RUN xx-apk -v add gcc g++ linux-headers
-RUN mkdir build && cd build && \
-    cmake $(xx-clang --print-cmake-defines) -DLIBCXX_HAS_MUSL_LIBC=ON -G Ninja .. && \
-    ninja && mkdir /out && cp -a lib/libc++* /out/ && \
-    xx-verify /out/libc++.so && \
+WORKDIR llvm-project
+ARG MACOSX_VERSION_MIN=11.0
+ARG TARGETPLATFORM
+COPY --from=sdk-base / /
+RUN xx-apk add gcc g++ linux-headers
+RUN mkdir build && cd build && mkdir /out &&  \
+    cmake $(xx-clang --print-cmake-defines) -DLIBCXX_HAS_MUSL_LIBC=ON -DCMAKE_CROSSCOMPILING=1 -DCMAKE_CXX_COMPILER_WORKS=1 ../runtimes/ -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_INSTALL_PREFIX=/out/ -G Ninja .. && \
+    ninja install-cxx install-cxxabi install-unwind && \
+    (xx-verify /out/lib/libc++.so.1.0 || xx-verify /out/lib/libc++.1.0.dylib) && \
     cd .. && rm -rf build
 
 FROM scratch AS libcxx
-COPY --from=libcxx-build /out /usr/lib/
+COPY --from=libcxx-build /out /usr/
+
+FROM --platform=$BUILDPLATFORM alpine AS darwin-sdk-cxx-build
+RUN apk add libstdc++
+COPY --from=base / /
+ARG MACOS_SDK_VERSION=12
+COPY --from=libtapi-base /usr/bin/tapi /usr/bin
+COPY --from=sdk-base / /
+COPY --from=libcxx / /opt/libcxx/
+ARG TARGETPLATFORM
+RUN <<eot
+  set -ex
+  sysroot="/xx-sdk/zig-$(xx-info arch)-macos.${MACOS_SDK_VERSION}"
+  for f in $(find /opt/libcxx/usr/lib -type f -name "*.dylib"); do
+    name="$(echo "$(basename $f)" | cut -d . -f 1)"
+    tapi stubify -o "$sysroot/usr/lib/$name.tbd" $f
+  done
+  cp -a /opt/libcxx/usr/include/. "$sysroot/usr/include/"
+  mkdir -p /out
+  cp -a "$sysroot/." /out/
+eot
+
+FROM scratch AS darwin-sdk-cxx
+COPY --from=darwin-sdk-cxx-build /out/ /
+
+FROM scratch AS linux-sdk-cxx
+FROM scratch AS windows-sdk-cxx
+
+FROM ${TARGETOS}-sdk-cxx AS sdk-cxx
+
+FROM --platform=$BUILDPLATFORM alpine AS sdk-tarball-build
+COPY --from=base / /
+ARG TARGETPLATFORM
+ARG MACOS_SDK_VERSION=12
+RUN --mount=target=/files,from=sdk-cxx <<eot
+  set -ex
+  mkdir -p /out
+  if [ -z "$(ls -A /files)" ]; then exit 0; fi
+  out="/out/$(xx-info).tar"
+  if [ "$(xx-info os)" = "darwin" ]; then
+    out="/out/zig-$(xx-info arch)-macos.${MACOS_SDK_VERSION}.tar"
+  fi
+  cd /files
+  tar cvf $out .
+  gzip $out
+eot
+
+FROM scratch AS sdk-tarball
+COPY --from=sdk-tarball-build /out /
 
 FROM scratch AS binutils
 COPY --from=binutils-base /out /usr/
