@@ -441,23 +441,32 @@ COPY --from=sdk-base / /
 RUN xx-apk add gcc g++ linux-headers
 RUN <<eot
   set -ex
+  mkdir /out
+  if [ "$(xx-info arch)" = "s390x" ]; then exit 0; fi
   mkdir build && cd build
-  case $(xx-info arch) in
-    arm | 386)
-      dptrsize="-DCMAKE_SIZEOF_VOID_P=4"
+  flags="-G Ninja $(xx-clang --print-cmake-defines) -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON"
+  case "$(xx-info os)" in
+    linux)
+      cmake $flags -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_BUILD_MEMPROF=OFF -DCOMPILER_RT_BUILD_ORC=OFF -DCOMPILER_RT_BUILD_GWP_ASAN=OFF ../
     ;;
     *)
-      dptrsize="-DCMAKE_SIZEOF_VOID_P=8"
+      cmake $flags -DCOMPILER_RT_USE_BUILTINS_LIBRARY=TRUE ../lib/builtins
     ;;
   esac
-  cmake $(xx-clang --print-cmake-defines) -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_LIPO=/usr/bin/llvm-lipo -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 $dptrsize -G Ninja ..
   ninja
-  mkdir /out && cp -a lib/$(xx-info os) /out/
+  cp -a lib/$(xx-info os) /out/
   cd .. && rm -rf build
+  find /out -type f
 eot
 
-FROM scratch AS compiler-rt
+FROM scratch AS built-compiler-rt
 COPY --from=compiler-rt-build /out /usr/lib/clang/compiler-rt/
+
+FROM built-compiler-rt AS linux-compiler-rt
+FROM built-compiler-rt AS windows-compiler-rt
+FROM scratch AS darwin-compiler-rt
+
+FROM ${TARGETOS}-compiler-rt AS compiler-rt
 
 FROM --platform=$BUILDPLATFORM alpine AS libcxx-build
 RUN apk add --no-cache git cmake clang lld ninja python3 llvm
@@ -469,12 +478,34 @@ WORKDIR llvm-project
 ARG MACOSX_VERSION_MIN=11.0
 ARG TARGETPLATFORM
 COPY --from=sdk-base / /
+COPY --from=compiler-rt / /
 RUN xx-apk add gcc g++ linux-headers
-RUN mkdir build && cd build && mkdir /out &&  \
-    cmake $(xx-clang --print-cmake-defines) -DLIBCXX_HAS_MUSL_LIBC=ON -DCMAKE_CROSSCOMPILING=1 -DCMAKE_CXX_COMPILER_WORKS=1 ../runtimes/ -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_INSTALL_PREFIX=/out/ -G Ninja .. && \
-    ninja install-cxx install-cxxabi install-unwind && \
-    (xx-verify /out/lib/libc++.so.1.0 || xx-verify /out/lib/libc++.1.0.dylib) && \
-    cd .. && rm -rf build
+RUN <<eot
+  set -ex
+  # installing compiler-rt. this should be integrated to xx
+  rtpath="$(xx-clang --print-libgcc-file-name -rtlib=compiler-rt)"
+  srcpath="/usr/lib/clang/compiler-rt/$(basename "$(dirname "$rtpath")")/$(basename "$rtpath")"
+  ls -lR /usr/lib/clang/compiler-rt/
+  if [ ! -f "$srcpath" ] || [ "$(xx-info os)" = "linux" ] && ! ls "$(dirname $srcpath)" | grep crtbegin >/dev/null; then
+    echo >&2 "compilert-rt not supported in $(xx-info)"
+    exit 0
+  fi
+  mkdir -p "$(dirname "$rtpath")"
+  cp -a "$(dirname "$srcpath")/." "$(dirname "$rtpath")/"
+eot
+RUN <<eot
+  set -ex
+  if [ -f "$(xx-clang --print-libgcc-file-name -rtlib=compiler-rt)" ]; then export CFLAGS="-rtlib=compiler-rt -w"; export CXXFLAGS="-rtlib=compiler-rt -w"; fi
+  mkdir build && cd build && mkdir /out
+  # TODO: windows fails with libunwind
+  # lld-link: error: undefined symbol: _Unwind_GetIP
+  # maybe needs to be built separately?
+  cmake $(xx-clang --print-cmake-defines) -DLIBCXX_HAS_MUSL_LIBC=ON -DCMAKE_CROSSCOMPILING=1 -DCMAKE_CXX_COMPILER_WORKS=1 ../runtimes/ -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DLIBUNWIND_USE_COMPILER_RT=ON -DLIBCXX_USE_COMPILER_RT=ON -DLIBCXXABI_USE_COMPILER_RT=ON -DCMAKE_SYSTEM_NAME=$(xx-info os | awk '{print toupper(substr($0,0,1))tolower(substr($0,2))}') -DCMAKE_INSTALL_PREFIX=/out/ -G Ninja ..
+  ninja install-cxx install-cxxabi install-unwind
+  ls -lR /out/lib
+  (xx-verify /out/lib/libc++.so.1.0 || xx-verify /out/lib/libc++.1.0.dylib)
+  cd .. && rm -rf build
+eot
 
 FROM scratch AS libcxx
 COPY --from=libcxx-build /out /usr/
