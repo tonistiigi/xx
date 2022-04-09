@@ -6,6 +6,8 @@ ARG TEST_WITH_DARWIN=false
 
 ARG SHADOW_VERSION=4.8.1
 
+ARG SDKOS=${TARGETOS}
+
 FROM --platform=$BUILDPLATFORM alpine AS scripts
 COPY xx-* /out/
 RUN ln -s xx-cc /out/xx-clang && \
@@ -237,7 +239,7 @@ RUN <<eot
                 cp -a "lib/libc/include/any-macos.$ver-any/." "$dir/usr/include/"
             fi
             cp -a "lib/libc/include/$arch-macos.$ver-gnu/." "$dir/usr/include/"
-            for l in libc libdbm libdl libgcc_s.1 libinfo libm libmx libpoll libproc libthread librpcsvc; do
+            for l in libc libdbm libdl libgcc_s.1 libinfo libm libmx libpoll libproc libpthread librpcsvc; do
                 ln -s libSystem.tbd "$dir/usr/lib/$l.tbd"
             done
         done
@@ -254,6 +256,8 @@ WORKDIR /src
 RUN git clone https://github.com/mingw-w64/mingw-w64 && cd mingw-w64 && git checkout 586baa17bb41dd78addd8cbb6415cfd24d24e925
 WORKDIR mingw-w64/mingw-w64-headers
 ARG TARGETPLATFORM
+ARG SDKPLATFORM=${TARGETPLATFORM}
+ENV TARGETPLATFORM=${SDKPLATFORM}
 RUN mkdir build && cd build && \
   ../configure --prefix=/usr/$(xx-info) --enable-idl --with-default-win32-winnt=0x601 --with-default-msvcrt=ucrt && \
   make -j $(nproc) && make install && \
@@ -290,7 +294,7 @@ COPY --from=mingw-build /out /usr/
 FROM mingw AS windows-sdk-base
 FROM scratch AS linux-sdk-base
 
-FROM $TARGETOS-sdk-base AS sdk-base
+FROM ${SDKOS}-sdk-base AS sdk-base
 
 
 
@@ -325,15 +329,13 @@ FROM scratch AS ld64-tgz
 COPY --from=ld64-tgz-build /out-tgz/ /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwintrue
-COPY --from=ld64-signed-static / /usr/bin/
+# COPY --from=ld64-signed-static / /usr/bin/
 # COPY --from=sdk-extras-darwin-amd64 / /
-COPY --from=zig-darwin-sdk / /
+COPY --from=darwin-sdk-base / /
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base-darwinfalse
 
-FROM test-base-darwin${TEST_WITH_DARWIN} AS dev
-COPY fixtures fixtures
-COPY --from=base / /
+
 
 # newuidmap & newgidmap binaries (shadow-uidmap 4.7-r1) shipped with alpine cannot be executed without CAP_SYS_ADMIN,
 # because the binaries are built without libcap-dev.
@@ -437,6 +439,8 @@ ARG LLVM_VERSION=llvmorg-13.0.0
 RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.git
 WORKDIR llvm-project/compiler-rt
 ARG TARGETPLATFORM
+ARG SDKPLATFORM=${TARGETPLATFORM}
+ENV TARGETPLATFORM=${SDKPLATFORM}
 COPY --from=sdk-base / /
 RUN xx-apk add gcc g++ linux-headers
 RUN <<eot
@@ -466,7 +470,7 @@ FROM built-compiler-rt AS linux-compiler-rt
 FROM built-compiler-rt AS windows-compiler-rt
 FROM scratch AS darwin-compiler-rt
 
-FROM ${TARGETOS}-compiler-rt AS compiler-rt
+FROM ${SDKOS}-compiler-rt AS compiler-rt
 
 FROM --platform=$BUILDPLATFORM alpine AS libcxx-build
 RUN apk add --no-cache git cmake clang lld ninja python3 llvm
@@ -477,8 +481,10 @@ RUN git clone --depth 1 -b ${LLVM_VERSION} https://github.com/llvm/llvm-project.
 WORKDIR llvm-project
 ARG MACOSX_VERSION_MIN=11.0
 ARG TARGETPLATFORM
+ARG SDKPLATFORM=${TARGETPLATFORM}
 COPY --from=sdk-base / /
 COPY --from=compiler-rt / /
+ENV TARGETPLATFORM=${SDKPLATFORM}
 RUN xx-apk add gcc g++ linux-headers
 RUN <<eot
   set -ex
@@ -518,6 +524,8 @@ COPY --from=libtapi-base /usr/bin/tapi /usr/bin
 COPY --from=sdk-base / /
 COPY --from=libcxx / /opt/libcxx/
 ARG TARGETPLATFORM
+ARG SDKPLATFORM=${TARGETPLATFORM}
+ENV TARGETPLATFORM=${SDKPLATFORM}
 RUN <<eot
   set -ex
   sysroot="/xx-sdk/zig-$(xx-info arch)-macos.${MACOS_SDK_VERSION}"
@@ -535,12 +543,16 @@ COPY --from=darwin-sdk-cxx-build /out/ /
 
 FROM scratch AS linux-sdk-cxx
 FROM scratch AS windows-sdk-cxx
+#COPY --from=sdk-base / /
+COPY --from=libcxx / /
 
-FROM ${TARGETOS}-sdk-cxx AS sdk-cxx
+FROM ${SDKOS}-sdk-cxx AS sdk-cxx
 
 FROM --platform=$BUILDPLATFORM alpine AS sdk-tarball-build
 COPY --from=base / /
 ARG TARGETPLATFORM
+ARG SDKPLATFORM=${TARGETPLATFORM}
+ENV TARGETPLATFORM=${SDKPLATFORM}
 ARG MACOS_SDK_VERSION=12
 RUN --mount=target=/files,from=sdk-cxx <<eot
   set -ex
@@ -562,3 +574,9 @@ FROM scratch AS binutils
 COPY --from=binutils-base /out /usr/
 
 FROM base
+
+FROM test-base-darwin${TEST_WITH_DARWIN} AS dev
+COPY fixtures fixtures
+COPY --from=base / /
+COPY --from=compiler-rt / /
+COPY --from=sdk-cxx / /sdk
