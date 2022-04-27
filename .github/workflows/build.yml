@@ -80,7 +80,7 @@ jobs:
             typ: rhel
             allow-failure: false
           -
-            image: centos:8
+            image: centos:7
             typ: rhel
             allow-failure: false
           -
