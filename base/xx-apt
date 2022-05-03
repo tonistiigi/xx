@@ -61,36 +61,44 @@ else
   arg0="apt"
 fi
 
+setaptsources() {
+  file=$1
+  arch=$2
+  mainuri=$3
+  securi=$4
+  # shellcheck disable=SC1091
+  release=$(. /etc/os-release && echo "$UBUNTU_CODENAME")
+  cat >"$file" <<EOL
+deb [arch=$arch] $mainuri $release main restricted universe multiverse
+deb [arch=$arch] $mainuri $release-updates main restricted universe multiverse
+deb [arch=$arch] $mainuri $release-backports main restricted universe multiverse
+deb [arch=$arch] $securi $release-security main restricted universe multiverse
+EOL
+}
+
 fixubuntusources() {
+  nocross=$1
   # fix all current sources to native arch
   nativearch="$(TARGETPLATFORM="" TARGETPAIR="" TARGETARCH="" TARGETOS="" xx-info arch)"
-  sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i /etc/apt/sources.list
-
-  if ! xx-info is-cross; then return; fi
-
-  # add custom list for target
-  debarch=$(xx-info debian-arch)
-  targetlist=/etc/apt/sources.list.d/xx-$debarch.list
-  if [ -f "$targetlist" ]; then return; fi
-
-  mainurl=archive.ubuntu.com/ubuntu
-  securityurl=security.ubuntu.com/ubuntu
-
-  case "${debarch}" in
-    arm64 | armhf | ppc64el | s390x | riscv64)
-      mainurl=ports.ubuntu.com/ubuntu-ports
-      securityurl=$mainurl
+  case "${nativearch}" in
+    amd64 | i386)
+      setaptsources "/etc/apt/sources.list" "$nativearch" "http://archive.ubuntu.com/ubuntu/" "http://security.ubuntu.com/ubuntu/"
+      ;;
+    *)
+      setaptsources "/etc/apt/sources.list" "$nativearch" "http://ports.ubuntu.com/ubuntu-ports/" "http://ports.ubuntu.com/ubuntu-ports/"
       ;;
   esac
-
-  # shellcheck disable=SC1091
-  ubuntuname=$(. /etc/os-release && echo "$UBUNTU_CODENAME")
-  cat <<eot >"$targetlist"
-deb [arch=$debarch] http://$mainurl/ $ubuntuname main restricted universe multiverse
-deb [arch=$debarch] http://$mainurl/ $ubuntuname-updates main restricted universe multiverse
-deb [arch=$debarch] http://$mainurl/ $ubuntuname-backports main restricted universe multiverse
-deb [arch=$debarch] http://$securityurl/ $ubuntuname-security main restricted universe multiverse
-eot
+  debarch=$(xx-info debian-arch)
+  if [ -z "$nocross" ]; then
+    case "${debarch}" in
+      amd64 | i386)
+        setaptsources "/etc/apt/sources.list.d/port-$debarch.list" "$debarch" "http://archive.ubuntu.com/ubuntu/" "http://security.ubuntu.com/ubuntu/"
+        ;;
+      *)
+        setaptsources "/etc/apt/sources.list.d/port-$debarch.list" "$debarch" "http://ports.ubuntu.com/ubuntu-ports/" "http://ports.ubuntu.com/ubuntu-ports/"
+        ;;
+    esac
+  fi
 }
 
 packages=
@@ -142,10 +150,10 @@ fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
   if [ "$XX_OS" = "linux" ]; then
-    if [ "$(xx-info vendor)" = "ubuntu" ] && [ -z "$nocross" ]; then
+    if [ "$(xx-info vendor)" = "ubuntu" ]; then
       # ubuntu uses different repositories for amd64/386 and rest of the architectures
       # so we need to fix the sources.list and add new ones
-      fixubuntusources
+      fixubuntusources "$nocross"
     fi
 
     dpkg --add-architecture "$XX_PKG_ARCH"
