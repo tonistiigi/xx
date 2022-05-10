@@ -170,6 +170,7 @@ testBuildHello() {
   export TARGETPLATFORM="linux/ppc64le"
 
   touch /usr/bin/$(xx-info triple)-ld
+  chmod +x /usr/bin/$(xx-info triple)-ld
 
   run xx-clang --setup-target-triple
   assert_success
