@@ -99,13 +99,13 @@ if [ -n "$TARGETPLATFORM" ]; then
 fi
 
 # detect distro vendor
-# shellcheck disable=SC1091
-if . /etc/os-release 2>/dev/null; then
-  XX_VENDOR=$ID
-fi
-
 if [ "$TARGETOS" = "darwin" ]; then
   XX_VENDOR="apple"
+elif [ -f /etc/os-release ]; then
+  # shellcheck disable=SC1091
+  if . /etc/os-release 2>/dev/null; then
+    XX_VENDOR=$ID
+  fi
 fi
 
 vendor=""
@@ -328,7 +328,7 @@ case "$1" in
     echo $XX_TRIPLE
     ;;
   "vendor")
-    echo $XX_VENDOR
+    echo "$XX_VENDOR"
     ;;
   "libc") # this is not abi, just the prefix
     echo $XX_LIBC
