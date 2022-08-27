@@ -59,3 +59,23 @@ fi
 @test "riscv64" {
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
 }
+
+@test "mips" {
+  assert_equal "mips-linux-gnu" "$(TARGETPLATFORM=linux/mips xx-info triple)"
+  assert_equal "mips" "$(TARGETPLATFORM=linux/mips xx-info pkg-arch)"
+}
+
+@test "mipsle" {
+  assert_equal "mipsel-linux-gnu" "$(TARGETPLATFORM=linux/mipsle xx-info triple)"
+  assert_equal "mipsel" "$(TARGETPLATFORM=linux/mipsle xx-info pkg-arch)"
+}
+
+@test "mips64" {
+  assert_equal "mips64-linux-gnuabi64" "$(TARGETPLATFORM=linux/mips64 xx-info triple)"
+  assert_equal "mips64" "$(TARGETPLATFORM=linux/mips64 xx-info pkg-arch)"
+}
+
+@test "mips64le" {
+  assert_equal "mips64el-linux-gnuabi64" "$(TARGETPLATFORM=linux/mips64le xx-info triple)"
+  assert_equal "mips64el" "$(TARGETPLATFORM=linux/mips64le xx-info pkg-arch)"
+}

@@ -18,9 +18,17 @@ testEnv() {
   assert_output --partial 'GOHOSTOS="'"$(TARGETOS= TARGETARCH= xx-info os)"'"'
   assert_output --partial 'GOHOSTARCH="'"$(TARGETOS= TARGETARCH= xx-info arch)"'"'
 
-  if [ $(xx-info arch) = "arm" ]; then
-    assert_output --partial 'GOARM="'"$expArm"'"'
-  fi
+  case "$(xx-info arch)" in
+    "arm")
+      assert_output --partial 'GOARM="'"$expArm"'"'
+      ;;
+    "mips64"*)
+      assert_output --partial 'GOMIPS64="'"$expMips"'"'
+      ;;
+    "mips"*)
+      assert_output --partial 'GOMIPS="'"$expMips"'"'
+      ;;
+  esac
 }
 
 @test "native-env" {
@@ -85,6 +93,62 @@ testEnv() {
 @test "ppc64le-env" {
   export TARGETARCH=ppc64le
   testEnv
+}
+
+@test "mips-env" {
+  export TARGETARCH=mips
+  expMips=hardfloat
+  testEnv
+}
+
+@test "mips-softfloat-env" {
+  export TARGETARCH=mips
+  export TARGETVARIANT=softfloat
+  expMips=softfloat
+  testEnv
+  unset TARGETVARIANT
+}
+
+@test "mipsle-env" {
+  export TARGETARCH=mipsle
+  expMips=hardfloat
+  testEnv
+}
+
+@test "mipsle-softfloat-env" {
+  export TARGETARCH=mipsle
+  export TARGETVARIANT=softfloat
+  expMips=softfloat
+  testEnv
+  unset TARGETVARIANT
+}
+
+@test "mips64-env" {
+  export TARGETARCH=mips64
+  expMips=hardfloat
+  testEnv
+}
+
+@test "mips64-softfloat-env" {
+  export TARGETARCH=mips64
+  export TARGETVARIANT=softfloat
+  expMips=softfloat
+  testEnv
+  unset TARGETVARIANT
+}
+
+@test "mips64le-env" {
+  export TARGETARCH=mips64le
+  expMips=hardfloat
+  testEnv
+}
+
+@test "mips64le-softfloat-env" {
+  export TARGETARCH=mips64le
+  export TARGETVARIANT=softfloat
+  expMips=softfloat
+  testEnv
+  unset TARGETVARIANT
 }
 
 @test "darwin-amd64-env" {
@@ -159,6 +223,30 @@ testHelloGO() {
 @test "386-hellogo" {
   export TARGETARCH=386
   testHelloGO
+}
+
+@test "mipsle-hellogo" {
+  export TARGETARCH=mipsle
+  testHelloGO
+}
+
+@test "mipsle-softfloat-hellogo" {
+  export TARGETARCH=mipsle
+  export TARGETVARIANT=softfloat
+  testHelloGO
+  unset TARGETVARIANT
+}
+
+@test "mips64le-hellogo" {
+  export TARGETARCH=mips64le
+  testHelloGO
+}
+
+@test "mips64le-softfloat-hellogo" {
+  export TARGETARCH=mips64le
+  export TARGETVARIANT=softfloat
+  testHelloGO
+  unset TARGETVARIANT
 }
 
 @test "darwin-amd64-hellogo" {

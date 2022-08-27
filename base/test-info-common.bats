@@ -76,6 +76,22 @@ load 'assert'
   assert_equal "ppc64le" "$(TARGETPLATFORM=linux/ppc64le xx-info march)"
 }
 
+@test "mips" {
+  assert_equal "mips" "$(TARGETPLATFORM=linux/mips xx-info march)"
+}
+
+@test "mipsle" {
+  assert_equal "mipsle" "$(TARGETPLATFORM=linux/mipsle xx-info march)"
+}
+
+@test "mips64" {
+  assert_equal "mips64" "$(TARGETPLATFORM=linux/mips64 xx-info march)"
+}
+
+@test "mips64le" {
+  assert_equal "mips64le" "$(TARGETPLATFORM=linux/mips64le xx-info march)"
+}
+
 @test "parse pair" {
   TARGETPAIR=linux-amd64 run xx-info os
   assert_success
@@ -100,6 +116,30 @@ load 'assert'
   TARGETPAIR=linux-ppc64le run xx-info
   assert_success
   assert_output "$(TARGETPLATFORM=linux/ppc64le xx-info)"
+
+  TARGETPAIR=linux-s390x run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/s390x xx-info)"
+
+  TARGETPAIR=linux-riscv64 run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/riscv64 xx-info)"
+
+  TARGETPAIR=linux-mips run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/mips xx-info)"
+
+  TARGETPAIR=linux-mipsle run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/mipsle xx-info)"
+
+  TARGETPAIR=linux-mips64 run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/mips64 xx-info)"
+
+  TARGETPAIR=linux-mips64le run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/mips64le xx-info)"
 }
 
 @test "windows" {
