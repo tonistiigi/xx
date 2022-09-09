@@ -63,7 +63,21 @@ group "default" {
 }
 
 target "_all-platforms" {
-    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/arm/v6", "linux/ppc64le", "linux/s390x", "linux/386", "linux/riscv64"]
+    platforms = [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v5",
+        "linux/arm/v6",
+        "linux/arm/v7",
+        "linux/mips",
+        "linux/mipsle",
+        "linux/mips64",
+        "linux/mips64le",
+        "linux/ppc64le",
+        "linux/s390x",
+        "linux/riscv64"
+    ]
 }
 
 target "base" {
@@ -80,14 +94,42 @@ target "sdk-extras" {
     context = "base"
     target = "sdk-extras"
     tags = ["${XX_REPO}:sdk-extras"]
-    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/arm/v6", "linux/ppc64le", "linux/s390x", "linux/386", "linux/riscv64", "windows/amd64", "windows/arm", "windows/386", "windows/arm64", "linux/mips64", "linux/mips64le", "darwin/amd64", "darwin/arm64", "freebsd/amd64"]
+    platforms = [
+        "darwin/amd64",
+        "darwin/arm64",
+        "freebsd/amd64",
+        "linux/386",
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v5",
+        "linux/arm/v6",
+        "linux/arm/v7",
+        "linux/mips",
+        "linux/mipsle",
+        "linux/mips64",
+        "linux/mips64le",
+        "linux/ppc64le",
+        "linux/riscv64",
+        "linux/s390x",
+        "windows/386",
+        "windows/amd64",
+        "windows/arm",
+        "windows/arm64"
+    ]
 }
 
 target "ld64-tgz" {
     context = "base"
     target = "ld64-tgz"
     output = ["./ld64-tgz"]
-    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/arm/v6", "linux/386"]
+    platforms = [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v5",
+        "linux/arm/v6",
+        "linux/arm/v7"
+    ]
     cache-to = ["type=inline"]
 }
 
@@ -115,7 +157,12 @@ target "binutils-base" {
     args = {
         BINUTILS_VERSION = BINUTILS_VERSION
     }
-    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/s390x"]
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm",
+        "linux/s390x"
+    ]
     cache-to = ["type=inline"]
 }
 
@@ -219,7 +266,13 @@ target "ld-tgz-base" {
     args = {
         LD_VERSION = BINUTILS_VERSION
     }
-    platforms = ["linux/amd64", "linux/arm64", "linux/arm", "linux/s390x", "linux/ppc64le"]
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm",
+        "linux/s390x",
+        "linux/ppc64le"
+    ]
     cache-to = ["type=inline"]
     output = ["./ld-tgz"]
 }

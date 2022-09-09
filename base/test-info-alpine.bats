@@ -67,6 +67,26 @@ load 'assert'
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
 }
 
+@test "mips" {
+  assert_equal "mips-alpine-linux-musl" "$(TARGETPLATFORM=linux/mips xx-info triple)"
+  assert_equal "mips" "$(TARGETPLATFORM=linux/mips xx-info pkg-arch)"
+}
+
+@test "mipsle" {
+  assert_equal "mipsel-alpine-linux-musl" "$(TARGETPLATFORM=linux/mipsle xx-info triple)"
+  assert_equal "mipsle" "$(TARGETPLATFORM=linux/mipsle xx-info pkg-arch)"
+}
+
+@test "mips64" {
+  assert_equal "mips64-alpine-linux-muslabi64" "$(TARGETPLATFORM=linux/mips64 xx-info triple)"
+  assert_equal "mips64" "$(TARGETPLATFORM=linux/mips64 xx-info pkg-arch)"
+}
+
+@test "mips64le" {
+  assert_equal "mips64el-alpine-linux-muslabi64" "$(TARGETPLATFORM=linux/mips64le xx-info triple)"
+  assert_equal "mips64le" "$(TARGETPLATFORM=linux/mips64le xx-info pkg-arch)"
+}
+
 @test "darwin" {
   assert_equal "x86_64-apple-macos10.6" "$(TARGETPLATFORM=darwin/amd64 xx-info triple)"
   assert_equal "darwin" "$(TARGETPLATFORM=darwin/amd64 xx-info os)"

@@ -27,6 +27,17 @@ if [ "$TARGETARCH" = "arm" ]; then
   fi
 fi
 
+if [ -n "$TARGETVARIANT" ]; then
+  case "$TARGETARCH" in
+    "mips64"*)
+      export GOMIPS64="${TARGETVARIANT}"
+      ;;
+    "mips"*)
+      export GOMIPS="${TARGETVARIANT}"
+      ;;
+  esac
+fi
+
 if [ "$GOOS" = "wasi" ]; then
   export GOOS="js"
 fi
