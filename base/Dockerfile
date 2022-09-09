@@ -25,11 +25,15 @@ RUN --mount=type=cache,target=/pkg-cache \
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-debian
+ARG APT_MIRROR=deb.debian.org
 RUN --mount=type=cache,target=/pkg-cache \
     rm -rf /var/cache/apt/archives && \
     ln -s /pkg-cache /var/cache/apt/archives && \
     rm /etc/apt/apt.conf.d/docker-clean && \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "1";' > /etc/apt/apt.conf.d/keep-downloads && \
+    touch /etc/apt/sources.list && \
+    sed -ri "s/(httpredir|deb).debian.org/${APT_MIRROR:-deb.debian.org}/g" /etc/apt/sources.list && \
+    sed -ri "s/(security).debian.org/${APT_MIRROR:-security.debian.org}/g" /etc/apt/sources.list && \
     apt update && apt install --no-install-recommends -y bats vim
 WORKDIR /work
 
