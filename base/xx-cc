@@ -539,7 +539,7 @@ EOT
     fi
   done
 
-  for f in addr2line ar as ranlib nm dlltool strip; do
+  for f in addr2line ar as ranlib nm dlltool strip readelf profdata; do
     if ! command -v "${target}-${f}" >/dev/null 2>/dev/null; then
       if [ -f "/usr/bin/llvm-${f}" ]; then
         if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
