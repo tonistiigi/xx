@@ -44,6 +44,10 @@ jobs:
             typ: alpine
             allow-failure: false
           -
+            image: alpine:3.16
+            typ: alpine
+            allow-failure: false
+          -
             image: alpine:edge
             typ: alpine
             allow-failure: true
@@ -68,7 +72,7 @@ jobs:
             typ: debian
             allow-failure: false
           -
-            image: ubuntu:21.10
+            image: ubuntu:22.04
             typ: debian
             allow-failure: false
           -
@@ -77,6 +81,10 @@ jobs:
             allow-failure: false
           -
             image: fedora:35
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:36
             typ: rhel
             allow-failure: false
           -
@@ -95,6 +103,12 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
       -
         name: Test
         uses: docker/bake-action@v1

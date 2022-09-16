@@ -23,6 +23,7 @@ target "test-alpine" {
 target "test-debian" {
     inherits = ["test-base"]
     args = {
+        APT_MIRROR = "cdn-fastly.deb.debian.org"
         TEST_BASE_TYPE = "debian"
         TEST_BASE_IMAGE = "debian:bullseye"
     }
