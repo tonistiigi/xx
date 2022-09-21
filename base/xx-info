@@ -13,6 +13,7 @@
 : "${XX_DEBIAN_ARCH=unknown}"
 # https://docs.fedoraproject.org/ro/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch01s03.html
 : "${XX_RHEL_ARCH=unknown}"
+: "${XX_OS_VERSION=unknown}"
 : "${XX_TRIPLE=unknown-unknown-none}"
 : "${XX_VENDOR=unknown}"
 : "${XX_LIBC=}"
@@ -30,6 +31,7 @@ Commands:
   libc           Print used libc (musl or gnu)
   march          Print target machine architecture, uname -m
   os             Print target operating system (linux,darwin,windows,wasi)
+  os-version     Print operating system version
   pkg-arch       Print either alpine-arch or debian-arch
   rhel-arch      Print target architecture for RPM package repositories
   sysroot        Print sysroot directory for target architecture
@@ -110,6 +112,7 @@ elif [ -f /etc/os-release ]; then
   # shellcheck disable=SC1091
   if . /etc/os-release 2>/dev/null; then
     XX_VENDOR=$ID
+    XX_OS_VERSION=$VERSION_ID
   fi
 fi
 
@@ -354,6 +357,9 @@ case "$1" in
   "os")
     echo $TARGETOS # TODO:
     ;;
+  "os-version")
+    echo "$XX_OS_VERSION"
+    ;;
   "march")
     echo $XX_MARCH
     ;;
@@ -380,6 +386,7 @@ case "$1" in
     ;;
   "env")
     echo "XX_OS=${TARGETOS}"
+    echo "XX_OS_VERSION=${XX_OS_VERSION}"
     echo "XX_ARCH=${TARGETARCH}"
     echo "XX_MARCH=${XX_MARCH}"
     echo "XX_VENDOR=${XX_VENDOR}"

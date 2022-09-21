@@ -7,6 +7,15 @@ load 'assert'
   assert_equal "linux" "$(xx-info os)"
 }
 
+@test "os-version" {
+  run xx-info os-version
+  assert_success
+  if grep 'PRETTY_NAME=".*/sid"$' /etc/os-release >/dev/null 2>/dev/null; then
+    skip "VERSION_ID not set for unstable repo"
+  fi
+  [ "$output" != "" ]
+}
+
 @test "is-cross" {
   run xx-info is-cross
   assert_failure
