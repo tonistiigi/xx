@@ -123,9 +123,14 @@ if [ -z "$XX_VENDOR" ]; then
   if [ -z "$XX_VENDOR" ]; then
     XX_VENDOR="unknown"
   fi
-  if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
-    vendor="-${XX_VENDOR}"
-  fi
+  case "$XX_VENDOR" in
+    unknown | debian | ubuntu | rhel | fedora | centos | rocky | ol)
+      # noop
+      ;;
+    *)
+      vendor="-${XX_VENDOR}"
+      ;;
+  esac
 else
   vendor="-${XX_VENDOR}"
 fi
