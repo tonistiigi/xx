@@ -123,12 +123,11 @@ if [ -z "$XX_VENDOR" ]; then
   if [ -z "$XX_VENDOR" ]; then
     XX_VENDOR="unknown"
   fi
-  if [ "$XX_VENDOR" != "unknown" ] && [ "$XX_VENDOR" != "debian" ]; then
-    vendor="-${XX_VENDOR}"
-  fi
-else
-  vendor="-${XX_VENDOR}"
 fi
+case "$XX_VENDOR" in
+  debian | ubuntu | rhel | fedora | centos | rocky | ol) ;;
+  *) vendor="-${XX_VENDOR}" ;;
+esac
 
 if [ -z "$XX_LIBC" ]; then
   if [ "$distro" = "alpine" ]; then
@@ -399,6 +398,7 @@ case "$1" in
     echo "XX_OS_VERSION=${XX_OS_VERSION}"
     echo "XX_ARCH=${TARGETARCH}"
     echo "XX_MARCH=${XX_MARCH}"
+    echo "XX_VENDOR=${XX_VENDOR}"
     if [ "$TARGETOS" = "linux" ]; then
       echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
     fi
