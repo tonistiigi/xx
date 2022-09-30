@@ -67,6 +67,10 @@ fi
 @test "riscv64" {
   assert_equal "riscv64-linux-gnu" "$(TARGETPLATFORM=linux/riscv64 xx-info triple)"
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
+
+  assert_equal "riscv64gc-linux-gnu" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc xx-info triple)"
+  assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc xx-info pkg-arch)" # does not change
+  assert_equal "riscv64gc-unknown-linux-gnu" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc XX_VENDOR=unknown xx-info triple)"
 }
 
 @test "mips" {

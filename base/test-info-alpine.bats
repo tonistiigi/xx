@@ -65,6 +65,13 @@ load 'assert'
 @test "riscv64" {
   assert_equal "riscv64-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 xx-info triple)"
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
+
+  assert_equal "riscv64gc-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc xx-info triple)"
+  assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc xx-info pkg-arch)" # does not change
+}
+
+@test "custom-vendor" {
+  assert_equal "riscv64-unknown-linux-musl" "$(TARGETPLATFORM=linux/riscv64 XX_VENDOR=unknown xx-info triple)"
 }
 
 @test "mips" {

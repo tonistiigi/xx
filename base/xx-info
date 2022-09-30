@@ -15,7 +15,7 @@
 : "${XX_RHEL_ARCH=unknown}"
 : "${XX_OS_VERSION=unknown}"
 : "${XX_TRIPLE=unknown-unknown-none}"
-: "${XX_VENDOR=unknown}"
+: "${XX_VENDOR=}"
 : "${XX_LIBC=}"
 
 usage() {
@@ -105,27 +105,32 @@ if [ -n "$TARGETPLATFORM" ]; then
   fi
 fi
 
+distro=""
 # detect distro vendor
-if [ "$TARGETOS" = "darwin" ]; then
-  XX_VENDOR="apple"
-elif [ -f /etc/os-release ]; then
-  # shellcheck disable=SC1091
-  if . /etc/os-release 2>/dev/null; then
-    XX_VENDOR=$ID
-    XX_OS_VERSION=$VERSION_ID
-  fi
+# shellcheck disable=SC1091
+if . /etc/os-release 2>/dev/null; then
+  distro=$ID
 fi
 
 vendor=""
+if [ -z "$XX_VENDOR" ]; then
+  if [ -n "$distro" ]; then
+    XX_VENDOR="$distro"
+  fi
+  if [ "$TARGETOS" = "darwin" ]; then
+    XX_VENDOR="apple"
+  fi
+  if [ -z "$XX_VENDOR" ]; then
+    XX_VENDOR="unknown"
+  fi
+fi
 case "$XX_VENDOR" in
-  unknown | debian | ubuntu | rhel | fedora | centos | rocky | ol) ;;
-  *)
-    vendor="-${XX_VENDOR}"
-    ;;
+  debian | ubuntu | rhel | fedora | centos | rocky | ol) ;;
+  *) vendor="-${XX_VENDOR}" ;;
 esac
 
 if [ -z "$XX_LIBC" ]; then
-  if [ "$XX_VENDOR" = "alpine" ]; then
+  if [ "$distro" = "alpine" ]; then
     XX_LIBC="musl"
   else
     XX_LIBC="gnu"
@@ -267,7 +272,11 @@ case "$TARGETARCH" in
     XX_DEBIAN_ARCH="riscv64"
     XX_ALPINE_ARCH="riscv64"
     XX_RHEL_ARCH="riscv64"
-    XX_TRIPLE="riscv64${vendor}-linux-${XX_LIBC}"
+    triplearch="riscv64"
+    if [ -n "$RISCV64_TARGET_ARCH" ]; then
+      triplearch="${RISCV64_TARGET_ARCH}"
+    fi
+    XX_TRIPLE="${triplearch}${vendor}-linux-${XX_LIBC}"
     ;;
   "ppc64le")
     XX_MARCH="ppc64le"
