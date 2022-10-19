@@ -54,7 +54,7 @@ jobs:
           -
             image: debian:buster-backports
             typ: debian
-            allow-failure: false
+            allow-failure: true
           -
             image: debian:bullseye
             typ: debian
