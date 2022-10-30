@@ -33,7 +33,9 @@ done
 
 done_file="/.xx-cargo.$(xx-info arch)"
 
-export RISCV64_TARGET_ARCH=riscv64gc
+if [ -z "$RISCV64_TARGET_ARCH" ]; then
+  export RISCV64_TARGET_ARCH=riscv64gc
+fi
 
 rustup=
 if which rustup >/dev/null 2>&1; then
@@ -79,5 +81,5 @@ if [ -n "$printtarget" ]; then
 fi
 
 if [ -z "$setuponly" ]; then
-  cargo "$@" --target="$(xx-info)"
+  exec cargo "$@" --target="$(xx-info)"
 fi
