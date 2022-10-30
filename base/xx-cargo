@@ -42,6 +42,7 @@ if which rustup >/dev/null 2>&1; then
   rustup=1
 fi
 
+vendor=$XX_VENDOR
 if [ -n "$rustup" ] || [ ! -f /etc/alpine-release ]; then
   export XX_VENDOR="unknown"
 fi
@@ -52,9 +53,11 @@ if [ ! -f "$done_file" ]; then
     if [ -n "$rustup" ]; then
       rustup target add "$(xx-info)" 2>/dev/null >/dev/null
     elif [ -f /etc/alpine-release ]; then
-      xx-apk add rust-stdlib 2>/dev/null >/dev/null
+      # XX_VENDOR overrided to match the distrib one to install packages
+      XX_VENDOR=$vendor xx-apk add rust-stdlib 2>/dev/null >/dev/null
     else
-      xx-apt install -y libstd-rust-dev 2>/dev/null >/dev/null
+      # XX_VENDOR overrided to match the distrib one to install packages
+      XX_VENDOR=$vendor xx-apt-get install -y libstd-rust-dev 2>/dev/null >/dev/null
     fi
   fi
   touch "$done_file"
