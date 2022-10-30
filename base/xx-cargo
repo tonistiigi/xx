@@ -36,6 +36,9 @@ done_file="/.xx-cargo.$(xx-info arch)"
 if [ -z "$RISCV64_TARGET_ARCH" ]; then
   export RISCV64_TARGET_ARCH=riscv64gc
 fi
+if [ -z "$ARM_TARGET_ARCH" ]; then
+  export ARM_TARGET_ARCH=armv7
+fi
 
 rustup=
 if which rustup >/dev/null 2>&1; then
@@ -69,12 +72,12 @@ if [ -n "$XX_RUSTFLAGS" ]; then
 fi
 export "CC_$(xx-info | tr - _)=$(xx-info)-clang"
 
-if which "qemu-$(RISCV64_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1; then
-  export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' xx-info march)"
+if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1; then
+  export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)"
   if [ -f /etc/alpine-release ]; then
-    export "QEMU_LD_PREFIX=/$(RISCV64_TARGET_ARCH='' xx-info)/"
+    export "QEMU_LD_PREFIX=/$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info)/"
   else
-    export "QEMU_LD_PREFIX=/lib/$(RISCV64_TARGET_ARCH='' XX_VENDOR='' xx-info)/"
+    export "QEMU_LD_PREFIX=/lib/$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' XX_VENDOR='' xx-info)/"
   fi
 fi
 
