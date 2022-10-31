@@ -13,7 +13,7 @@
 : "${XX_DEBIAN_ARCH=unknown}"
 # https://docs.fedoraproject.org/ro/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch01s03.html
 : "${XX_RHEL_ARCH=unknown}"
-: "${XX_OS_VERSION=unknown}"
+: "${XX_OS_VERSION=}"
 : "${XX_TRIPLE=unknown-unknown-none}"
 : "${XX_VENDOR=}"
 : "${XX_LIBC=}"
@@ -110,6 +110,7 @@ distro=""
 # shellcheck disable=SC1091
 if . /etc/os-release 2>/dev/null; then
   distro=$ID
+  XX_OS_VERSION=$VERSION_ID
 fi
 
 vendor=""
