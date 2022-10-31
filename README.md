@@ -24,6 +24,9 @@ ___
 * [Autotools](#autotools)
 * [CMake](#cmake)
 * [Go / Cgo](#go--cgo)
+* [Rust](#rust)
+  * [Building on Alpine](#building-on-alpine-1)
+  * [Building on Debian](#building-on-debian-1)
 * [External SDK support](#external-sdk-support)
 * [Used by](#used-by)
 * [Issues](#issues)
@@ -59,13 +62,13 @@ ARG TARGETPLATFORM
 RUN xx-info env
 ```
 
-`xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
+`xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-cargo`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
 
 ## Supported targets
 
-`xx` supports building from and into Linux amd64, arm64, arm/v7, s390x, ppc64le and 386, and Alpine, Debian and Ubuntu. Risc-V is supported for Go builds and for newer distros that provide Risc-V packages like `alpine:edge` or `debian:sid`.
+`xx` supports building from and into Linux amd64, arm64, arm/v7, s390x, ppc64le and 386, and Alpine, Debian and Ubuntu. Risc-V is supported for Go and Rust builds and for newer distros that provide Risc-V packages like `alpine:edge` or `debian:sid`.
 
-Go builds that don't depend on system packages can additionally target MacOS and Windows on all architectures. C/C++/CGo builds are supported for MacOS targets when an external SDK image is provided.
+Go builds that don't depend on system packages can additionally target MacOS and Windows on all architectures. C/C++/CGo/Rust builds are supported for MacOS targets when an external SDK image is provided.
 
 `xx-info` command also works on RHEL-style distros but no support is provided for package manager wrappers(eg. yum, dnf) there.
 
@@ -328,6 +331,120 @@ If you want to make `go` compiler cross-compile by default, you can use `xx-go -
 RUN xx-go --wrap
 RUN go build -o hello hello.go && \
     xx-verify hello
+```
+
+## Rust
+
+Building Rust can be achieved with the `xx-cargo` wrapper that automatically
+sets up the target triple and also `pkg-config` and C compiler.
+
+The wrapper supports rust installed via [`rustup`](https://rustup.rs/)
+(alpine/debian), distribution packages (alpine/debian) and the [official `rust` image](https://hub.docker.com/_/rust).
+
+### Building on Alpine
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# official rust image
+FROM --platform=$BUILDPLATFORM rust:alpine
+RUN apk add clang lld
+# ...
+RUN --mount=type=cache,target=/usr/local/cargo/git/db \
+    --mount=type=cache,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,target=/usr/local/cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+```
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# rustup
+FROM --platform=$BUILDPLATFORM alpine AS rustup
+RUN apk add curl
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal
+ENV PATH="/root/.cargo/bin:$PATH"
+
+FROM rustup
+RUN apk add clang lld
+# ...
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+```
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# packages
+FROM --platform=$BUILDPLATFORM alpine
+RUN apk add clang lld rust cargo
+# ...
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-apk add xx-c-essentials
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+```
+
+### Building on Debian
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# official rust image
+FROM --platform=$BUILDPLATFORM rust:bullseye
+RUN apt-get update && apt-get install -y clang lld
+# ...
+RUN --mount=type=cache,target=/usr/local/cargo/git/db \
+    --mount=type=cache,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,target=/usr/local/cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+```
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# rustup
+FROM --platform=$BUILDPLATFORM debian:bullseye AS rustup
+RUN apt-get update && apt-get install -y curl ca-certificates
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal
+ENV PATH="/root/.cargo/bin:$PATH"
+
+FROM rustup
+RUN apt-get update && apt-get install -y clang lld
+# ...
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+```
+
+```dockerfile
+# syntax=docker/dockerfile:1
+# packages
+FROM --platform=$BUILDPLATFORM debian:bullseye
+RUN apt-get update && apt-get install -y clang lld cargo
+# ...
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN xx-apt-get install xx-c-essentials
+RUN xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
 ```
 
 ## External SDK support
