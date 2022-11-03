@@ -30,9 +30,13 @@ testHelloCargo() {
   assert_success
   run xx-cargo build --verbose --color=never --manifest-path=./fixtures/hello_cargo/Cargo.toml --release --target-dir /tmp/cargobuild
   assert_success
-  xx-verify /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
+
+  if [ "$TARGETARCH" = "wasm" ]; then
+    sfx=".wasm"
+  fi
+  xx-verify /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo$sfx
   if ! xx-info is-cross; then
-    run /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
+    run /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo$sfx
     assert_success
     assert_output "hello cargo"
   fi
@@ -94,6 +98,14 @@ testHelloCargoRustup() {
 @test "386-hellocargo-rustup" {
   export TARGETARCH=386
   testHelloCargoRustup
+}
+
+@test "wasm-hellocargo-rustup" {
+  export TARGETARCH=wasm
+  export TARGETOS=wasi
+  testHelloCargoRustup
+  unset TARGETOS
+  unset TARGETARCH
 }
 
 @test "uninstall-rustup" {
