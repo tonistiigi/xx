@@ -75,6 +75,8 @@ RUN --mount=type=cache,target=/pkg-cache \
 RUN --mount=type=cache,target=/pkg-cache \
     --mount=target=/root/.cache,type=cache \
     [ "${TEST_CMDS:-golang}" = "${TEST_CMDS#*golang}" ] && exit 0; ./test-go.bats
+RUN --mount=type=cache,target=/pkg-cache \
+    [ "${TEST_CMDS:-cargo}" = "${TEST_CMDS#*cargo}" ] && exit 0; ./test-cargo.bats
 
 FROM --platform=${BUILDPLATFORM} alpine AS libtapi-base
 RUN apk add --no-cache git clang lld cmake make python3 bash

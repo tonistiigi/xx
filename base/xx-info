@@ -239,10 +239,13 @@ case "$TARGETARCH" in
     XX_DEBIAN_ARCH="armhf"
     XX_ALPINE_ARCH="armv7"
     XX_RHEL_ARCH="armv7hl"
-    XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabihf"
-    if [ "$XX_VENDOR" = "alpine" ]; then
-      XX_TRIPLE="armv7${vendor}-linux-${XX_LIBC}eabihf"
+    triplearch="arm"
+    if [ -n "$ARM_TARGET_ARCH" ]; then
+      triplearch="${ARM_TARGET_ARCH}"
+    elif [ "$XX_VENDOR" = "alpine" ]; then
+      triplearch="armv7"
     fi
+    XX_TRIPLE="${triplearch}${vendor}-linux-${XX_LIBC}eabihf"
     if [ "$TARGETVARIANT" = "v6" ]; then
       XX_MARCH="armv6l"
       XX_DEBIAN_ARCH="armel"

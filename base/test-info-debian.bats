@@ -35,6 +35,10 @@ fi
   assert_equal "arm-linux-gnueabihf" "$(TARGETPLATFORM=linux/arm xx-info triple)"
   assert_equal "armhf" "$(TARGETPLATFORM=linux/arm xx-info pkg-arch)"
   assert_equal "v7" "$(TARGETPLATFORM=linux/arm xx-info variant)"
+
+  assert_equal "armv7-linux-gnueabihf" "$(TARGETPLATFORM=linux/arm ARM_TARGET_ARCH=armv7 xx-info triple)"
+  assert_equal "armhf" "$(TARGETPLATFORM=linux/arm ARM_TARGET_ARCH=armv7 xx-info pkg-arch)" # does not change
+  assert_equal "armv7-unknown-linux-gnueabihf" "$(TARGETPLATFORM=linux/arm ARM_TARGET_ARCH=armv7 XX_VENDOR=unknown xx-info triple)"
 }
 
 @test "armv6" {

@@ -33,6 +33,10 @@ load 'assert'
   assert_equal "armv7-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm xx-info triple)"
   assert_equal "armv7" "$(TARGETPLATFORM=linux/arm xx-info pkg-arch)"
   assert_equal "v7" "$(TARGETPLATFORM=linux/arm/v7 xx-info variant)"
+
+  assert_equal "arm-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm ARM_TARGET_ARCH=arm xx-info triple)"
+  assert_equal "armv7" "$(TARGETPLATFORM=linux/arm ARM_TARGET_ARCH=arm xx-info pkg-arch)" # does not change
+  assert_equal "v7" "$(TARGETPLATFORM=linux/arm/v7 ARM_TARGET_ARCH=arm xx-info variant)"  # does not change
 }
 
 @test "armv6" {
