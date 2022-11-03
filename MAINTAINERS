@@ -1,0 +1,20 @@
+# The Twenty Committee
+#
+# This file describes the maintainer groups within the xx project.
+# The rules for governance are borrowed from and can be seen in
+# https://github.com/moby/moby/blob/master/project/GOVERNANCE.md file.
+#
+# It is structured to be consumable by both humans and programs.
+# To extract its contents programmatically, use any TOML-compliant
+# parser.
+#
+
+[Org]
+
+  [Org.Maintainers]
+
+    people = [
+      "crazy-max",
+      "tiborvass",
+      "tonistiigi",
+    ]
