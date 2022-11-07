@@ -477,6 +477,15 @@ RUN xx-cargo build --release --target-dir ./build && \
     xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
+### WebAssembly
+
+`xx-cargo` can also be used to build WebAssembly targets. Use platform `wasi/wasm` on your builds for `xx` to pick up the correct configuration. If your code is compatible you can use identical Dockerfile to build Linux and WebAssembly containers.
+
+When using multi-stage builds to copy build results to other stages, note that Rust adds ".wasm" suffix to the binaries built with
+WebAssembly.
+
+Only Rust builds are supported at the moment. To build C/C++ code for WebAssembly using `xx-clang` your Dockerfile needs to set up Wasi Sysroot and `libclang-rt` itself. 
+
 ## External SDK support
 
 In addition to Linux targets, `xx` can also build binaries for MacOS and Windows. When building MacOS binaries from C, external MacOS SDK is needed in `/xx-sdk` directory. Such SDK can be built, for example, with [gen_sdk_package script in osxcross project](https://github.com/tpoechtrager/osxcross/blob/master/tools/gen_sdk_package.sh). Please consult XCode license terms when making such an image. `RUN --mount` syntax can be used in Dockerfile in order to avoid copying SDK files. No special tooling such as `ld64` linker is required in the image itself.
