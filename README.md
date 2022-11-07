@@ -345,22 +345,70 @@ The wrapper supports rust installed via [`rustup`](https://rustup.rs/)
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-# official rust image
 FROM --platform=$BUILDPLATFORM rust:alpine
 RUN apk add clang lld
 # ...
-RUN --mount=type=cache,target=/usr/local/cargo/git/db \
-    --mount=type=cache,target=/usr/local/cargo/registry/cache \
-    --mount=type=cache,target=/usr/local/cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
+
+Cargo binary can also be called directly with `--target` flag if you don't want
+to use the wrapper. `--print-target-triple` is a built-in flag that can be used
+to set the correct target:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-# rustup
+FROM --platform=$BUILDPLATFORM rust:alpine
+RUN apk add clang lld
+# ...
+ARG TARGETPLATFORM
+RUN cargo build --target=$(xx-cargo --print-target-triple) --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
+```
+
+> **Note**
+>
+> `xx-cargo --print-target-triple` does not always have the same value as
+> `xx-clang --print-target-triple`. This is because prebuilt Rust and C
+> libraries sometimes use a different value.
+
+The first invocation of `xx-cargo` will install the standard library for Rust
+matching the target if not already installed.
+
+To fetch dependencies from crates.io you can use `cargo fetch` before building:
+
+```dockerfile
+# syntax=docker/dockerfile:1
+FROM --platform=$BUILDPLATFORM rust:alpine
+RUN apk add clang lld
+# ...
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    cargo fetch
+ARG TARGETPLATFORM
+RUN --mount=type=cache,target=/root/.cargo/git/db \
+    --mount=type=cache,target=/root/.cargo/registry/cache \
+    --mount=type=cache,target=/root/.cargo/registry/index \
+    xx-cargo build --release --target-dir ./build && \
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
+```
+
+> **Note**
+>
+> By calling `cargo fetch` before `ARG TARGETPLATFORM` your packages are
+> fetched only once for the whole build while the building happens separately
+> for each target architecture.
+
+To avoid redownloading dependencies on every build, you can use cache mounts
+to store [Git sources with packages and metadata of crate registries](https://doc.rust-lang.org/cargo/guide/cargo-home.html#directories).
+
+If you don't want to use the official Rust image, you can install `rustup`
+manually:
+
+```dockerfile
+# syntax=docker/dockerfile:1
 FROM --platform=$BUILDPLATFORM alpine AS rustup
 RUN apk add curl
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal
@@ -369,51 +417,41 @@ ENV PATH="/root/.cargo/bin:$PATH"
 FROM rustup
 RUN apk add clang lld
 # ...
-RUN --mount=type=cache,target=/root/.cargo/git/db \
-    --mount=type=cache,target=/root/.cargo/registry/cache \
-    --mount=type=cache,target=/root/.cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
+
+If you install rust using distribution packages, `rustup` will not be available:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-# packages
 FROM --platform=$BUILDPLATFORM alpine
 RUN apk add clang lld rust cargo
 # ...
-RUN --mount=type=cache,target=/root/.cargo/git/db \
-    --mount=type=cache,target=/root/.cargo/registry/cache \
-    --mount=type=cache,target=/root/.cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-apk add xx-c-essentials
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
+
+In this case, you need to also install minimum necessary packages using `xx-apk`.
 
 ### Building on Debian
 
+Building on Debian/Ubuntu is very similar. If you are using `rustup`:
+
 ```dockerfile
 # syntax=docker/dockerfile:1
-# official rust image
 FROM --platform=$BUILDPLATFORM rust:bullseye
 RUN apt-get update && apt-get install -y clang lld
-# ...
-RUN --mount=type=cache,target=/usr/local/cargo/git/db \
-    --mount=type=cache,target=/usr/local/cargo/registry/cache \
-    --mount=type=cache,target=/usr/local/cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-# rustup
 FROM --platform=$BUILDPLATFORM debian:bullseye AS rustup
 RUN apt-get update && apt-get install -y curl ca-certificates
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal
@@ -422,29 +460,21 @@ ENV PATH="/root/.cargo/bin:$PATH"
 FROM rustup
 RUN apt-get update && apt-get install -y clang lld
 # ...
-RUN --mount=type=cache,target=/root/.cargo/git/db \
-    --mount=type=cache,target=/root/.cargo/registry/cache \
-    --mount=type=cache,target=/root/.cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
+
+Or distribution packages:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-# packages
 FROM --platform=$BUILDPLATFORM debian:bullseye
 RUN apt-get update && apt-get install -y clang lld cargo
-# ...
-RUN --mount=type=cache,target=/root/.cargo/git/db \
-    --mount=type=cache,target=/root/.cargo/registry/cache \
-    --mount=type=cache,target=/root/.cargo/registry/index \
-    cargo fetch
 ARG TARGETPLATFORM
 RUN xx-apt-get install xx-c-essentials
 RUN xx-cargo build --release --target-dir ./build && \
-    xx-verify ./build/$(xx-cargo --print-target)/release/hello_cargo
+    xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
 ## External SDK support
