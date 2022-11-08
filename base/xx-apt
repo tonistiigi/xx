@@ -170,13 +170,13 @@ packages2=
 for p in ${packages}; do
   if [ "${p}" = "xx-c-essentials" ]; then
     p="libc6-dev"
-    if "$arg0" info "libgcc-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
+    if checkpkg "libgcc-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
       p="$p libgcc-10-dev"
     else
       p="$p libgcc-8-dev"
     fi
   elif [ "${p}" = "xx-cxx-essentials" ]; then
-    if "$arg0" info "libstdc++-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
+    if checkpkg "libstdc++-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
       p="libstdc++-10-dev"
     else
       p="libstdc++-8-dev"
