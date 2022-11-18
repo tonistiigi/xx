@@ -15,6 +15,14 @@ load 'assert'
   assert_output --partial "alpine-baselayout"
 }
 
+@test "essentials" {
+  run xx-apk list xx-c-essentials
+  assert_success
+
+  run xx-apk list xx-cxx-essentials
+  assert_success
+}
+
 @test "cross" {
   target="arm64"
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi

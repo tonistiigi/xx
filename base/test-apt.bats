@@ -22,6 +22,14 @@ load 'assert'
   assert_line "Package: gcc"
 }
 
+@test "essentials" {
+  run xx-apt show xx-c-essentials
+  assert_success
+
+  run xx-apt show xx-cxx-essentials
+  assert_success
+}
+
 @test "amd64" {
   export TARGETARCH=amd64
   if ! xx-info is-cross; then skip; fi
