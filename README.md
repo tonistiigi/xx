@@ -150,7 +150,7 @@ RUN xx-clang --static -o /out/myapp app.c && \
 
 The recommended method for C-based build is to use `clang` via `xx-clang` wrapper. Clang is natively a cross-compiler, but in order to use it, you also need a linker, compiler-rt or libgcc, and a C library(musl or glibc). All these are available as packages in Alpine and Debian based distros. Clang and linker are binaries and should be installed for your build architecture, while libgcc and C library should be installed for your target architecture.
 
-The recommended linker is `lld,` but there are some caveats. `lld` is not supported on S390x, and based on our experience, sometimes has issues with preparing static binaries for Ppc64le. In these cases, `ld` from `binutils` is required. As separate `ld` binary needs to be built for each architecture, distros often do not provide it as a package. Therefore `xx` loads [prebuilt](https://github.com/tonistiigi/xx/releases/tag/prebuilt%2Fld-1) `ld` binaries when needed. `XX_CC_PREFER_LINKER=ld` can be defined if you want to always use `ld`, even when `lld` is available on the system. Building MacOS binaries happens through a prebuilt `ld64` linker that also adds ad-hoc code-signature to the resulting binary.
+The recommended linker is `lld`, but there are some caveats. `lld` is not supported on S390x, and based on our experience, sometimes has issues with preparing static binaries for Ppc64le. In these cases, `ld` from `binutils` is required. As separate `ld` binary needs to be built for each architecture, distros often do not provide it as a package. Therefore `xx` loads [prebuilt](https://github.com/tonistiigi/xx/releases/tag/prebuilt%2Fld-1) `ld` binaries when needed. `XX_CC_PREFER_LINKER=ld` can be defined if you want to always use `ld`, even when `lld` is available on the system. Building MacOS binaries happens through a prebuilt `ld64` linker that also adds ad-hoc code-signature to the resulting binary.
 
 `xx-clang` can be called with any arguments `clang` binary accepts and will internally call the native `clang` binary with additional configuration for correct cross-compilation. On first invocation, `xx-clang` will also set up alias commands for the current target triple that can be later called directly. This helps with tooling that looks for programs with a target triple prefix from your `PATH`. This setup phase can be manually invoked by calling `xx-clang --setup-target-triple` that is a special flag that `clang` itself does not implement.
 
@@ -207,7 +207,7 @@ Building on Debian/Ubuntu is very similar. The only required dependency that nee
 
 ```dockerfile
 # ...
-RUN apt-get update && apt-get instal -y clang lld
+RUN apt-get update && apt-get install -y clang lld
 # copy source
 ARG TARGETPLATFORM
 RUN xx-apt install -y libc6-dev
@@ -228,7 +228,7 @@ RUN $(xx-info)-gcc -o hello hello.c
 
 ### Wrapping as default
 
-Special flags `xx-clang --wrap` and `xx-clang --unwarp` can be used to override the default behavior of `clang` with `xx-clang` in the extreme cases where your build scripts have no way to point to alternative compiler names.
+Special flags `xx-clang --wrap` and `xx-clang --unwrap` can be used to override the default behavior of `clang` with `xx-clang` in the extreme cases where your build scripts have no way to point to alternative compiler names.
 
 ```
 # export TARGETPLATFORM=linux/amd64
