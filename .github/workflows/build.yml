@@ -52,6 +52,10 @@ jobs:
             typ: alpine
             allow-failure: false
           -
+            image: alpine:3.17
+            typ: alpine
+            allow-failure: false
+          -
             image: alpine:edge
             typ: alpine
             allow-failure: true
@@ -89,6 +93,10 @@ jobs:
             allow-failure: false
           -
             image: fedora:36
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:37
             typ: rhel
             allow-failure: false
           -
