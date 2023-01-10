@@ -29,7 +29,7 @@ for a in "$@"; do
     "--setup-target-triple")
       setuponly=1
       ;;
-    "--print-target")
+    "--print-target-triple")
       printtarget=1
       ;;
     *)

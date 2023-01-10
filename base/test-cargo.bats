@@ -30,9 +30,9 @@ testHelloCargo() {
   assert_success
   run xx-cargo build --verbose --color=never --manifest-path=./fixtures/hello_cargo/Cargo.toml --release --target-dir /tmp/cargobuild
   assert_success
-  xx-verify /tmp/cargobuild/$(xx-cargo --print-target)/release/hello_cargo
+  xx-verify /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
   if ! xx-info is-cross; then
-    run /tmp/cargobuild/$(xx-cargo --print-target)/release/hello_cargo
+    run /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
     assert_success
     assert_output "hello cargo"
   fi
