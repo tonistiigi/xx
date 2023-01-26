@@ -70,7 +70,8 @@ jobs:
           -
             image: debian:bookworm
             typ: debian
-            allow-failure: false
+            # FIXME: Set to false when https://github.com/tonistiigi/xx/issues/95 fixed
+            allow-failure: true
           -
             image: debian:sid
             typ: debian
