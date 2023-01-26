@@ -88,6 +88,10 @@ if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev
   fi
 fi
 
+if command -v "$(xx-info)-pkg-config" >/dev/null 2>/dev/null; then
+  export "PKG_CONFIG=$(xx-info)-pkg-config"
+fi
+
 if [ -n "$printtarget" ]; then
   xx-info
   exit 0
