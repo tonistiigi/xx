@@ -166,21 +166,34 @@ if [ "$XX_OS" = "windows" ]; then
   esac
 fi
 
+gccvers="12 11 10 9"
 packages2=
 for p in ${packages}; do
   if [ "${p}" = "xx-c-essentials" ]; then
     p="libc6-dev"
-    if checkpkg "libgcc-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
-      p="$p libgcc-10-dev"
-    else
-      p="$p libgcc-8-dev"
+    libgccVer=
+    for gccver in ${gccvers}; do
+      if checkpkg "libgcc-${gccver}-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
+        libgccVer=$gccver
+        break
+      fi
+    done
+    if [ -z "$libgccVer" ]; then
+      libgccVer=8
     fi
+    p="$p libgcc-${libgccVer}-dev"
   elif [ "${p}" = "xx-cxx-essentials" ]; then
-    if checkpkg "libstdc++-10-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
-      p="libstdc++-10-dev"
-    else
-      p="libstdc++-8-dev"
+    libstdcxxVer=
+    for gccver in ${gccvers}; do
+      if checkpkg "libstdc++-${gccver}-dev:${XX_PKG_ARCH}" >/dev/null 2>/dev/null; then
+        libstdcxxVer=$gccver
+        break
+      fi
+    done
+    if [ -z "$libstdcxxVer" ]; then
+      libstdcxxVer=8
     fi
+    p="libstdc++-${libstdcxxVer}-dev"
   fi
   if [ -z "$packages2" ]; then
     packages2="$p"
