@@ -320,7 +320,7 @@ target "ld-tgz-base" {
     inherits = ["_ld-base"]
     target = "ld-static-tgz"
     args = {
-        LD_VERSION = BINUTILS_VERSION
+        BINUTILS_VERSION = BINUTILS_VERSION
     }
     platforms = [
         "linux/amd64",
