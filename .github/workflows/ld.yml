@@ -1,0 +1,108 @@
+name: ld
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
+    paths:
+      - 'src/ld/**'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - 'src/ld/**'
+
+jobs:
+  ld64:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build
+        uses: docker/bake-action@v2
+        with:
+          files: |
+            ./docker-bake.hcl
+          targets: ld64-tgz
+
+  binutils:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allow-failure }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-arm64
+          - target: linux-amd64
+          - target: linux-armv7
+          - target: linux-armv6
+          - target: linux-ppc64le
+          - target: linux-386
+          - target: linux-riscv64
+          - target: linux-s390x
+          - target: windows-amd64
+          - target: windows-386
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build
+        uses: docker/bake-action@v2
+        with:
+          targets: binutils-${{ matrix.target }}-alpine
+
+  ld:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allow-failure }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-arm64
+          - target: linux-amd64
+          - target: linux-armv7
+          - target: linux-armv6
+          - target: linux-ppc64le
+          - target: linux-386
+          - target: linux-riscv64
+          - target: linux-s390x
+          - target: windows-amd64
+          - target: windows-386
+
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build
+        uses: docker/bake-action@v2
+        with:
+          targets: ld-${{ matrix.target }}-tgz

@@ -132,9 +132,18 @@ jobs:
         uses: docker/setup-buildx-action@v2
       -
         name: Test
+        if: ${{ matrix.typ != 'rhel' }}
         uses: docker/bake-action@v2
         with:
-          targets: test-${{ matrix.typ }}
+          targets: test
+          set: |
+            test-${{ matrix.typ }}.args.TEST_BASE_IMAGE=${{ matrix.image }}
+      -
+        name: Test (info)
+        if: ${{ matrix.typ == 'rhel' }}
+        uses: docker/bake-action@v2
+        with:
+          targets: test-info
           set: |
             test-${{ matrix.typ }}.args.TEST_BASE_IMAGE=${{ matrix.image }}
 
