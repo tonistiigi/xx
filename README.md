@@ -146,6 +146,11 @@ RUN xx-clang --static -o /out/myapp app.c && \
     xx-verify --static /out/myapp
 ```
 
+> **Note**
+> 
+> `XX_VERIFY_STATIC=1` environment variable can be defined to make `xx-verify`
+> always verify that the compiler produced a static binary.
+
 ## C/C++
 
 The recommended method for C-based build is to use `clang` via `xx-clang` wrapper. Clang is natively a cross-compiler, but in order to use it, you also need a linker, compiler-rt or libgcc, and a C library(musl or glibc). All these are available as packages in Alpine and Debian based distros. Clang and linker are binaries and should be installed for your build architecture, while libgcc and C library should be installed for your target architecture.

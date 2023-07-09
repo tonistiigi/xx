@@ -53,6 +53,25 @@ load 'assert'
   unset TARGETPLATFORM
 }
 
+@test "static-env" {
+  export XX_VERIFY_STATIC=1
+
+  export XX_VERIFY_FILE_CMD_OUTPUT=": ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-aarch64.so.1, stripped"
+  export TARGETPLATFORM=linux/arm64
+  run xx-verify /idontexist
+  assert_failure
+  assert_output --partial "not statically linked"
+
+  export XX_VERIFY_FILE_CMD_OUTPUT=": ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, with debug_info, not stripped"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  unset XX_VERIFY_FILE_CMD_OUTPUT
+  unset XX_VERIFY_STATIC
+  unset TARGETPLATFORM
+}
+
 @test "darwin" {
   export XX_VERIFY_FILE_CMD_OUTPUT=": Mach-O 64-bit executable x86_64"
   export TARGETPLATFORM=darwin/amd64

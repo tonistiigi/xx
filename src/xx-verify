@@ -38,7 +38,7 @@ EOT
   exit 1
 }
 
-static=""
+static="$XX_VERIFY_STATIC"
 files=""
 
 for i in "$@"; do
@@ -245,7 +245,7 @@ for f in "$@"; do
     fi
   fi
 
-  if [ -n "$static" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
+  if [ "$static" = "1" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
     if echo "$out" | grep -E "statically linked|static-pie" >/dev/null; then
       exit 0
     fi
