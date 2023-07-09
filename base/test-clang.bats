@@ -79,6 +79,14 @@ testBuildHello() {
 @test "nolinker" {
   export XX_NO_DOWNLOAD=1
   if [ -f /etc/debian_version ]; then skip; fi # clang has dependency on ld in debian
+  if [ -f /etc/alpine-release ]; then
+    # clang (since 16) has a dependency on linker tools since alpine 3.18
+    # https://github.com/alpinelinux/aports/blob/19182e91254966beefa20f8f110fd522c9f3454c/main/clang16/APKBUILD#L128
+    alpineRelease=$(cat /etc/alpine-release)
+    if grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"' | grep -q "edge$" || [ "$(semver compare "$alpineRelease" "3.17.9999")" -ge 0 ]; then
+      skip
+    fi
+  fi
   del lld 2>/dev/null || true
   add clang
   run xx-clang --print-target-triple

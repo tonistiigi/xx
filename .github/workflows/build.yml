@@ -56,6 +56,10 @@ jobs:
             typ: alpine
             allow-failure: false
           -
+            image: alpine:3.18
+            typ: alpine
+            allow-failure: false
+          -
             image: alpine:edge
             typ: alpine
             allow-failure: true
@@ -89,15 +93,11 @@ jobs:
             typ: rhel
             allow-failure: false
           -
-            image: fedora:35
-            typ: rhel
-            allow-failure: false
-          -
-            image: fedora:36
-            typ: rhel
-            allow-failure: false
-          -
             image: fedora:37
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:38
             typ: rhel
             allow-failure: false
           -
@@ -109,7 +109,15 @@ jobs:
             typ: rhel
             allow-failure: false
           -
+            image: rockylinux/rockylinux:9
+            typ: rhel
+            allow-failure: false
+          -
             image: oraclelinux:8
+            typ: rhel
+            allow-failure: false
+          -
+            image: oraclelinux:9
             typ: rhel
             allow-failure: false
     steps:

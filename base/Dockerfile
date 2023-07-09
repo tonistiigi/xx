@@ -55,6 +55,7 @@ RUN --mount=type=cache,target=/pkg-cache \
 WORKDIR /work
 
 FROM test-base-${TEST_BASE_TYPE} AS test
+ADD --chmod=755 https://raw.githubusercontent.com/fsaintjacques/semver-tool/3.4.0/src/semver /usr/bin/semver
 COPY --from=assert . .
 COPY --from=base / /
 COPY fixtures fixtures
