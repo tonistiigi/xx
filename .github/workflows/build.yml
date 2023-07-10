@@ -68,7 +68,7 @@ jobs:
             typ: debian
             allow-failure: true
           -
-            image: debian:bullseye
+            image: debian:bullseye-backports
             typ: debian
             allow-failure: false
           -
