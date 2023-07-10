@@ -316,8 +316,9 @@ testHelloCGO() {
   rm -rf /usr/bin/$(xx-info triple)* || true
 
   add llvm
-  add pkg-config || add pkgconf
+  add pkgconf || add pkg-config
   xxadd xx-c-essentials
+  xxadd pkgconf || add pkg-config
   run xx-go env
   assert_success
   assert_output --partial 'CC="'"$(xx-info triple)-clang"'"'
