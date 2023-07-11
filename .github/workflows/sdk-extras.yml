@@ -8,28 +8,30 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "master"
+      - 'master'
     tags:
-      - "v*"
+      - 'v*'
     paths:
-      - "src/sdk-extras/**"
+      - 'src/sdk-extras/**'
   pull_request:
-    branches:
-      - "master"
     paths:
-      - "src/sdk-extras/**"
+      - 'src/sdk-extras/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      -
+        name: Checkout
         uses: actions/checkout@v3
-      - name: Set up QEMU
+      -
+        name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
+      -
+        name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: Build
+      -
+        name: Build
         uses: docker/bake-action@v2
         with:
           files: |
