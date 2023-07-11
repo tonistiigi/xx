@@ -2,26 +2,25 @@ variable "XX_REPO" {
     default = "tonistiigi/xx"
 }
 
+variable "TEST_BASE_TYPE" {
+    default = "alpine"
+}
+
 // Special target: https://github.com/docker/metadata-action#bake-definition
 target "meta-helper" {
     tags = ["${XX_REPO}:test"]
 }
 
-group "test" {
-    targets = ["test-alpine", "test-debian", "test-rhel"]
-}
-
-target "test-base" {
-    context = "base"
-    target = "test"
+target "test-src" {
+    context = "src"
 }
 
 target "test-alpine" {
-    inherits = ["test-base"]
+    inherits = ["test-src"]
 }
 
 target "test-debian" {
-    inherits = ["test-base"]
+    inherits = ["test-src"]
     args = {
         APT_MIRROR = "cdn-fastly.deb.debian.org"
         TEST_BASE_TYPE = "debian"
@@ -30,12 +29,62 @@ target "test-debian" {
 }
 
 target "test-rhel" {
-    inherits = ["test-base"]
+    inherits = ["test-src"]
     args = {
         TEST_BASE_TYPE = "rhel"
         TEST_BASE_IMAGE = "fedora:35"
-        TEST_CMDS = "info"
     }
+}
+
+target "test-base" {
+  inherits = ["test-${TEST_BASE_TYPE}"]
+}
+
+group "test" {
+  targets = [
+    "test-info",
+    "test-apk",
+    "test-apt",
+    "test-verify",
+    "test-clang",
+    "test-go",
+    "test-cargo"
+  ]
+}
+
+target "test-info" {
+  inherits = ["test-base"]
+  target = "test-info"
+}
+
+target "test-apk" {
+  inherits = ["test-base"]
+  target = "test-apk"
+}
+
+target "test-apt" {
+  inherits = ["test-base"]
+  target = "test-apt"
+}
+
+target "test-verify" {
+  inherits = ["test-base"]
+  target = "test-verify"
+}
+
+target "test-clang" {
+  inherits = ["test-base"]
+  target = "test-clang"
+}
+
+target "test-go" {
+  inherits = ["test-base"]
+  target = "test-go"
+}
+
+target "test-cargo" {
+  inherits = ["test-base"]
+  target = "test-cargo"
 }
 
 group "validate" {
@@ -81,18 +130,18 @@ target "_all-platforms" {
     ]
 }
 
-target "base" {
+target "xx" {
     inherits = ["meta-helper"]
-    context = "base"
-    target = "base"
+    context = "src"
+    target = "xx"
 }
 
-target "base-all" {
-    inherits = ["base", "_all-platforms"]
+target "image-all" {
+    inherits = ["image", "_all-platforms"]
 }
 
 target "sdk-extras" {
-    context = "base"
+    context = "src/sdk-extras"
     target = "sdk-extras"
     tags = ["${XX_REPO}:sdk-extras"]
     platforms = [
@@ -119,15 +168,21 @@ target "sdk-extras" {
     ]
 }
 
+target "_ld-base" {
+    context = "src/ld"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+    }
+}
+
 target "ld64-tgz" {
-    context = "base"
+    inherits = ["_ld-base"]
     target = "ld64-tgz"
     output = ["./ld64-tgz"]
     platforms = [
         "linux/386",
         "linux/amd64",
         "linux/arm64",
-        "linux/arm/v5",
         "linux/arm/v6",
         "linux/arm/v7"
     ]
@@ -153,7 +208,7 @@ group "binutils" {
 }
 
 target "binutils-base" {
-    context = "base"
+    inherits = ["_ld-base"]
     target = "binutils"
     args = {
         BINUTILS_VERSION = BINUTILS_VERSION
@@ -262,7 +317,7 @@ group "ld-static-tgz" {
 }
 
 target "ld-tgz-base" {
-    context = "base"
+    inherits = ["_ld-base"]
     target = "ld-static-tgz"
     args = {
         LD_VERSION = BINUTILS_VERSION
@@ -356,4 +411,28 @@ target "ld-windows-386-tgz" {
         LD_TARGET = "windows-386"
     }
     cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "windows-386")[0]])]
+}
+
+target "compiler-rt" {
+    context = "src/llvm"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+    }
+    target = "compiler-rt"
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ]
+}
+
+target "libcxx" {
+    context = "src/llvm"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+    }
+    target = "libcxx"
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ]
 }
