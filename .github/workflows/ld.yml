@@ -80,6 +80,9 @@ jobs:
         uses: docker/bake-action@v2
         with:
           targets: ${{ matrix.target }}
+          set: |
+            *.cache-from=type=gha,scope=${{ matrix.target }}
+            *.cache-to=type=gha,scope=${{ matrix.target }}
 
   ld-targets:
     runs-on: ubuntu-latest
@@ -123,3 +126,6 @@ jobs:
         uses: docker/bake-action@v2
         with:
           targets: ${{ matrix.target }}
+          set: |
+            *.cache-from=type=gha,scope=${{ matrix.target }}
+            *.cache-to=type=gha,scope=${{ matrix.target }}
