@@ -18,26 +18,6 @@ on:
       - 'src/ld/**'
 
 jobs:
-  ld64:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      -
-        name: Build
-        uses: docker/bake-action@v2
-        with:
-          files: |
-            ./docker-bake.hcl
-          targets: ld64-tgz
-
   binutils-targets:
     runs-on: ubuntu-latest
     outputs:
@@ -65,6 +45,52 @@ jobs:
       fail-fast: false
       matrix:
         target: ${{ fromJson(needs.binutils-targets.outputs.matrix) }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build
+        uses: docker/bake-action@v2
+        with:
+          targets: ${{ matrix.target }}
+          set: |
+            *.cache-from=type=gha,scope=${{ matrix.target }}
+            *.cache-to=type=gha,scope=${{ matrix.target }}
+
+  ld64-targets:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Create targets matrix
+        id: targets
+        run: |
+          matrix=$(docker buildx bake ld64-static-tgz --print | jq -cr '.group."ld64-static-tgz".targets')
+          echo "matrix=${matrix}" >> ${GITHUB_OUTPUT}
+      -
+        name: Show matrix
+        run: |
+          echo ${{ steps.targets.outputs.matrix }}
+
+  ld64:
+    runs-on: ubuntu-latest
+    needs:
+      - ld64-targets
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.ld64-targets.outputs.matrix) }}
     steps:
       -
         name: Checkout
