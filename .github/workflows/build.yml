@@ -120,6 +120,8 @@ jobs:
             image: oraclelinux:9
             typ: rhel
             allow-failure: false
+    env:
+      TEST_BASE_TYPE: ${{ matrix.typ }}
     steps:
       -
         name: Checkout
@@ -188,5 +190,5 @@ jobs:
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
-          targets: base-all
+          targets: xx-all
           push: ${{ github.event_name != 'pull_request' }}
