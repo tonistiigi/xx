@@ -86,9 +86,22 @@ RUN --mount=from=libtapi-static,source=/opt/libtapi,target=/opt/libtapi \
     make -j $(nproc) -C ld64 && \
     xx-verify --static ld64/src/ld/ld
 
-
 FROM scratch AS ld64-static
 COPY --from=ld64-static-base /work/cctools-port/cctools/ld64/src/ld/ld /ld64
+
+FROM scratch AS ld64-signed-static
+COPY --from=ld64-static / /
+COPY --from=sigtool / /
+COPY ld64.signed /
+
+FROM --platform=$BUILDPLATFORM alpine AS ld64-tgz-build
+WORKDIR /work
+ARG TARGETOS TARGETARCH TARGETVARIANT
+RUN --mount=from=ld64-signed-static \
+    mkdir /out-tgz && tar cvzf /out-tgz/ld64-signed-$TARGETOS-$TARGETARCH$TARGETVARIANT.tar.gz *
+
+FROM scratch AS ld64-static-tgz
+COPY --from=ld64-tgz-build /out-tgz/ /
 
 FROM cctools-base AS cctools-build
 # for LTO
@@ -135,20 +148,6 @@ RUN if xx-info is-cross; then cp -a /usr/include/CLI /$(xx-info triple)/usr/incl
 FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
-
-FROM scratch AS ld64-signed-static
-COPY --from=ld64-static / /
-COPY --from=sigtool / /
-COPY ld64.signed /
-
-FROM --platform=$BUILDPLATFORM alpine AS ld64-tgz-build
-WORKDIR /work
-ARG TARGETOS TARGETARCH TARGETVARIANT
-RUN --mount=from=ld64-signed-static \
-    mkdir /out-tgz && tar cvzf /out-tgz/ld64-signed-$TARGETOS-$TARGETARCH$TARGETVARIANT.tar.gz *
-
-FROM scratch AS ld64-tgz
-COPY --from=ld64-tgz-build /out-tgz/ /
 
 FROM --platform=$BUILDPLATFORM alpine AS binutils-base0
 RUN apk add --no-cache git clang lld zlib-dev gcc patch make musl-dev

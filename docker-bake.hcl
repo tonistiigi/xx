@@ -175,20 +175,6 @@ target "_ld-base" {
     }
 }
 
-target "ld64-tgz" {
-    inherits = ["_ld-base"]
-    target = "ld64-tgz"
-    output = ["./ld64-tgz"]
-    platforms = [
-        "linux/386",
-        "linux/amd64",
-        "linux/arm64",
-        "linux/arm/v6",
-        "linux/arm/v7"
-    ]
-    cache-to = ["type=inline"]
-}
-
 variable "BINUTILS_VERSION_ONLY" {
     default = ""
 }
@@ -310,6 +296,64 @@ target "binutils-windows-386-alpine" {
     }
     tags = binutilsTag(XX_REPO, BINUTILS_VERSION, BINUTILS_VERSION_ONLY, "windows-386")
     cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, BINUTILS_VERSION_ONLY, "windows-386")[0]])]
+}
+
+group "ld64-static-tgz" {
+    targets = [for v in ["linux-386", "linux-amd64", "linux-arm64", "linux-armv6", "linux-armv7"]: "ld64-${v}-tgz"]
+}
+
+target "ld64-tgz-base" {
+    inherits = ["_ld-base"]
+    target = "ld64-static-tgz"
+    platforms = [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v6",
+        "linux/arm/v7"
+    ]
+    cache-to = ["type=inline"]
+    output = ["./ld64-tgz"]
+}
+
+target "ld64-linux-amd64-tgz" {
+    inherits = ["ld64-tgz-base"]
+    args = {
+        LD_TARGET = "linux-amd64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-amd64")[0]])]
+}
+
+target "ld64-linux-arm64-tgz" {
+    inherits = ["ld64-tgz-base"]
+    args = {
+        LD_TARGET = "linux-arm64"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-arm64")[0]])]
+}
+
+target "ld64-linux-armv7-tgz" {
+    inherits = ["ld64-tgz-base"]
+    args = {
+        LD_TARGET = "linux-armv7"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-armv7")[0]])]
+}
+
+target "ld64-linux-armv6-tgz" {
+    inherits = ["ld64-tgz-base"]
+    args = {
+        LD_TARGET = "linux-armv6"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-armv6")[0]])]
+}
+
+target "ld64-linux-386-tgz" {
+    inherits = ["ld64-tgz-base"]
+    args = {
+        LD_TARGET = "linux-386"
+    }
+    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", "linux-arm64")[0]])]
 }
 
 group "ld-static-tgz" {
