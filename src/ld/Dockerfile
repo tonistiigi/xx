@@ -1,11 +1,18 @@
 #syntax=docker/dockerfile:1.5
 
+ARG LIBTAPI_VERSION=1100.0.11
+ARG CCTOOLS_VERSION=949.0.1-ld64-530
+ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
+# BINUTILS_PATCHES_VERSION defines version of aports to use for patches
+ARG BINUTILS_PATCHES_VERSION=3.13-stable
+ARG BINUTILS_VERSION=2.36.1
+
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
 FROM --platform=${BUILDPLATFORM} alpine AS libtapi-base
 RUN apk add --no-cache git clang lld cmake make python3 bash
 COPY --from=xx / /
-ARG LIBTAPI_VERSION=1100.0.11
+ARG LIBTAPI_VERSION
 RUN git clone https://github.com/tpoechtrager/apple-libtapi --depth 1 -b ${LIBTAPI_VERSION}
 WORKDIR ./apple-libtapi
 RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
@@ -40,7 +47,7 @@ RUN apk add --no-cache git clang lld make llvm
 COPY --from=xx / /
 WORKDIR /work
 ARG CCTOOLS_REPO=https://github.com/tpoechtrager/cctools-port
-ARG CCTOOLS_VERSION=949.0.1-ld64-530
+ARG CCTOOLS_VERSION
 RUN git clone $CCTOOLS_REPO -b ${CCTOOLS_VERSION}
 WORKDIR ./cctools-port/cctools
 ARG TARGETPLATFORM
@@ -128,7 +135,7 @@ RUN git clone https://github.com/CLIUtils/CLI11 && \
     cd CLI11 && \
     cp -a include/CLI /usr/include/ && \
     cd .. && rm -rf CLI11
-ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
+ARG SIGTOOL_VERSION
 RUN git clone https://github.com/thefloweringash/sigtool && \
     cd sigtool && \
     git checkout ${SIGTOOL_VERSION}
@@ -152,14 +159,13 @@ COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 FROM --platform=$BUILDPLATFORM alpine AS binutils-base0
 RUN apk add --no-cache git clang lld zlib-dev gcc patch make musl-dev
 WORKDIR /work
-# BINUTILS_PATCHES_VERSION defines version of aports to use for patches
-ARG BINUTILS_PATCHES_VERSION=3.13-stable
+ARG BINUTILS_PATCHES_VERSION
 RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpinelinux/aports.git && \
     mkdir patches && \
     cp -a aports/main/binutils/*.patch patches/ && \
     rm -rf aports
 COPY --from=xx / /
-ARG BINUTILS_VERSION=2.36.1
+ARG BINUTILS_VERSION
 RUN wget https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz
 ARG TARGETPLATFORM
 # first build version for current architecture that is used then cross compiling
