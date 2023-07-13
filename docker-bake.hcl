@@ -183,6 +183,13 @@ variable "BINUTILS_VERSION" {
     default = "2.36.1"
 }
 
+# only use in ci to get binutils version when releasing
+target "_binutils-version" {
+    args = {
+        BINUTILS_VERSION = BINUTILS_VERSION
+    }
+}
+
 function "binutilsTag" {
     # this can be cleaned up in newer buildx
     params = [repo, version, version_only, target]
