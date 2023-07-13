@@ -188,5 +188,5 @@ jobs:
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
-          targets: base-all
+          targets: xx-all
           push: ${{ github.event_name != 'pull_request' }}

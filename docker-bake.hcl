@@ -136,8 +136,8 @@ target "xx" {
     target = "xx"
 }
 
-target "image-all" {
-    inherits = ["image", "_all-platforms"]
+target "xx-all" {
+    inherits = ["xx", "_all-platforms"]
 }
 
 target "sdk-extras" {
