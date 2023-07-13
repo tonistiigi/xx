@@ -4,8 +4,8 @@ ARG LIBTAPI_VERSION=1100.0.11
 ARG CCTOOLS_VERSION=949.0.1-ld64-530
 ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
 # BINUTILS_PATCHES_VERSION defines version of aports to use for patches
-ARG BINUTILS_PATCHES_VERSION=3.13-stable
-ARG BINUTILS_VERSION=2.36.1
+ARG BINUTILS_PATCHES_VERSION=3.16-stable
+ARG BINUTILS_VERSION=2.38
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
@@ -157,7 +157,7 @@ COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
 FROM --platform=$BUILDPLATFORM alpine AS binutils-base0
-RUN apk add --no-cache git clang lld zlib-dev gcc patch make musl-dev
+RUN apk add --no-cache file git clang lld zlib-dev gcc patch make musl-dev bison flex texinfo
 WORKDIR /work
 ARG BINUTILS_PATCHES_VERSION
 RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpinelinux/aports.git && \
