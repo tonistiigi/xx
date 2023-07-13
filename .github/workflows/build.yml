@@ -120,6 +120,8 @@ jobs:
             image: oraclelinux:9
             typ: rhel
             allow-failure: false
+    env:
+      TEST_BASE_TYPE: ${{ matrix.typ }}
     steps:
       -
         name: Checkout
