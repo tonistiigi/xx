@@ -12,6 +12,9 @@ on:
       - '.github/workflows/bats-assert.yml'
       - 'util/bats-assert/**'
 
+env:
+  BUILDX_VERSION: latest
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +27,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          version: ${{ env.BUILDX_VERSION }}
       -
         name: Test
         working-directory: ./util/bats-assert

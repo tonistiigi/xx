@@ -15,6 +15,9 @@ on:
     branches:
       - 'master'
 
+env:
+  BUILDX_VERSION: latest
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -22,6 +25,11 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: ${{ env.BUILDX_VERSION }}
       -
         name: Validate
         uses: docker/bake-action@v2
@@ -131,6 +139,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          version: ${{ env.BUILDX_VERSION }}
       -
         name: Test
         if: ${{ matrix.typ != 'rhel' }}
@@ -163,6 +173,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          version: ${{ env.BUILDX_VERSION }}
       -
         name: Docker meta
         id: meta
