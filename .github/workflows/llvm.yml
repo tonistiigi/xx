@@ -12,9 +12,11 @@ on:
     tags:
       - 'v*'
     paths:
+      - '.github/workflows/llvm.yml'
       - 'src/llvm/**'
   pull_request:
     paths:
+      - '.github/workflows/llvm.yml'
       - 'src/llvm/**'
 
 env:

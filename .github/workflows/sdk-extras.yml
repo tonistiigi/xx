@@ -12,9 +12,11 @@ on:
     tags:
       - 'v*'
     paths:
+      - '.github/workflows/sdk-extras.yml'
       - 'src/sdk-extras/**'
   pull_request:
     paths:
+      - '.github/workflows/sdk-extras.yml'
       - 'src/sdk-extras/**'
 
 env:
