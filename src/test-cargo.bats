@@ -47,8 +47,17 @@ testHelloCargoRustup() {
 @test "install-rustup" {
   add clang lld curl ca-certificates
   assert_success
-  run sh -c "curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal"
+  run sh -c "curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=1.69.0 --no-modify-path --profile=minimal"
   assert_success
+  export "PATH=/root/.cargo/bin:$PATH"
+  run rustup --version 2>/dev/null
+  assert_success
+  assert_output --partial "rustup "
+  run rustc --version
+  assert_success
+  assert_output --partial "rustc "
+  echo "# $(rustup --version 2>/dev/null)" >&3
+  echo "# $(rustc --version)" >&3
 }
 
 @test "amd64-hellocargo-rustup" {
