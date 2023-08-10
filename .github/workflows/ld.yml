@@ -231,3 +231,22 @@ jobs:
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Generate src/xx-ld-shas
+        run: |
+          bash ./hack/generate-ld-shas
+        env:
+          DIST: ./dist
+          GITHUB_RELEASE_TAG: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
+      -
+        name: Create PR
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
+        with:
+          base: master
+          branch: bot/generate-ld-shas
+          commit-message: "update src/xx-ld-shas"
+          add-paths: src/xx-ld-shas
+          signoff: true
+          delete-branch: true
+          title: "Update `src/xx-ld-shas`"
+          draft: false
