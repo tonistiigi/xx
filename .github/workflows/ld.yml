@@ -14,10 +14,12 @@ on:
     paths:
       - '.github/workflows/ld.yml'
       - 'src/ld/**'
+      - 'docker-bake.hcl'
   pull_request:
     paths:
       - '.github/workflows/ld.yml'
       - 'src/ld/**'
+      - 'docker-bake.hcl'
 
 env:
   # needs latest for output platform-split support
