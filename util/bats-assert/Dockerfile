@@ -1,11 +1,11 @@
 FROM --platform=$BUILDPLATFORM alpine AS build
 RUN apk add --no-cache git
 WORKDIR /work
-RUN git clone --bare git://github.com/ztombol/bats-support && \
+RUN git clone --bare https://github.com/ztombol/bats-support && \
     mkdir -p /out/bats-support && cd /out/bats-support && \
     git --git-dir=/work/bats-support.git --work-tree=. checkout 004e707638eedd62e0481e8cdc9223ad471f12ee -- src load.bash LICENSE
 
-RUN git clone --bare git://github.com/ztombol/bats-assert && \
+RUN git clone --bare https://github.com/ztombol/bats-assert && \
     mkdir -p /out/bats-assert && cd /out/bats-assert && \
     git --git-dir=/work/bats-assert.git --work-tree=. checkout 9f88b4207da750093baabc4e3f41bf68f0dd3630 -- src load.bash LICENSE
 
