@@ -7,10 +7,12 @@ on:
     paths:
       - '.github/workflows/bats-assert.yml'
       - 'util/bats-assert/**'
+      - 'docker-bake.hcl'
   pull_request:
     paths:
       - '.github/workflows/bats-assert.yml'
       - 'util/bats-assert/**'
+      - 'docker-bake.hcl'
 
 jobs:
   build:

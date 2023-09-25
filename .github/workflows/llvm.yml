@@ -14,10 +14,12 @@ on:
     paths:
       - '.github/workflows/llvm.yml'
       - 'src/llvm/**'
+      - 'docker-bake.hcl'
   pull_request:
     paths:
       - '.github/workflows/llvm.yml'
       - 'src/llvm/**'
+      - 'docker-bake.hcl'
 
 jobs:
   compiler-rt:
