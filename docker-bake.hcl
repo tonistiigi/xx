@@ -42,50 +42,50 @@ target "test-base" {
 }
 
 group "test" {
-  targets = [
-    "test-info",
-    "test-apk",
-    "test-apt",
-    "test-verify",
-    "test-clang",
-    "test-go",
-    "test-cargo"
-  ]
+    targets = [
+        "test-info",
+        "test-apk",
+        "test-apt",
+        "test-verify",
+        "test-clang",
+        "test-go",
+        "test-cargo"
+    ]
 }
 
 target "test-info" {
-  inherits = ["test-base"]
-  target = "test-info"
+    inherits = ["test-base"]
+    target = "test-info"
 }
 
 target "test-apk" {
-  inherits = ["test-base"]
-  target = "test-apk"
+    inherits = ["test-base"]
+    target = "test-apk"
 }
 
 target "test-apt" {
-  inherits = ["test-base"]
-  target = "test-apt"
+    inherits = ["test-base"]
+    target = "test-apt"
 }
 
 target "test-verify" {
-  inherits = ["test-base"]
-  target = "test-verify"
+    inherits = ["test-base"]
+    target = "test-verify"
 }
 
 target "test-clang" {
-  inherits = ["test-base"]
-  target = "test-clang"
+    inherits = ["test-base"]
+    target = "test-clang"
 }
 
 target "test-go" {
-  inherits = ["test-base"]
-  target = "test-go"
+    inherits = ["test-base"]
+    target = "test-go"
 }
 
 target "test-cargo" {
-  inherits = ["test-base"]
-  target = "test-cargo"
+    inherits = ["test-base"]
+    target = "test-cargo"
 }
 
 group "validate" {
