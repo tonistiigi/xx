@@ -37,7 +37,8 @@ target "test-rhel" {
 }
 
 target "test-base" {
-  inherits = ["test-${TEST_BASE_TYPE}"]
+    inherits = ["test-${TEST_BASE_TYPE}"]
+    output = ["type=cacheonly"]
 }
 
 group "test" {
