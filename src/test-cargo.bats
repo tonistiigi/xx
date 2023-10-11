@@ -24,6 +24,42 @@ cleanPackages() {
   assert_output --partial "cargo: not found"
 }
 
+@test "aarch64" {
+  assert_equal "aarch64-alpine-linux-musl" "$(TARGETPLATFORM=linux/arm64 xx-cargo --print-target-triple)"
+}
+
+@test "arm" {
+  assert_equal "armv7-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm xx-cargo --print-target-triple)"
+}
+
+@test "armv6" {
+  assert_equal "armv6-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm/v6 xx-cargo --print-target-triple)"
+}
+
+@test "armv5" {
+  assert_equal "armv5-alpine-linux-musleabi" "$(TARGETPLATFORM=linux/arm/v5 xx-cargo --print-target-triple)"
+}
+
+@test "amd64" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64 xx-cargo --print-target-triple)"
+}
+
+@test "386" {
+  assert_equal "i586-alpine-linux-musl" "$(TARGETPLATFORM=linux/386 xx-cargo --print-target-triple)"
+}
+
+@test "riscv64" {
+  assert_equal "riscv64gc-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 xx-cargo --print-target-triple)"
+}
+
+@test "s390x" {
+  assert_equal "s390x-alpine-linux-musl" "$(TARGETPLATFORM=linux/s390x xx-cargo --print-target-triple)"
+}
+
+@test "ppc64le" {
+  assert_equal "powerpc64le-alpine-linux-musl" "$(TARGETPLATFORM=linux/ppc64le xx-cargo --print-target-triple)"
+}
+
 testHelloCargo() {
   rm -f "/.xx-cargo.$(xx-info arch)"
   run xxadd xx-c-essentials
