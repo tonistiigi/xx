@@ -59,7 +59,7 @@ if [ -n "$rustup" ] || [ ! -f /etc/alpine-release ]; then
 fi
 
 if [ ! -f "$done_file" ]; then
-  XX_RUSTUP="" xx-clang --setup-target-triple
+  XX_RUSTUP="" XX_VENDOR=$vendor xx-clang --setup-target-triple
   if [ ! -d "$(rustc --print sysroot)/lib/rustlib/$(xx-info)" ]; then
     if [ -n "$rustup" ]; then
       execSilent rustup target add "$(xx-info)"
@@ -74,11 +74,11 @@ if [ ! -f "$done_file" ]; then
   touch "$done_file"
 fi
 
-export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(XX_RUSTUP='' XX_VENDOR='' xx-info)-clang"
+export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(XX_RUSTUP='' XX_VENDOR=$vendor xx-info)-clang"
 if [ -n "$XX_RUSTFLAGS" ]; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUSTFLAGS=$XX_RUSTFLAGS"
 fi
-export "CC_$(xx-info | tr - _)=$(XX_RUSTUP='' XX_VENDOR='' xx-info)-clang"
+export "CC_$(xx-info | tr - _)=$(XX_RUSTUP='' XX_VENDOR=$vendor xx-info)-clang"
 
 if xx-info is-cross; then
   nativeRustTriple="$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info)"
