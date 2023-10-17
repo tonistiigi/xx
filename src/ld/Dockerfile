@@ -5,8 +5,8 @@ ARG LIBTAPI_VERSION=1100.0.11
 ARG CCTOOLS_VERSION=949.0.1-ld64-530
 ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
 # BINUTILS_PATCHES_VERSION defines version of aports to use for patches
-ARG BINUTILS_PATCHES_VERSION=3.18-stable
-ARG BINUTILS_VERSION=2.40
+ARG BINUTILS_PATCHES_VERSION=master
+ARG BINUTILS_VERSION=2.41
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
@@ -174,7 +174,7 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} &
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/usr --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --disable-nls && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/usr --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --disable-nls --disable-gprofng && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION}
