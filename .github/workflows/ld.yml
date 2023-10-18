@@ -6,6 +6,11 @@ concurrency:
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create GitHub Release'
+        required: false
+        type: boolean
   push:
     branches:
       - 'master'
@@ -124,6 +129,15 @@ jobs:
         name: List artifacts
         run: |
           tree -nh ./dist
+      -
+        name: Upload artifacts
+        if: ${{ inputs.release }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ld
+          path: ./dist/*
+          if-no-files-found: error
+          retention-days: 1
 
   ld-targets:
     runs-on: ubuntu-latest
@@ -177,3 +191,62 @@ jobs:
         name: List artifacts
         run: |
           tree -nh ./dist
+      -
+        name: Upload artifacts
+        if: ${{ inputs.release }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ld
+          path: ./dist/*
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.release }}
+    needs:
+      - ld
+      - ld64
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Prepare
+        run: |
+          version=$(docker buildx bake ld-linux-amd64-static-tgz --print | jq -cr '.target."ld-linux-amd64-static-tgz".args."BINUTILS_VERSION"')
+          echo "VERSION=${version}" >> $GITHUB_ENV
+      -
+        name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ld
+          path: ./dist
+      -
+        name: GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
+          tag_name: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Generate src/xx-ld-shas
+        run: |
+          bash ./hack/generate-ld-shas
+        env:
+          DIST: ./dist
+          GITHUB_RELEASE_TAG: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
+      -
+        name: Create PR
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
+        with:
+          base: master
+          branch: bot/generate-ld-shas
+          commit-message: "update src/xx-ld-shas"
+          add-paths: src/xx-ld-shas
+          signoff: true
+          delete-branch: true
+          title: "Update `src/xx-ld-shas`"
+          draft: false

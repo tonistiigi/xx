@@ -248,7 +248,7 @@ target "ld64-static-tgz" {
     ]
     cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", tgt)[0]])]
     cache-to = ["type=inline"]
-    output = ["./bin/ld64-static-tgz"]
+    output = ["./bin/ld-static-tgz"]
 }
 
 target "ld-static-tgz" {

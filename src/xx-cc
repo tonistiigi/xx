@@ -1,11 +1,16 @@
 #!/usr/bin/env sh
 
+: "${LD_MIRRORS=}"
+: "${LD_SHAS=}"
+: "${LD64_SHAS=}"
+
 set -e
 
-mirrors="https://github.com/tonistiigi/xx/releases/download/prebuilt%2Fld-2.38-0"
+# shellcheck disable=SC1090
+. "$(command -v xx-ld-shas)"
 
 if [ -n "$XX_MIRROR" ]; then
-  mirrors="$XX_MIRROR"
+  LD_MIRRORS="$XX_MIRROR"
 fi
 
 _wget() {
@@ -192,18 +197,9 @@ download_ld64() {
     return
   fi
   ensurewget
-  shas=$(
-    cat <<'EOT'
-ld64-signed-linux-386 b60f72fb81845f707786cee499f49541a1c46686
-ld64-signed-linux-amd64 2dd147c0b50f83e7939c7fa151fe81febae84caf
-ld64-signed-linux-arm64 89125aa156c77a772d05b3d02a183b446b20c5b8
-ld64-signed-linux-armv6 ce1744dfaff44ffacf57e77994e3a8b2eedffe8a
-ld64-signed-linux-armv7 93314800a42f36e2d2a90c99e7c1f7ac7e6f43fb
-EOT
-  )
 
   file="ld64-signed-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info os)-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info arch)$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info variant)"
-  sha=$(echo "$shas" | grep "$file" | cut -d' ' -f2 || true)
+  sha=$(echo "$LD64_SHAS" | grep "$file" | cut -d' ' -f2 || true)
 
   if [ -z "$sha" ]; then
     return
@@ -211,7 +207,7 @@ EOT
 
   tmpdir=$(mktemp -d)
 
-  for m in $mirrors; do
+  for m in $LD_MIRRORS; do
     if ! _wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
       if ! _wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
         continue
@@ -242,84 +238,9 @@ download_ld() {
     return
   fi
   ensurewget
-  # for f in *; do echo -n "${f%.tar.gz} " ; shasum -a 1 -b $f | cut -d' ' -f1 ; done | pbcopy
-  shas=$(
-    cat <<'EOT'
-linux-386-ld-linux-386 1c6e95b6fa2cd67d5b139d8f59ef42736bca1b29
-linux-386-ld-linux-amd64 3a6a2aeaa926c910348d1272c9100f5a2fc880cc
-linux-386-ld-linux-arm64 54d1a061f1e0ce5b7f0150e0d86d140dbc74e810
-linux-386-ld-linux-armv6 a5ec847effb4dae7ba7ebdba8efac96851f55c52
-linux-386-ld-linux-armv7 4fd68022c815529d31a4104a2eaa4964614fa9b7
-linux-386-ld-linux-ppc64le f3d59fcf8ccd052abee648e89df0035a923b251b
-linux-386-ld-linux-s390x 6347f3b773972302071d56a1cedfcda3616270da
-linux-amd64-ld-linux-386 3e8f208da293ca1726716b9f9176e9eec7bb70d7
-linux-amd64-ld-linux-amd64 080368ec185f7cd46a4d416ec9d9b07a87a0e38e
-linux-amd64-ld-linux-arm64 aa3f0aaa30bde9e3e43ad22abf9cd741571414d8
-linux-amd64-ld-linux-armv6 be9ded3bbb3656351c601d09ed8efb78c345e511
-linux-amd64-ld-linux-armv7 990a6abd228c910f803a68c2d1be140029d955a8
-linux-amd64-ld-linux-ppc64le 0c00ea4fec4284a43499a0823ae2f0d27cc0df7f
-linux-amd64-ld-linux-s390x c69551214da34452bedcdd082e0e5100d30f0123
-linux-arm64-ld-linux-386 4bb1f097624679f77b47755b46bb2420dad53056
-linux-arm64-ld-linux-amd64 c925dee584f3d4fef2c19469c54b4b32b2d6e29c
-linux-arm64-ld-linux-arm64 67e4fe36075015a9f06053db9bda041f628f100c
-linux-arm64-ld-linux-armv6 36f7cc07023b50c368405fcfe5475a7d143f8cbc
-linux-arm64-ld-linux-armv7 8a0eef9ce950480883910914084859f1dfdc2763
-linux-arm64-ld-linux-ppc64le 582cc738880295275c833ce67629d44a6c4735dc
-linux-arm64-ld-linux-s390x 81d000a3111f06a0a3536886dbe1f4b5a65fabf9
-linux-armv6-ld-linux-386 8499efdc3d266e3bc7e97e47fb63372bb9283596
-linux-armv6-ld-linux-amd64 e48a60bdfd05b2fd15313a026d008f572a31f3fa
-linux-armv6-ld-linux-arm64 8aba449dd98656122d20442b6db2119b574af7d8
-linux-armv6-ld-linux-armv6 c9b31c63a5d7af690562d48237020f098fb0d362
-linux-armv6-ld-linux-armv7 618cf8d0b425ca2a73d540ec832b65822211e9da
-linux-armv6-ld-linux-ppc64le 1ded4435d9d2af95fe2600307a7c21463d84d1ab
-linux-armv6-ld-linux-s390x 295a424043251b2ce4c1419e4f50824a17e06f8d
-linux-armv7-ld-linux-386 a545fafc90240152388b9bcfd264db303d2524fb
-linux-armv7-ld-linux-amd64 e03db86d6ddf0aabf16fcd49cf5d96794dc5364b
-linux-armv7-ld-linux-arm64 8b20b6aa8b08619c19c323cdf59c2312aa93ceaf
-linux-armv7-ld-linux-armv6 31e0b269e161245b2811963fa7982d6aac608fbd
-linux-armv7-ld-linux-armv7 133cc2777f712d69b16c3a19ed4f3ca33d992f4b
-linux-armv7-ld-linux-ppc64le 6bc0428090108a37591bef38dec1b8f5105903fc
-linux-armv7-ld-linux-s390x e06e2e4fc0642eb36008b264eaf62f3a1296a9da
-linux-ppc64le-ld-linux-386 b4561d4a74f82e628931bad3daf28c97ce9d7347
-linux-ppc64le-ld-linux-amd64 f3f032245399ff46afc9a2aff051fc6c58b1a62d
-linux-ppc64le-ld-linux-arm64 c6bc1cee1513e8c8109d57a25de2e78f8d643cfe
-linux-ppc64le-ld-linux-armv6 c8bb4beaea974db2b4651cf45853eb72e80e23da
-linux-ppc64le-ld-linux-armv7 693b5617b282bcb1e6fcde2b3abd5b720d3d2f46
-linux-ppc64le-ld-linux-ppc64le b49b5a55cf7d3239bb9ae53350b5635d8a848f29
-linux-ppc64le-ld-linux-s390x f2757e8242fc190c4fcf35c7ece88486b949e2c3
-linux-riscv64-ld-linux-386 030f59c1425f42232e0075a7324640dfb6f835be
-linux-riscv64-ld-linux-amd64 0b5bd6ea0ec242606c4e63458a134dfc6670770c
-linux-riscv64-ld-linux-arm64 03f23014888953b581c3d607bfa35b5c5c66aa88
-linux-riscv64-ld-linux-armv6 2a7491470763390bf89e667869fc16096b9ecc3a
-linux-riscv64-ld-linux-armv7 cad4ee8ee1739cbcf91ace751a3e7e5ffed595c1
-linux-riscv64-ld-linux-ppc64le 2901d8ca953e58961013f12f46e5309c54004d1f
-linux-riscv64-ld-linux-s390x cd875e21040d79d81c6e812232bb9a53e410941d
-linux-s390x-ld-linux-386 e077c4664f58223b5e6f0033aa76f459b7b5b87b
-linux-s390x-ld-linux-amd64 acf4e62ff69b1ed2eba67913a2df3a86285dcc93
-linux-s390x-ld-linux-arm64 3dedd7834e52d3713f6136a62960e90500dc8581
-linux-s390x-ld-linux-armv6 72a780e78f27c50a578f874ed0cb1268430831bf
-linux-s390x-ld-linux-armv7 95d0c9723e6a6f0c6743a928d666783b37ff2ffa
-linux-s390x-ld-linux-ppc64le 2dd0d7d86e1a59f95bc5740d9a9757d1e945c04d
-linux-s390x-ld-linux-s390x 82af2cab690c7bf7d0f50cb1a77e4cb24a4b59ca
-windows-386-ld-linux-386 33acb48796a4819836efae4501ff03d0f735ccdc
-windows-386-ld-linux-amd64 bc69c14e05a95cd36507267169423d19c34be57d
-windows-386-ld-linux-arm64 c7d6edf9c6dc99ac77c1a43afa4c47d63dbbe925
-windows-386-ld-linux-armv6 17f4a54c173f33771864071277ef9406d21e4e34
-windows-386-ld-linux-armv7 90193a36ade422db6a83132a3646df14ccb33c24
-windows-386-ld-linux-ppc64le 9333dfb85995486f42a7d84ad6e5554663bdba99
-windows-386-ld-linux-s390x 22b53c83bdfd7c50d664ad451f5215b7297a65fc
-windows-amd64-ld-linux-386 c33d238d88be7396b2cfcc3fdcb3eb315caf5026
-windows-amd64-ld-linux-amd64 190e25f106c2c94bd4a9eb43c1a1adfa467ab16c
-windows-amd64-ld-linux-arm64 f79e8a5d76f6cb73758ba686032931e0ca79882e
-windows-amd64-ld-linux-armv6 a2bf366e475a05fdd5f76dcb89853c0fa9688732
-windows-amd64-ld-linux-armv7 f80649beea9fda70e571b60b5a8c002e68962dd8
-windows-amd64-ld-linux-ppc64le 85e1ca017bf8336f197612440964483cc48a21f5
-windows-amd64-ld-linux-s390x 5de90ec0906a3a28cc62058b90a89d266590b5d6
-EOT
-  )
 
   file="$targetos-$targetarch$targetvariant-ld-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info os)-$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info arch)$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info variant)"
-  sha=$(echo "$shas" | grep "$file" | cut -d' ' -f2 || true)
+  sha=$(echo "$LD_SHAS" | grep "$file" | cut -d' ' -f2 || true)
 
   if [ -z "$sha" ]; then
     return
@@ -327,7 +248,7 @@ EOT
 
   tmpdir=$(mktemp -d)
 
-  for m in $mirrors; do
+  for m in $LD_MIRRORS; do
     if ! _wget "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
       if ! _wget --no-check-certificate "$m/$file.tar.gz" -q -O "$tmpdir/$file.tar.gz" >/dev/null 2>/dev/null; then
         continue
@@ -394,7 +315,7 @@ setup() {
     return
   fi
 
-  if [ ! -f /usr/bin/$name ]; then
+  if [ ! -f /usr/bin/"$name" ]; then
     echo >&2 "/usr/bin/$name not found"
     exit 1
   fi
