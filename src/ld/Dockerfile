@@ -1,15 +1,16 @@
 #syntax=docker/dockerfile:1.5
 
+ARG ALPINE_VERSION=3.18
 ARG LIBTAPI_VERSION=1100.0.11
 ARG CCTOOLS_VERSION=949.0.1-ld64-530
 ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
 # BINUTILS_PATCHES_VERSION defines version of aports to use for patches
-ARG BINUTILS_PATCHES_VERSION=3.16-stable
-ARG BINUTILS_VERSION=2.38
+ARG BINUTILS_PATCHES_VERSION=master
+ARG BINUTILS_VERSION=2.41
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
-FROM --platform=${BUILDPLATFORM} alpine AS libtapi-base
+FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libtapi-base
 RUN apk add --no-cache git clang lld cmake make python3 bash
 COPY --from=xx / /
 ARG LIBTAPI_VERSION
@@ -42,7 +43,7 @@ RUN export INSTALLPREFIX=/opt/libtapi/ \
     ./build.sh && cd build && make -j $(nproc) LLVMObject tapiCore LLVMSupport LLVMDemangle LLVMMC LLVMBinaryFormat install-tapi-headers && mkdir /opt/libtapi/lib && cp -a ./lib/*.a /opt/libtapi/lib/ && \
     cd .. && rm -rf build
 
-FROM --platform=${BUILDPLATFORM} alpine AS cctools-base
+FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS cctools-base
 RUN apk add --no-cache git clang lld make llvm
 COPY --from=xx / /
 WORKDIR /work
@@ -101,7 +102,7 @@ COPY --from=ld64-static / /
 COPY --from=sigtool / /
 COPY ld64.signed /
 
-FROM --platform=$BUILDPLATFORM alpine AS ld64-tgz-build
+FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS ld64-tgz-build
 WORKDIR /work
 ARG TARGETOS TARGETARCH TARGETVARIANT
 RUN --mount=from=ld64-signed-static \
@@ -127,7 +128,7 @@ FROM scratch AS cctools
 COPY --from=libtapi /opt/libtapi/lib/*.so /usr/lib/
 COPY --from=cctools-build /opt/cctools /usr
 
-FROM --platform=${BUILDPLATFORM} alpine AS sigtool-base
+FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS sigtool-base
 RUN apk add --no-cache git clang lld cmake make pkgconf
 COPY --from=xx / /
 WORKDIR /work
@@ -156,8 +157,8 @@ FROM scratch AS sigtool
 COPY --from=codesign-static / /
 COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
-FROM --platform=$BUILDPLATFORM alpine AS binutils-base0
-RUN apk add --no-cache file git clang lld zlib-dev gcc patch make musl-dev bison flex texinfo
+FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS binutils-base0
+RUN apk add --no-cache file git clang lld linux-headers zlib-dev zstd-dev gcc patch make musl-dev musl-libintl bison flex texinfo
 WORKDIR /work
 ARG BINUTILS_PATCHES_VERSION
 RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpinelinux/aports.git && \
@@ -173,11 +174,11 @@ RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} &
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/usr --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --disable-nls && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/usr --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --disable-nls --disable-gprofng && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION}
-RUN xx-apk add --no-cache musl-dev gcc g++ zlib-dev
+RUN xx-apk add --no-cache musl-dev gcc g++ zlib-dev zstd-dev
 
 FROM binutils-base0 AS ld-base
 RUN xx-apk add --no-cache zlib-static
@@ -192,7 +193,7 @@ RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$LD_CFLAGS --static" CXXFLAGS="$LD
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/ --disable-multilib --enable-deterministic-archives --target=$LD_TARGET_TRIPLE --host $(xx-clang --print-target-triple) --disable-nls --disable-gold --enable-relro --disable-plugins --with-pic --with-mmap --with-system-zlib --disable-gas --disable-elfcpp --disable-binutils --disable-gprof $BINUTILS_CONFIG && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/ --disable-multilib --enable-deterministic-archives --target=$LD_TARGET_TRIPLE --host $(xx-clang --print-target-triple) --disable-nls --disable-gold --enable-relro --disable-plugins --with-pic --with-mmap --with-system-zlib --disable-gas --disable-elfcpp --disable-binutils --disable-gprofng $BINUTILS_CONFIG && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
@@ -224,7 +225,7 @@ RUN export CC=xx-clang CXX=xx-clang++ CFLAGS="$BINUTILS_CFLAGS" CXXFLAGS="$BINUT
     tar xf binutils-${BINUTILS_VERSION}.tar.gz && \
     cd binutils-${BINUTILS_VERSION} && \
     for f in ../patches/*; do patch -p1 < $f; done && \
-    ./configure --disable-separate-code --libdir=/lib --prefix=/out --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM= TARGETPAIR=$BINUTILS_TARGET xx-info) --host $(xx-clang --print-target-triple) --disable-nls --enable-gold --enable-relro --enable-plugins --with-pic --with-mmap --with-system-zlib $BINUTILS_CONFIG && \
+    ./configure --disable-separate-code --libdir=/lib --prefix=/out --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM= TARGETPAIR=$BINUTILS_TARGET xx-info) --host $(xx-clang --print-target-triple) --disable-nls --enable-gold --enable-relro --enable-plugins --with-pic --with-mmap --with-system-zlib --disable-gprofng $BINUTILS_CONFIG && \
     make -j $(nproc) && \
     make install && \
     cd ..  && rm -rf binutils-${BINUTILS_VERSION} && \
