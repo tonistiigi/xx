@@ -110,7 +110,7 @@ target "shellcheck" {
 }
 
 group "default" {
-    targets = ["base-all"]
+    targets = ["xx-all"]
 }
 
 target "_all-platforms" {
