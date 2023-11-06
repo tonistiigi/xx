@@ -87,7 +87,7 @@ if xx-info is-cross; then
   export "CC_$(echo "$nativeRustTriple" | tr - _)=$nativeClangTriple-clang"
 fi
 
-if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1 && [ "$XX_OS" = "linux" ]; then
+if command -v "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1 && [ "$XX_OS" = "linux" ]; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)"
   if [ -f /etc/alpine-release ]; then
     export "QEMU_LD_PREFIX=/$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info)/"
