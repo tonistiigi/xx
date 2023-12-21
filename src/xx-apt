@@ -21,6 +21,16 @@ checkpkg() {
   apt show "$@"
 }
 
+aptsourcesfile() {
+  if [ -f /etc/apt/sources.list.d/debian.sources ]; then
+    echo /etc/apt/sources.list.d/debian.sources
+  elif [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+    echo /etc/apt/sources.list.d/ubuntu.sources
+  else
+    echo /etc/apt/sources.list
+  fi
+}
+
 exitnolinux() {
   if [ "${TARGETOS}" != "linux" ]; then
     echo >&2 "skipping packages installation on ${XX_OS}"
@@ -37,7 +47,7 @@ case "${TARGETARCH}" in
   riscv*)
     case "${XX_VENDOR}" in
       debian)
-        if ! grep "sid main" /etc/apt/sources.list >/dev/null; then
+        if ! grep "sid main" "$(aptsourcesfile)" >/dev/null; then
           echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 currently only supported on sid"
           exit 0
         fi
@@ -64,7 +74,7 @@ fi
 fixubuntusources() {
   # fix all current sources to native arch
   nativearch="$(TARGETPLATFORM="" TARGETPAIR="" TARGETARCH="" TARGETOS="" xx-info arch)"
-  sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i /etc/apt/sources.list
+  sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i "$(aptsourcesfile)"
 
   if ! xx-info is-cross; then return; fi
 
