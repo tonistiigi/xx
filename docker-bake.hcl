@@ -32,7 +32,6 @@ target "test-alpine" {
 target "test-debian" {
     inherits = ["test-src"]
     args = {
-        APT_MIRROR = "cdn-fastly.deb.debian.org"
         TEST_BASE_TYPE = "debian"
         TEST_BASE_IMAGE = "debian:bookworm"
     }
