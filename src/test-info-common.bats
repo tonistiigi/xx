@@ -77,6 +77,10 @@ load 'assert'
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info march)"
 }
 
+@test "loong64" {
+  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info march)"
+}
+
 @test "s390x" {
   assert_equal "s390x" "$(TARGETPLATFORM=linux/s390x xx-info march)"
 }
@@ -133,6 +137,10 @@ load 'assert'
   TARGETPAIR=linux-riscv64 run xx-info
   assert_success
   assert_output "$(TARGETPLATFORM=linux/riscv64 xx-info)"
+
+  TARGETPAIR=linux-loong64 run xx-info
+  assert_success
+  assert_output "$(TARGETPLATFORM=linux/loong64 xx-info)"
 
   TARGETPAIR=linux-mips run xx-info
   assert_success

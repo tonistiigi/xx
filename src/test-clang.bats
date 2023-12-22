@@ -254,6 +254,14 @@ testBuildHello() {
   expectedSuffix=
 }
 
+@test "loong64-c-ld" {
+  skip "LOONG64 not supported"
+  export TARGETARCH=loong64
+  testHelloCLLD # actually runs with ld
+  expectedLinker=
+  expectedSuffix=
+}
+
 @test "ppc64le-c-lld" {
   export TARGETARCH=ppc64le
   testHelloCLLD
@@ -297,6 +305,12 @@ testBuildHello() {
     skip "RISC-V not supported"
   fi
   export TARGETARCH=riscv64
+  testHelloCPPLLD # actually runs with ld
+}
+
+@test "loong64-c++-ld" {
+  skip "LOONG64 not supported"
+  export TARGETARCH=loong64
   testHelloCPPLLD # actually runs with ld
 }
 

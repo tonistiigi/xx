@@ -175,6 +175,8 @@ detectTargetOSArch() {
     targetarch="s390x"
   elif [ "$arch" = "powerpc64le" ]; then
     targetarch="ppc64le"
+  elif [ "$arch" = "loong64" ]; then
+    targetarch="loong64"
   fi
 
   if [ -z "$targetarch" ]; then
@@ -334,6 +336,10 @@ setup() {
   if [ "${target#riscv64}" != "${target}" ]; then
     prefer_lld=
   fi
+  # lld has no support for loong64
+  if [ "${target#loong64}" != "${target}" ]; then
+    prefer_lld=
+  fi
 
   if [ -n "${XX_CC_PREFER_STATIC_LINKER}" ] && { [ "${target#386}" != "${target}" ] || [ "${target#powerpc64le}" != "${target}" ]; }; then
     prefer_lld=
@@ -401,6 +407,9 @@ setup() {
     fi
     if [ "$exp" = "riscv64" ]; then
       exp="riscv"
+    fi
+    if [ "$exp" = "loong64" ]; then
+      exp="loong64"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
       ln -s "$(command -v ld)" "/usr/bin/${target}-ld"

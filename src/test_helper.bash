@@ -89,6 +89,28 @@ supportRiscVCGo() {
   go version | egrep -E "1.16|1.17|1.18|1.19" >/dev/null 2>&1
 }
 
+supportLoongArch() {
+  if [ -f /etc/debian_version ]; then
+    if grep "sid" /etc/apt/sources.list 2>/dev/null >/dev/null; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+  return 0
+}
+
+supportLoongArchGo() {
+  go version | grep -E "1.14|1.15|1.16|1.17|1.18|1.19|1.20|1.21" >/dev/null 2>&1
+}
+
+supportLoongArchCGo() {
+  if ! supportLoongArch; then
+    return 1
+  fi
+  go version | egrep -E "1.16|1.17|1.18|1.19|1.20|1.21" >/dev/null 2>&1
+}
+
 supportRC() {
   command -v llvm-rc >/dev/null 2>&1
 }
