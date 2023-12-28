@@ -1,8 +1,6 @@
-#FROM --platform=$BUILDPLATFORM alpine AS build
-FROM cr.loongnix.cn/library/alpine:3.11 AS build
+FROM --platform=$BUILDPLATFORM alpine AS build
 RUN apk add --no-cache git
 WORKDIR /work
-ENV https_proxy=http://10.130.0.20:7890
 RUN git clone --bare https://github.com/ztombol/bats-support && \
     mkdir -p /out/bats-support && cd /out/bats-support && \
     git --git-dir=/work/bats-support.git --work-tree=. checkout 004e707638eedd62e0481e8cdc9223ad471f12ee -- src load.bash LICENSE
@@ -18,7 +16,7 @@ RUN echo 'source "$(dirname "${BASH_SOURCE[0]}")/bats-support/load.bash"' > /out
 FROM scratch AS release
 COPY --from=build /out /
 
-FROM cr.loongnix.cn/library/alpine:3.11 AS test-gen
+FROM alpine AS test-gen
 RUN apk add --no-cache bats
 WORKDIR /work
 COPY --from=release . .

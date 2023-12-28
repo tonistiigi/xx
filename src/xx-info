@@ -343,7 +343,7 @@ case "$TARGETARCH" in
   "loong64")
     XX_MARCH="loong64"
     XX_DEBIAN_ARCH="loong64"
-    XX_ALPINE_ARCH="loong64"
+    XX_ALPINE_ARCH="loongarch64"
     XX_RHEL_ARCH="loong64"
     XX_TRIPLE="loong64${vendor}-linux-${XX_LIBC}abi"
     ;;

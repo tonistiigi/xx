@@ -75,8 +75,8 @@ load 'assert'
 }
 
 @test "loong64" {
-  assert_equal "loong64-alpine-linux-muslabi" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
-  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
+  assert_equal "loong64-alpine-linux-musl" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
+  assert_equal "loongarch64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
 }
 
 @test "custom-vendor" {

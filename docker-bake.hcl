@@ -127,7 +127,7 @@ target "_all-platforms" {
         "linux/mips64le",
         "linux/ppc64le",
         "linux/s390x",
-        "linux/riscv64",
+	"linux/riscv64",
 	"linux/loong64"
     ]
 }

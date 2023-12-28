@@ -86,7 +86,6 @@ testEnv() {
 }
 
 @test "loong64-env" {
-  skip "LOONG64 GO not supported"
   export TARGETARCH=loong64
   testEnv
 }
@@ -170,6 +169,106 @@ testEnv() {
   unset TARGETOS
 }
 
+
+testHelloGO() {
+  run xx-go build -o /tmp/a.out ./fixtures/hello.go
+  assert_success
+  xx-verify /tmp/a.out
+  if ! xx-info is-cross; then
+    run /tmp/a.out
+    assert_success
+    assert_output "hello go"
+  fi
+}
+
+@test "native-hellogo" {
+  unset TARGETARCH
+  testHelloGO
+}
+
+@test "amd64-hellogo" {
+  export TARGETARCH=amd64
+  testHelloGO
+}
+
+@test "arm64-hellogo" {
+  export TARGETARCH=arm64
+  testHelloGO
+}
+
+@test "arm-hellogo" {
+  export TARGETARCH=arm
+  testHelloGO
+}
+
+@test "armv5-hellogo" {
+  export TARGETARCH=arm
+  export TARGETVARIANT=v5
+  testHelloGO
+  unset TARGETVARIANT
+}
+
+@test "s390x-hellogo" {
+  export TARGETARCH=s390x
+  testHelloGO
+}
+
+@test "ppc64le-hellogo" {
+  export TARGETARCH=ppc64le
+  testHelloGO
+}
+
+@test "riscv64-hellogo" {
+  if ! supportRiscVGo; then
+    skip "RISC-V GO not supported"
+  fi
+  export TARGETARCH=riscv64
+  testHelloGO
+}
+
+@test "loong64-hellogo" {
+  if ! supportLoongArchGo; then
+    skip "LOONG64 GO not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloGO
+}
+
+@test "386-hellogo" {
+  export TARGETARCH=386
+  testHelloGO
+}
+
+@test "mipsle-hellogo" {
+  export TARGETARCH=mipsle
+  testHelloGO
+}
+
+@test "mipsle-softfloat-hellogo" {
+  export TARGETARCH=mipsle
+  export TARGETVARIANT=softfloat
+  testHelloGO
+  unset TARGETVARIANT
+}
+
+@test "mips64le-hellogo" {
+  export TARGETARCH=mips64le
+  testHelloGO
+}
+
+@test "mips64le-softfloat-hellogo" {
+  export TARGETARCH=mips64le
+  export TARGETVARIANT=softfloat
+  testHelloGO
+  unset TARGETVARIANT
+}
+
+@test "darwin-amd64-hellogo" {
+  export TARGETARCH=amd64
+  export TARGETOS=darwin
+  testHelloGO
+}
+
 testHelloCGO() {
   export CGO_ENABLED=1
   xxadd xx-c-essentials
@@ -220,8 +319,6 @@ testHelloCGO() {
 
 @test "loong64-hellocgo" {
   skip "LOONG64 CGO not supported"
-  export TARGETARCH=loong64
-  testHelloCGO
 }
 
 @test "386-hellocgo" {

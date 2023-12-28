@@ -101,14 +101,7 @@ supportLoongArch() {
 }
 
 supportLoongArchGo() {
-  go version | grep -E "1.14|1.15|1.16|1.17|1.18|1.19|1.20|1.21" >/dev/null 2>&1
-}
-
-supportLoongArchCGo() {
-  if ! supportLoongArch; then
-    return 1
-  fi
-  go version | egrep -E "1.16|1.17|1.18|1.19|1.20|1.21" >/dev/null 2>&1
+  go version | grep -E "1.19|1.20|1.21" >/dev/null 2>&1
 }
 
 supportRC() {

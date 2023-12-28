@@ -409,7 +409,7 @@ setup() {
       exp="riscv"
     fi
     if [ "$exp" = "loong64" ]; then
-      exp="loong64"
+      exp="loongarch"
     fi
     if ld -V 2>/dev/null | grep $exp >/dev/null; then
       ln -s "$(command -v ld)" "/usr/bin/${target}-ld"

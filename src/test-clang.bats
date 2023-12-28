@@ -255,11 +255,11 @@ testBuildHello() {
 }
 
 @test "loong64-c-ld" {
-  skip "LOONG64 not supported"
+  if ! supportLoongArch; then
+    skip "LOONGARCH not supported"
+  fi
   export TARGETARCH=loong64
-  testHelloCLLD # actually runs with ld
-  expectedLinker=
-  expectedSuffix=
+  testHelloCLLD
 }
 
 @test "ppc64le-c-lld" {
