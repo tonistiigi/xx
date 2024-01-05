@@ -31,7 +31,7 @@ teardown_file() {
   else
     del golang
   fi
-  rm /tmp/a.out
+  rm /tmp/a.out || true
   rm -rf /var/cache/apt/*.bin || true
 }
 
@@ -58,7 +58,11 @@ testEnv() {
 }
 
 @test "nogo" {
-  del go 2>/dev/null || true
+  if command -v apk >/dev/null 2>/dev/null; then
+    del go
+  else
+    del golang
+  fi
   run xx-go env
   assert_failure
   assert_output --partial "go: not found"

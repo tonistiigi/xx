@@ -26,9 +26,9 @@ xxadd() {
 
 xxdel() {
   if [ -f /etc/alpine-release ]; then
-    xx-apk add "$@" 2>/dev/null || true
+    xx-apk del "$@" 2>/dev/null || true
   else
-    xxrun xx-apt install -y --autoremove "$@" 2>/dev/null || true
+    xxrun xx-apt remove -y --autoremove "$@" 2>/dev/null || true
   fi
 }
 
