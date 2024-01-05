@@ -32,7 +32,7 @@ target "test-debian" {
     args = {
         APT_MIRROR = "cdn-fastly.deb.debian.org"
         TEST_BASE_TYPE = "debian"
-        TEST_BASE_IMAGE = "debian:bullseye"
+        TEST_BASE_IMAGE = "debian:bookworm"
     }
 }
 

@@ -448,7 +448,7 @@ Building on Debian/Ubuntu is very similar. If you are using `rustup`:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM rust:bullseye
+FROM --platform=$BUILDPLATFORM rust:bookworm
 RUN apt-get update && apt-get install -y clang lld
 ARG TARGETPLATFORM
 RUN xx-cargo build --release --target-dir ./build && \
@@ -457,7 +457,7 @@ RUN xx-cargo build --release --target-dir ./build && \
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM debian:bullseye AS rustup
+FROM --platform=$BUILDPLATFORM debian:bookworm AS rustup
 RUN apt-get update && apt-get install -y curl ca-certificates
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path --profile minimal
 ENV PATH="/root/.cargo/bin:$PATH"
@@ -474,7 +474,7 @@ Or distribution packages:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM debian:bullseye
+FROM --platform=$BUILDPLATFORM debian:bookworm
 RUN apt-get update && apt-get install -y clang lld cargo
 ARG TARGETPLATFORM
 RUN xx-apt-get install xx-c-essentials
