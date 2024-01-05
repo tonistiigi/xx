@@ -3,40 +3,69 @@
 load 'assert'
 load 'test_helper'
 
-@test "nogo" {
-  del go 2>/dev/null || true
-  run xx-go env
-  assert_failure
-  assert_output --partial "go: not found"
-}
-
-testEnv() {
-  run xx-go env
-  assert_success
-  assert_output --partial 'GOARCH="'"$(xx-info arch)"'"'
-  assert_output --partial 'GOOS="'"$(xx-info os)"'"'
-  assert_output --partial 'GOHOSTOS="'"$(TARGETOS= TARGETARCH= xx-info os)"'"'
-  assert_output --partial 'GOHOSTARCH="'"$(TARGETOS= TARGETARCH= xx-info arch)"'"'
-
-  case "$(xx-info arch)" in
-    "arm")
-      assert_output --partial 'GOARM="'"$expArm"'"'
-      ;;
-    "mips64"*)
-      assert_output --partial 'GOMIPS64="'"$expMips"'"'
-      ;;
-    "mips"*)
-      assert_output --partial 'GOMIPS="'"$expMips"'"'
-      ;;
-  esac
-}
-
-@test "native-env" {
+ensureGo() {
   if command -v apk >/dev/null 2>/dev/null; then
     add go
   else
     add golang
   fi
+  add clang lld
+}
+
+setup_file() {
+  ensureGo
+}
+
+teardown_file() {
+  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64; do
+    TARGETPLATFORM=$p xxdel xx-c-essentials
+    root=/$(TARGETPLATFORM=$p xx-info triple)
+    if [ -d "$root" ] && [ "$root" != "/" ]; then
+      rm -rf "$root"
+    fi
+  done
+  del clang lld llvm
+  del pkgconfig || del pkg-config
+  if command -v apk >/dev/null 2>/dev/null; then
+    del go
+  else
+    del golang
+  fi
+  rm /tmp/a.out
+  rm -rf /var/cache/apt/*.bin || true
+}
+
+testEnv() {
+  # single/double quotes changed in between go versions
+  run sh -c "xx-go env | sed 's/[\"'\'']//g'"
+  assert_success
+  assert_output --partial "GOARCH=$(xx-info arch)"
+  assert_output --partial "GOOS=$(xx-info os)"
+  assert_output --partial "GOHOSTOS=$(TARGETOS= TARGETARCH= xx-info os)"
+  assert_output --partial "GOHOSTARCH=$(TARGETOS= TARGETARCH= xx-info arch)"
+
+  case "$(xx-info arch)" in
+    "arm")
+      assert_output --partial "GOARM=$expArm"
+      ;;
+    "mips64"*)
+      assert_output --partial "GOMIPS64=$expMips"
+      ;;
+    "mips"*)
+      assert_output --partial "GOMIPS=$expMips"
+      ;;
+  esac
+}
+
+@test "nogo" {
+  del go 2>/dev/null || true
+  run xx-go env
+  assert_failure
+  assert_output --partial "go: not found"
+  ensureGo
+}
+
+@test "native-env" {
   testEnv
 }
 
@@ -270,7 +299,6 @@ testHelloCGO() {
 }
 
 @test "native-hellocgo" {
-  add clang lld
   unset TARGETARCH
   testHelloCGO
 }
@@ -319,12 +347,13 @@ testHelloCGO() {
   add pkgconf || add pkg-config
   xxadd xx-c-essentials
   xxadd pkgconf || add pkg-config
-  run xx-go env
+  # single/double quotes changed in between go versions
+  run sh -c "xx-go env | sed 's/[\"'\'']//g'"
   assert_success
-  assert_output --partial 'CC="'"$(xx-info triple)-clang"'"'
-  assert_output --partial 'CXX="'"$(xx-info triple)-clang++"'"'
-  assert_output --partial 'AR="'"$(xx-info triple)-ar"'"'
-  assert_output --partial 'PKG_CONFIG="'"$(xx-info triple)-pkg-config"'"'
+  assert_output --partial "CC=$(xx-info triple)-clang"
+  assert_output --partial "CXX=$(xx-info triple)-clang++"
+  assert_output --partial "AR=$(xx-info triple)-ar"
+  assert_output --partial "PKG_CONFIG=$(xx-info triple)-pkg-config"
 }
 
 @test "wrap-unwrap" {
@@ -350,23 +379,4 @@ testHelloCGO() {
   run go env GOARCH
   assert_success
   assert_output "$nativeArch"
-}
-
-@test "clean-packages" {
-  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6; do
-    TARGETPLATFORM=$p xxdel xx-c-essentials
-    root=/$(TARGETPLATFORM=$p xx-info triple)
-    if [ -d "$root" ] && [ "$root" != "/" ]; then
-      rm -rf "$root"
-    fi
-  done
-  del clang lld llvm
-  del pkgconfig || del pkg-config
-  if command -v apk >/dev/null 2>/dev/null; then
-    del go
-  else
-    del golang
-  fi
-  rm /tmp/a.out
-  rm -rf /var/cache/apt/*.bin || true
 }
