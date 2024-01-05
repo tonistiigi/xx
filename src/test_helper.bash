@@ -78,15 +78,17 @@ supportRiscV() {
   return 0
 }
 
+versionGTE() { test "$(printf '%s\n' "$@" | sort -V | tail -n 1)" = "$1"; }
+
 supportRiscVGo() {
-  go version | grep -E "1.14|1.15|1.16|1.17|1.18|1.19" >/dev/null 2>&1
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.14"
 }
 
 supportRiscVCGo() {
   if ! supportRiscV; then
     return 1
   fi
-  go version | egrep -E "1.16|1.17|1.18|1.19" >/dev/null 2>&1
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.16"
 }
 
 supportRC() {
