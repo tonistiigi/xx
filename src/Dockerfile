@@ -101,8 +101,8 @@ FROM scratch AS sdk-extras
 
 # dev can be used for debugging during development
 FROM test-base AS dev
-COPY --from=sdk-extras / /
-COPY --from=xx / /
+COPY --link --from=sdk-extras / /
+COPY --link --from=xx / /
 COPY fixtures fixtures
 COPY *.bats test_helper.bash ./
 
