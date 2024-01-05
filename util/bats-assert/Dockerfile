@@ -16,7 +16,7 @@ RUN echo 'source "$(dirname "${BASH_SOURCE[0]}")/bats-support/load.bash"' > /out
 FROM scratch AS release
 COPY --from=build /out /
 
-FROM alpine AS test-gen
+FROM alpine:3.19 AS test-gen
 RUN apk add --no-cache bats
 WORKDIR /work
 COPY --from=release . .
