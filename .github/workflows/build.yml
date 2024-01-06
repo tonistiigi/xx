@@ -72,6 +72,10 @@ jobs:
             typ: debian
             allow-failure: false
           -
+            image: debian:bookworm-backports
+            typ: debian
+            allow-failure: false
+          -
             image: debian:trixie
             typ: debian
             allow-failure: false
