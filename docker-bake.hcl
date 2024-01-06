@@ -6,6 +6,14 @@ variable "TEST_BASE_TYPE" {
     default = "alpine"
 }
 
+variable "TEST_BASE_IMAGE" {
+    default = TEST_BASE_TYPE == "alpine" ? "alpine:3.19" : TEST_BASE_TYPE == "debian" ? "debian:bookworm" : null
+}
+
+variable "DEV_SDK_PLATFORM" {
+    default = null
+}
+
 // Special target: https://github.com/docker/metadata-action#bake-definition
 target "meta-helper" {
     tags = ["${XX_REPO}:test"]
@@ -24,7 +32,7 @@ target "test-debian" {
     args = {
         APT_MIRROR = "cdn-fastly.deb.debian.org"
         TEST_BASE_TYPE = "debian"
-        TEST_BASE_IMAGE = "debian:bullseye"
+        TEST_BASE_IMAGE = "debian:bookworm"
     }
 }
 
@@ -171,6 +179,11 @@ target "sdk-extras" {
     ]
 }
 
+target "sdk-extras-dev" {
+    inherits = ["sdk-extras"]
+    platforms = DEV_SDK_PLATFORM == null ? null : [ DEV_SDK_PLATFORM ]
+}
+
 target "_ld-base" {
     context = "src/ld"
     contexts = {
@@ -310,5 +323,22 @@ target "libcxx" {
     platforms = [
         "linux/amd64",
         "linux/arm64",
+    ]
+}
+
+target "dev" {
+    context = "src"
+    target = "dev"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+        "sdk-extras" = DEV_SDK_PLATFORM != null ? "target:sdk-extras-dev" : "docker-image://scratch"
+    }
+    args = {
+        TEST_BASE_TYPE = TEST_BASE_TYPE
+        TEST_BASE_IMAGE = TEST_BASE_IMAGE
+    }
+    tags = [ "${XX_REPO}:dev" ]
+    output = [
+        "type=docker"
     ]
 }

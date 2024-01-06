@@ -101,7 +101,7 @@ cmd() {
         set -- "$@" g++
         ;;
       "compiler-rt" | "compiler-rt-static")
-        iscompilerrt=1
+        iscompilerrt="$a"
         set -- "$@" "$a"
         ;;
       "rust-stdlib")
@@ -123,12 +123,11 @@ cmd() {
       rm -rf "/${XX_TRIPLE:?}/usr/bin/*"
     fi
     if [ -n "$iscompilerrt" ]; then
-      # shellcheck disable=SC2044
-      for f in $(find /"$(xx-info)"/usr/lib/clang -type f -name "*clang_rt.*"); do
-        ff=${f#/$(xx-info)}
+      for f in $(apk --root "$root" info -qL "$iscompilerrt" | grep 'clang_rt.'); do
+        ff="/${f}"
         if [ ! -f "${ff}" ]; then
           mkdir -p "$(dirname "${ff}")"
-          ln -s "$f" "${ff}"
+          ln -s "/$(xx-info)/${f}" "${ff}"
         fi
       done
     fi
