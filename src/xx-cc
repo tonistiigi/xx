@@ -443,10 +443,41 @@ setup() {
     return
   fi
 
+  config="--target=$(echo "${target}" | sed s/^riscv64gc-/riscv64-/) -fuse-ld=${linker}"
+  if [ "${nativeTarget}" != "${target}" ]; then
+    if [ "$targetos" = "darwin" ]; then
+      detectMacOSSDK
+      config="${config} -isysroot ${macos_sdk_path} -stdlib=libc++"
+    elif [ "$targetos" = "windows" ]; then
+      config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
+    elif [ -f /etc/alpine-release ]; then
+      config="${config} --sysroot=/${target}/"
+
+      if [ -n "$is_bfd" ]; then
+        config="${config} -Wl,-rpath-link,/${target}/usr/lib"
+      fi
+
+      cat <<EOT >"/usr/bin/${target}-pkg-config"
+#!/usr/bin/env sh
+export PKG_CONFIG_SYSROOT_DIR=/${target}
+export PKG_CONFIG_LIBDIR=/${target}/usr/lib/pkgconfig/
+exec pkg-config "\$@"
+EOT
+      chmod +x "/usr/bin/${target}-pkg-config"
+
+    fi
+  elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
+    ln -s pkg-config "/usr/bin/${target}-pkg-config"
+  fi
+  f="$(dirname "$(readlink -f "$(command -v /usr/bin/clang)")")/${target}.cfg"
+  echo "$config" >"${f}"
+  if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
+    ln -s "${f}" "/usr/bin/${target}.cfg"
+  fi
+
   for f in clang clang++; do
     if [ -f /usr/bin/$f ]; then
-      # there seems to be a bug in llvm that prevents config to be loaded if target contains a dot , like macos10.4
-      if echo "${target}" | grep '\.' 2>/dev/null >/dev/null; then
+      if [ -f "/usr/bin/${target}.cfg" ]; then
         cat <<EOT >"/usr/bin/${target}-$f"
 #!/usr/bin/env sh
 $f --config /usr/bin/${target}.cfg "\$@"
@@ -486,38 +517,6 @@ EOT
         chmod +x "/usr/bin/${target}-windres"
       fi
     fi
-  fi
-
-  config="--target=$(echo "${target}" | sed s/^riscv64gc-/riscv64-/) -fuse-ld=${linker}"
-  if [ "${nativeTarget}" != "${target}" ]; then
-    if [ "$targetos" = "darwin" ]; then
-      detectMacOSSDK
-      config="${config} -isysroot ${macos_sdk_path} -stdlib=libc++"
-    elif [ "$targetos" = "windows" ]; then
-      config="${config} -I/usr/${target}/include -L/usr/${target}/lib"
-    elif [ -f /etc/alpine-release ]; then
-      config="${config} --sysroot=/${target}/"
-
-      if [ -n "$is_bfd" ]; then
-        config="${config} -Wl,-rpath-link,/${target}/usr/lib"
-      fi
-
-      cat <<EOT >"/usr/bin/${target}-pkg-config"
-#!/usr/bin/env sh
-export PKG_CONFIG_SYSROOT_DIR=/${target}
-export PKG_CONFIG_LIBDIR=/${target}/usr/lib/pkgconfig/
-exec pkg-config "\$@"
-EOT
-      chmod +x "/usr/bin/${target}-pkg-config"
-
-    fi
-  elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
-    ln -s pkg-config "/usr/bin/${target}-pkg-config"
-  fi
-  f="$(dirname "$(readlink -f "$(command -v /usr/bin/clang)")")/${target}.cfg"
-  echo "$config" >"${f}"
-  if [ "${f}" != "/usr/bin/${target}.cfg" ]; then
-    ln -s "${f}" "/usr/bin/${target}.cfg"
   fi
 
   if [ -f /etc/alpine-release ]; then
