@@ -2,19 +2,7 @@
 
 set -e
 
-signDarwinBinary() {
-  local path="$1"
-  local sigsize arch
-
-  arch=$(sigtool-gensig --file "$path" show-arch)
-
-  sigsize=$(sigtool-gensig --file "$path" size)
-  sigsize=$(( ((sigsize + 15) / 16) * 16 + 1024 ))
-
-  codesign_allocate -i "$path" -a "$arch" "$sigsize" -o "$path.unsigned"
-  sigtool-gensig --identifier "$(basename "$path")" --file "$path.unsigned" inject
-  mv -f "$path.unsigned" "$path"
-}
+ld64 "$@"
 
 out="a.out"
 isout=
@@ -29,6 +17,4 @@ for f in "$@"; do
   fi
 done
 
-ld64 "$@"
-
-signDarwinBinary "$out"
+codesign -f -s - "$out"

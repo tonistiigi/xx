@@ -1,17 +1,17 @@
 diff --git a/build.sh b/build.sh
-index 37588d1..788dc60 100755
+index 2ceb4c189..f16bca00d 100755
 --- a/build.sh
 +++ b/build.sh
-@@ -13,7 +13,7 @@ mkdir build
+@@ -35,7 +35,7 @@ mkdir build
 
  pushd build &>/dev/null
 
 -CMAKE_EXTRA_ARGS=""
 +: ${CMAKE_EXTRA_ARGS}
 
- if [ $OPERATING_SYSTEM == "Android" ]; then
+ if [ "$OPERATING_SYSTEM" = "Android" ]; then
    export CC="$CC -D__ANDROID_API__=26"
-@@ -68,6 +68,8 @@ cmake ../src/llvm \
+@@ -64,6 +64,8 @@ cmake -G "$cmakegen" ../src/llvm \
   -DTAPI_FULL_VERSION=$TAPI_VERSION \
   $CMAKE_EXTRA_ARGS
 
@@ -20,11 +20,12 @@ index 37588d1..788dc60 100755
  echo ""
  echo "## Building clangBasic ##"
  echo ""
-@@ -80,5 +82,7 @@ echo ""
+@@ -76,6 +78,8 @@ echo ""
 
  $MAKE libtapi -j $JOBS
 
 +fi
 +
- popd &>/dev/null
- popd &>/dev/null
+ if [ -n "$BUILD_TAPI_TOOLS" ]; then
+   echo ""
+   echo "## Building tapi tools ##"

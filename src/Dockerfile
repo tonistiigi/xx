@@ -97,11 +97,14 @@ COPY test-cargo.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked ./test-cargo.bats
 
 
+# these targets can be overwritten with build contexts
 FROM scratch AS sdk-extras
+FROM scratch AS ld64
 
 # dev can be used for debugging during development
 FROM test-base AS dev
 COPY --link --from=sdk-extras / /
+COPY --link --from=ld64 / /usr/bin/
 COPY --link --from=xx / /
 COPY fixtures fixtures
 COPY *.bats test_helper.bash ./
