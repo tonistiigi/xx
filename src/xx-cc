@@ -553,6 +553,7 @@ check_compiler() {
 setupTarget=
 printTarget=
 printCmake=
+printSysroot=
 target=
 nextIsTarget=
 downloadLD=
@@ -570,6 +571,9 @@ for p in "$@"; do
   if [ "${p}" = "--print-cmake-defines" ] || [ "${p}" = "-print-cmake-defines" ]; then
     setupTarget=1
     printCmake=1
+  fi
+  if [ "${p}" = "--print-sysroot" ] || [ "${p}" = "-print-sysroot" ]; then
+    printSysroot=1
   fi
   if [ "${p}" = "--download-prog=ld" ]; then
     downloadLD=1
@@ -626,6 +630,24 @@ fi
 if [ -n "${printCmake}" ]; then
   setup
   echo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_ASM_COMPILER=clang -DPKG_CONFIG_EXECUTABLE="$(xx-clang --print-prog-name=pkg-config)" -DCMAKE_C_COMPILER_TARGET="$(xx-clang --print-target-triple)" -DCMAKE_CXX_COMPILER_TARGET="$(xx-clang++ --print-target-triple)" -DCMAKE_ASM_COMPILER_TARGET="$(xx-clang --print-target-triple)"
+  exit 0
+fi
+
+if [ -n "${printSysroot}" ]; then
+  setup
+
+  if xx-info is-cross; then
+    if [ -f "/etc/alpine-release" ]; then
+      echo "/${target}/"
+      exit 0
+    fi
+    if [ "$(xx-info os)" = "darwin" ]; then
+      detectMacOSSDK
+      echo "${macos_sdk_path}"
+      exit 0
+    fi
+  fi
+  echo "/"
   exit 0
 fi
 
