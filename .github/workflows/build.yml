@@ -36,14 +36,6 @@ jobs:
       matrix:
         include:
           -
-            image: alpine:3.13
-            typ: alpine
-            allow-failure: false
-          -
-            image: alpine:3.14
-            typ: alpine
-            allow-failure: false
-          -
             image: alpine:3.15
             typ: alpine
             allow-failure: false
@@ -57,6 +49,10 @@ jobs:
             allow-failure: false
           -
             image: alpine:3.18
+            typ: alpine
+            allow-failure: false
+          -
+            image: alpine:3.19
             typ: alpine
             allow-failure: false
           -
@@ -76,6 +72,14 @@ jobs:
             typ: debian
             allow-failure: false
           -
+            image: debian:bookworm-backports
+            typ: debian
+            allow-failure: false
+          -
+            image: debian:trixie
+            typ: debian
+            allow-failure: false
+          -
             image: debian:sid
             typ: debian
             allow-failure: true
@@ -88,6 +92,14 @@ jobs:
             typ: debian
             allow-failure: false
           -
+            image: ubuntu:23.04
+            typ: debian
+            allow-failure: false
+          -
+            image: ubuntu:24.04
+            typ: debian
+            allow-failure: false
+          -
             image: redhat/ubi8
             typ: rhel
             allow-failure: false
@@ -97,6 +109,10 @@ jobs:
             allow-failure: false
           -
             image: fedora:38
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:39
             typ: rhel
             allow-failure: false
           -
