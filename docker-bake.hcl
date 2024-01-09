@@ -14,6 +14,8 @@ variable "DEV_SDK_PLATFORM" {
     default = null
 }
 
+variable "DEV_WITH_LD64" {}
+
 // Special target: https://github.com/docker/metadata-action#bake-definition
 target "meta-helper" {
     tags = ["${XX_REPO}:test"]
@@ -236,32 +238,21 @@ target "binutils" {
     tags = binutilsTag(XX_REPO, BINUTILS_VERSION, BINUTILS_VERSION_ONLY, tgt)
 }
 
-target "ld64-static-tgz" {
-    name = "ld64-${tgt}-static-tgz"
+target "ld64" {
     inherits = ["_ld-base"]
-    matrix = {
-        tgt = [
-            "linux-386",
-            "linux-amd64",
-            "linux-arm64",
-            "linux-armv6",
-            "linux-armv7"
-        ]
-    }
-    target = "ld64-static-tgz"
-    args = {
-        LD_TARGET = tgt
-    }
+    target = "ld64-signed-static"
+}
+
+target "ld64-static-tgz" {
+    inherits = ["ld64"]
     platforms = [
         "linux/386",
         "linux/amd64",
         "linux/arm64",
-        "linux/arm/v6",
-        "linux/arm/v7"
+        "linux/arm/v7",
     ]
-    cache-from = [join("", ["type=registry,ref=", binutilsTag(XX_REPO, BINUTILS_VERSION, "1", tgt)[0]])]
-    cache-to = ["type=inline"]
     output = ["./bin/ld-static-tgz"]
+    target = "ld64-static-tgz"
 }
 
 target "ld-static-tgz" {
@@ -330,6 +321,7 @@ target "dev" {
     contexts = {
         "tonistiigi/xx" = "target:xx"
         "sdk-extras" = DEV_SDK_PLATFORM != null ? "target:sdk-extras-dev" : "docker-image://scratch"
+        "ld64" = DEV_WITH_LD64 != "" ? "target:ld64" : "docker-image://scratch"
     }
     args = {
         TEST_BASE_TYPE = TEST_BASE_TYPE
@@ -338,5 +330,31 @@ target "dev" {
     tags = [ "${XX_REPO}:dev" ]
     output = [
         "type=docker"
+    ]
+}
+
+target "lipo" {
+    context = "src/ld"
+    target = "lipo-static"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+    }
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v7",
+    ]
+}
+
+target "sigtool" {
+    context = "src/ld"
+    target = "sigtool-static"
+    contexts = {
+        "tonistiigi/xx" = "target:xx"
+    }
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/arm/v7",
     ]
 }
