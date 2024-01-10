@@ -38,6 +38,20 @@ exitnolinux() {
   fi
 }
 
+n=$#
+for a in "$@"; do
+  if [ $# = $n ]; then set --; fi
+  case "$a" in
+    "--print-source-file")
+      aptsourcesfile
+      exit 0
+      ;;
+    *)
+      set -- "$@" "$a"
+      ;;
+  esac
+done
+
 # these are not supported yet
 case "${TARGETARCH}" in
   mips*)

@@ -219,3 +219,12 @@ load 'assert'
   run apt show wget-notexist
   assert_failure
 }
+
+@test "print-source-file" {
+  run xx-apt --print-source-file
+  assert_success
+  assert_output --partial "/etc/apt/sources.list"
+
+  run test -e "$(xx-apt --print-source-file)"
+  assert_success
+}

@@ -134,6 +134,9 @@ ARG TARGETPLATFORM
 RUN xx-apt-get install -y libc6-dev zlib1g-dev
 ```
 
+> [!NOTE]
+> `xx-apt --print-source-file` can be used to print the path of the main [Apt sources configuration file](https://manpages.debian.org/bookworm/apt/sources.list.5.en.html)
+
 Installing two meta-libraries, `xx-c-essentials`, `xx-cxx-essentials` is also allowed that expand the minimum necessary packages for either base image.
 
 ## `xx-verify` - Verifying compilation results
