@@ -146,8 +146,7 @@ RUN xx-clang --static -o /out/myapp app.c && \
     xx-verify --static /out/myapp
 ```
 
-> **Note**
-> 
+> [!NOTE]
 > `XX_VERIFY_STATIC=1` environment variable can be defined to make `xx-verify`
 > always verify that the compiler produced a static binary.
 
@@ -372,8 +371,7 @@ RUN cargo build --target=$(xx-cargo --print-target-triple) --release --target-di
     xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
-> **Note**
->
+> [!NOTE]
 > `xx-cargo --print-target-triple` does not always have the same value as
 > `xx-clang --print-target-triple`. This is because prebuilt Rust and C
 > libraries sometimes use a different value.
@@ -400,8 +398,7 @@ RUN --mount=type=cache,target=/root/.cargo/git/db \
     xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
-> **Note**
->
+> [!NOTE]
 > By calling `cargo fetch` before `ARG TARGETPLATFORM` your packages are
 > fetched only once for the whole build while the building happens separately
 > for each target architecture.
