@@ -249,6 +249,7 @@ jobs:
         with:
           name: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
           tag_name: prebuilt/ld-${{ env.VERSION }}-${{ github.run_number }}
+          prerelease: true
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
