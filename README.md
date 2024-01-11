@@ -134,6 +134,9 @@ ARG TARGETPLATFORM
 RUN xx-apt-get install -y libc6-dev zlib1g-dev
 ```
 
+> [!NOTE]
+> `xx-apt --print-source-file` can be used to print the path of the main [Apt sources configuration file](https://manpages.debian.org/bookworm/apt/sources.list.5.en.html)
+
 Installing two meta-libraries, `xx-c-essentials`, `xx-cxx-essentials` is also allowed that expand the minimum necessary packages for either base image.
 
 ## `xx-verify` - Verifying compilation results
@@ -146,8 +149,7 @@ RUN xx-clang --static -o /out/myapp app.c && \
     xx-verify --static /out/myapp
 ```
 
-> **Note**
-> 
+> [!NOTE]
 > `XX_VERIFY_STATIC=1` environment variable can be defined to make `xx-verify`
 > always verify that the compiler produced a static binary.
 
@@ -372,8 +374,7 @@ RUN cargo build --target=$(xx-cargo --print-target-triple) --release --target-di
     xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
-> **Note**
->
+> [!NOTE]
 > `xx-cargo --print-target-triple` does not always have the same value as
 > `xx-clang --print-target-triple`. This is because prebuilt Rust and C
 > libraries sometimes use a different value.
@@ -400,8 +401,7 @@ RUN --mount=type=cache,target=/root/.cargo/git/db \
     xx-verify ./build/$(xx-cargo --print-target-triple)/release/hello_cargo
 ```
 
-> **Note**
->
+> [!NOTE]
 > By calling `cargo fetch` before `ARG TARGETPLATFORM` your packages are
 > fetched only once for the whole build while the building happens separately
 > for each target architecture.
