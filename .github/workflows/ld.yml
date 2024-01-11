@@ -28,10 +28,6 @@ on:
       - 'src/ld/**'
       - 'docker-bake.hcl'
 
-env:
-  # needs latest for output platform-split support
-  BUILDKIT_IMAGE: "moby/buildkit:latest"
-
 jobs:
   binutils-targets:
     runs-on: ubuntu-latest
@@ -91,8 +87,6 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
       -
         name: Build
         uses: docker/bake-action@v4
@@ -101,10 +95,22 @@ jobs:
           set: |
             ld64-static-tgz.cache-from=type=gha,scope=ld64-static-tgz
             ld64-static-tgz.cache-to=type=gha,scope=ld64-static-tgz
-            ld64-static-tgz.output=type=local,dest=./dist,platform-split=false
+            ld64-static-tgz.output=type=local,dest=./dist
       -
-        name: List artifacts
+        name: Rename provenance
         run: |
+          for pdir in ./dist/*/; do
+            (
+              cd "$pdir"
+              binname=$(find . -name '*.tar.gz')
+              filename=$(basename "${binname%.tar.gz}")
+              mv "provenance.json" "${filename}.provenance.json"
+            )
+          done
+      -
+        name: Move and list artifacts
+        run: |
+          mv ./dist/**/* ./dist/
           tree -nh ./dist
       -
         name: Upload artifacts
@@ -153,8 +159,6 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
       -
         name: Build
         uses: docker/bake-action@v4
@@ -163,10 +167,22 @@ jobs:
           set: |
             *.cache-from=type=gha,scope=${{ matrix.target }}
             *.cache-to=type=gha,scope=${{ matrix.target }}
-            *.output=type=local,dest=./dist,platform-split=false
+            *.output=type=local,dest=./dist
       -
-        name: List artifacts
+        name: Rename provenance
         run: |
+          for pdir in ./dist/*/; do
+            (
+              cd "$pdir"
+              binname=$(find . -name '*.tar.gz')
+              filename=$(basename "${binname%.tar.gz}")
+              mv "provenance.json" "${filename}.provenance.json"
+            )
+          done
+      -
+        name: Move and list artifacts
+        run: |
+          mv ./dist/**/* ./dist/
           tree -nh ./dist
       -
         name: Upload artifacts
@@ -190,8 +206,6 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
       -
         name: Build
         uses: docker/bake-action@v4
@@ -213,8 +227,6 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
       -
         name: Build
         uses: docker/bake-action@v4
