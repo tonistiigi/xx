@@ -82,6 +82,19 @@ if [ -n "$TARGETPLATFORM" ]; then
     TARGETOS="$os"
     TARGETARCH="$arch"
     case "$arch" in
+      "amd64")
+        case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
+          "v2")
+            TARGETVARIANT="v2"
+            ;;
+          "v3")
+            TARGETVARIANT="v3"
+            ;;
+          "v4")
+            TARGETVARIANT="v4"
+            ;;
+        esac
+        ;;
       "arm")
         case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
           "v5")

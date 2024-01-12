@@ -24,6 +24,24 @@ load 'assert'
   assert_equal "x86_64" "$(TARGETPLATFORM=linux/amd64 xx-info pkg-arch)"
 }
 
+@test "amd64v2" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64/v2 xx-info triple)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=linux/amd64/v2 xx-info pkg-arch)"
+  assert_equal "v2" "$(TARGETPLATFORM=linux/amd64/v2 xx-info variant)"
+}
+
+@test "amd64v3" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64/v3 xx-info triple)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=linux/amd64/v3 xx-info pkg-arch)"
+  assert_equal "v3" "$(TARGETPLATFORM=linux/amd64/v3 xx-info variant)"
+}
+
+@test "amd64v4" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64/v4 xx-info triple)"
+  assert_equal "x86_64" "$(TARGETPLATFORM=linux/amd64/v4 xx-info pkg-arch)"
+  assert_equal "v4" "$(TARGETPLATFORM=linux/amd64/v4 xx-info variant)"
+}
+
 @test "aarch64" {
   assert_equal "aarch64-alpine-linux-musl" "$(TARGETPLATFORM=linux/arm64 xx-info triple)"
   assert_equal "aarch64" "$(TARGETPLATFORM=linux/arm64 xx-info pkg-arch)"
