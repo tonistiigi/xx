@@ -21,7 +21,7 @@ setup_file() {
 }
 
 teardown_file() {
-  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64; do
+  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64 linux/loong64; do
     TARGETPLATFORM=$p xxdel xx-c-essentials
     root=/$(TARGETPLATFORM=$p xx-info triple)
     if [ -d "$root" ] && [ "$root" != "/" ]; then
@@ -123,6 +123,9 @@ testEnv() {
 }
 
 @test "loong64-env" {
+  if ! supportLoongArchGo; then
+    skip "LoongArch64 GO not supported"
+  fi
   export TARGETARCH=loong64
   testEnv
 }
@@ -264,7 +267,7 @@ testHelloGO() {
 
 @test "loong64-hellogo" {
   if ! supportLoongArchGo; then
-    skip "LOONGARCH GO not supported"
+    skip "LoongGArch64 GO not supported"
   fi
   export TARGETARCH=loong64
   testHelloGO
