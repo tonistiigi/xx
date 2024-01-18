@@ -189,6 +189,9 @@ if [ -z "$TARGETARCH" ]; then
     "mips64le")
       TARGETARCH="mips64le"
       ;;
+    "loongarch64")
+      TARGETARCH="loong64"
+      ;;
   esac
 fi
 
@@ -337,6 +340,14 @@ case "$TARGETARCH" in
     XX_RHEL_ARCH="mips64el"
     XX_TRIPLE="mips64el${vendor}-linux-${XX_LIBC}abi64"
     ;;
+  "loong64")
+    XX_MARCH="loong64"
+    XX_DEBIAN_ARCH="loong64"
+    XX_ALPINE_ARCH="loongarch64"
+    XX_RHEL_ARCH="loong64"
+    XX_TRIPLE="loong64${vendor}-linux-${XX_LIBC}abi"
+    ;;
+
 esac
 
 XX_PKG_ARCH=$TARGETARCH

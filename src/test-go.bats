@@ -9,7 +9,11 @@ ensureGo() {
   else
     add golang
   fi
-  add clang lld
+  if [ "$(xx-info arch)" = "loong64" ]; then
+    add clang binutils
+  else
+    add clang lld
+  fi
 }
 
 setup_file() {
@@ -115,6 +119,11 @@ testEnv() {
 
 @test "riscv64-env" {
   export TARGETARCH=riscv64
+  testEnv
+}
+
+@test "loong64-env" {
+  export TARGETARCH=loong64
   testEnv
 }
 
@@ -253,6 +262,14 @@ testHelloGO() {
   testHelloGO
 }
 
+@test "loong64-hellogo" {
+  if ! supportLoongArchGo; then
+    skip "LOONGARCH GO not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloGO
+}
+
 @test "386-hellogo" {
   export TARGETARCH=386
   testHelloGO
@@ -333,6 +350,10 @@ testHelloCGO() {
   fi
   export TARGETARCH=riscv64
   testHelloCGO
+}
+
+@test "loong64-hellocgo" {
+  skip "LOONG64 CGO not supported"
 }
 
 @test "386-hellocgo" {

@@ -1,25 +1,25 @@
 #syntax=docker/dockerfile:1.5
 
-ARG ALPINE_VERSION=3.18
-ARG LIBTAPI_VERSION=1100.0.11
-ARG CCTOOLS_VERSION=949.0.1-ld64-530
-ARG SIGTOOL_VERSION=1dafd2ca4651210ba9acce10d279ace22b50fb01
-# BINUTILS_PATCHES_VERSION defines version of aports to use for patches
-ARG BINUTILS_PATCHES_VERSION=master
+ARG ALPINE_VERSION=3.19
+ARG LIBTAPI_VERSION=1300.6.5
+ARG CCTOOLS_VERSION=1009.2-ld64-907
+ARG SIGTOOL_VERSION=c6242cb29c412168f771e97d75417e55af6cdb2e
+ARG LIBDISPATCH_VERSION=swift-5.9.2-RELEASE
+ARG APORTS_VERSION=3.19-stable
 ARG BINUTILS_VERSION=2.41
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
 FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libtapi-base
 RUN apk add --no-cache git clang lld cmake make python3 bash
-COPY --from=xx / /
+COPY --link --from=xx / /
 ARG LIBTAPI_VERSION
 RUN git clone https://github.com/tpoechtrager/apple-libtapi --depth 1 -b ${LIBTAPI_VERSION}
 WORKDIR ./apple-libtapi
 RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
     git apply /tmp/libtapi-cmake-args.patch
 RUN apk add --no-cache gcc g++
-RUN NOMAKE=1 CMAKE_EXTRA_ARGS="$(xx-clang --print-cmake-defines)" ./build.sh && \
+RUN NOMAKE=1 CMAKE_EXTRA_ARGS="$(xx-clang --print-cmake-defines) -DCMAKE_CXX_FLAGS=-D_LARGEFILE64_SOURCE" ./build.sh && \
     cd build && \
     make -j $(nproc) clang-tblgen llvm-tblgen && \
     cp -a bin/clang-tblgen bin/llvm-tblgen /usr/bin/ && \
@@ -29,7 +29,7 @@ FROM libtapi-base AS libtapi
 ARG TARGETPLATFORM
 RUN xx-apk add g++
 RUN INSTALLPREFIX=/opt/libtapi/ \
-    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen $(xx-clang --print-cmake-defines)" \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DCMAKE_CXX_FLAGS=-D_LARGEFILE64_SOURCE $(xx-clang --print-cmake-defines)" \
     ./build.sh && ./install.sh && \
     xx-verify /opt/libtapi/lib/libtapi.so && \
     rm -rf build
@@ -38,21 +38,58 @@ FROM libtapi-base AS libtapi-static
 ARG TARGETPLATFORM
 RUN xx-apk add g++
 RUN export INSTALLPREFIX=/opt/libtapi/ \
-    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen $(xx-clang --print-cmake-defines)" \
-    && sed -i s/SHARED/STATIC/g src/llvm/projects/libtapi/tools/libtapi/CMakeLists.txt && \
-    ./build.sh && cd build && make -j $(nproc) LLVMObject tapiCore LLVMSupport LLVMDemangle LLVMMC LLVMBinaryFormat install-tapi-headers && mkdir /opt/libtapi/lib && cp -a ./lib/*.a /opt/libtapi/lib/ && \
+    CMAKE_EXTRA_ARGS="-DCLANG_TABLEGEN_EXE=/usr/bin/clang-tblgen -DLLVM_TABLEGEN=/usr/bin/llvm-tblgen -DCLANG_TABLEGEN=/usr/bin/clang-tblgen -DCMAKE_CXX_FLAGS=-D_LARGEFILE64_SOURCE $(xx-clang --print-cmake-defines)" \
+    && sed -i s/SHARED/STATIC/g src/tapi/tools/libtapi/CMakeLists.txt && \
+    ./build.sh && cd build && make -j $(nproc) LLVMObject tapiCore LLVMSupport LLVMDemangle LLVMMC  LLVMBinaryFormat tapiObjCMetadata tapiNoInits LLVMTextAPI install-tapi-headers && \
+    mkdir /opt/libtapi/lib && cp -a ./lib/*.a /opt/libtapi/lib/ && \
     cd .. && rm -rf build
 
+FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS aports
+RUN apk add git
+WORKDIR /work
+ARG APORTS_VERSION
+RUN git clone --depth 1 -b ${APORTS_VERSION} https://github.com/alpinelinux/aports.git
+
+FROM scratch AS patches-binutils
+COPY --from=aports /work/aports/main/binutils/*.patch /
+
+FROM scratch AS patches-libdispatch
+COPY --from=aports /work/aports/community/libdispatch/*.patch /
+
+# libdispatch is needed because alpine does not provide static library in apk
+FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libdispatch-base
+RUN apk add git clang lld cmake samurai patch
+ARG LIBDISPATCH_VERSION
+COPY --link --from=xx / /
+RUN --mount=target=/patches,from=patches-libdispatch \
+    git clone -b ${LIBDISPATCH_VERSION} --depth 1 https://github.com/apple/swift-corelibs-libdispatch.git && \
+    cd swift-corelibs-libdispatch && \
+    for f in /patches/*; do patch -p1 < $f; done
+WORKDIR ./swift-corelibs-libdispatch
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache gcc g++ musl-dev linux-headers bsd-compat-headers
+RUN cmake $(xx-clang --print-cmake-defines) -G Ninja -B build -DCMAKE_INSTALL_PREFIX=/out/libdispatch -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=False -DCMAKE_BUILD_TYPE=MinSizeRel && \
+    cmake --build build && \
+    cmake --install build && \
+    rm -rf build
+RUN ls -l /out/libdispatch/lib && \
+    [ -f /out/libdispatch/lib/libdispatch.a ] && [ -f /out/libdispatch/lib/libBlocksRuntime.a ]
+
+FROM scratch AS libdispatch
+COPY --from=libdispatch-base /out/libdispatch/lib/*.a /lib/
+
 FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS cctools-base
-RUN apk add --no-cache git clang lld make llvm
-COPY --from=xx / /
+RUN apk add --no-cache git clang lld make llvm llvm-dev libdispatch-dev
+COPY --link --from=xx / /
 WORKDIR /work
 ARG CCTOOLS_REPO=https://github.com/tpoechtrager/cctools-port
 ARG CCTOOLS_VERSION
 RUN git clone $CCTOOLS_REPO -b ${CCTOOLS_VERSION}
 WORKDIR ./cctools-port/cctools
 ARG TARGETPLATFORM
-RUN xx-apk add --no-cache musl-dev gcc g++
+RUN --mount=target=/libdispatch,from=libdispatch \
+    xx-apk add --no-cache musl-dev gcc g++ libdispatch-dev && \
+    cp -a /libdispatch/. $(xx-clang --print-sysroot)usr/
 
 FROM cctools-base AS lipo-base
 ARG LIPO_CFLAGS="-Wl,-s -Os"
@@ -64,25 +101,15 @@ RUN export CFLAGS=${LIPO_CFLAGS} && \
 FROM scratch AS lipo-static
 COPY --from=lipo-base /work/cctools-port/cctools/misc/lipo /
 
-FROM cctools-base AS codesign-base
+FROM cctools-base AS codesign-allocate-base
 ARG CODESIGN_CFLAGS="-Wl,-s -Os"
 RUN export CFLAGS=${CODESIGN_CFLAGS} && \
     ./configure --host=$(xx-clang --print-target-triple) LDFLAGS=--static && \
     make -C libmacho && make -C libstuff && make -C misc codesign_allocate && \
     xx-verify --static misc/codesign_allocate
 
-FROM scratch AS codesign-static
-COPY --from=codesign-base /work/cctools-port/cctools/misc/codesign_allocate /
-
-FROM cctools-base AS otool-base
-ARG OTOOL_CFLAGS="-Wl,-s -Os"
-RUN export CFLAGS=${OTOOL_CFLAGS} && \
-    ./configure --host=$(xx-clang --print-target-triple) LDFLAGS=--static && \
-    make -C libstuff && make -C libobjc2 && make -C otool && \
-    xx-verify --static otool/otool
-
-FROM scratch AS otool-static
-COPY --from=otool-base /work/cctools-port/cctools/otool/otool /
+FROM scratch AS codesign-allocate-static
+COPY --from=codesign-allocate-base /work/cctools-port/cctools/misc/codesign_allocate /
 
 FROM cctools-base AS ld64-static-base
 # for LTO
@@ -90,16 +117,44 @@ RUN apk add llvm-dev
 ARG LD64_CXXFLAGS="-Wl,-s -Os"
 RUN --mount=from=libtapi-static,source=/opt/libtapi,target=/opt/libtapi \
     export CXXFLAGS=${LD64_CXXFLAGS} && ./configure --with-libtapi=/opt/libtapi --host=$(xx-clang --print-target-triple) &&\
-    sed -i 's/-ltapi/-ltapi -ltapiCore -lLLVMObject -lLLVMSupport -lLLVMDemangle -lLLVMMC -lLLVMBinaryFormat --static/' ld64/src/ld/Makefile && \
+    sed -i 's/-ltapi/-ltapi -ltapiCore -ltapiObjCMetadata -lLLVMObject -lLLVMTextAPI -lLLVMSupport -lLLVMDemangle -lLLVMMC -lLLVMBinaryFormat --static/' ld64/src/ld/Makefile && \
     make -j $(nproc) -C ld64 && \
     xx-verify --static ld64/src/ld/ld
+
+FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS sigtool-base
+RUN apk add --no-cache git clang lld cmake make pkgconf
+COPY --from=xx / /
+WORKDIR /work
+ARG SIGTOOL_VERSION
+RUN git clone https://github.com/thefloweringash/sigtool && \
+    cd sigtool && \
+    git checkout ${SIGTOOL_VERSION}
+WORKDIR ./sigtool
+RUN --mount=target=/tmp/sigtool-static.patch,source=sigtool-static.patch \
+    git apply /tmp/sigtool-static.patch
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache g++ openssl-dev openssl-libs-static
+ARG SIGTOOL_CXXFLAGS="-Wl,-s -Os"
+RUN export CXXFLAGS=${SIGTOOL_CXXFLAGS} && \
+    mkdir build && cd build && \
+    cmake -DBUILD_SHARED_LIBS=False $(xx-clang --print-cmake-defines) -DCMAKE_EXE_LINKER_FLAGS=-static .. && \
+    make -j $(nproc) && \
+    xx-verify --static ./sigtool ./codesign
+
+FROM scratch AS sigtool-static
+COPY --link --from=codesign-allocate-static / /
+COPY --link --from=sigtool-base /work/sigtool/build/sigtool /
+
+FROM scratch AS codesign-static
+COPY --link --from=codesign-allocate-static / /
+COPY --link --from=sigtool-base /work/sigtool/build/codesign /
 
 FROM scratch AS ld64-static
 COPY --from=ld64-static-base /work/cctools-port/cctools/ld64/src/ld/ld /ld64
 
 FROM scratch AS ld64-signed-static
-COPY --from=ld64-static / /
-COPY --from=sigtool / /
+COPY --link --from=ld64-static / /
+COPY --link --from=codesign-static / /
 COPY ld64.signed /
 
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS ld64-tgz-build
@@ -125,47 +180,15 @@ RUN --mount=from=libtapi,source=/opt/libtapi,target=/opt/libtapi \
     xx-verify /opt/cctools/bin/ld
 
 FROM scratch AS cctools
-COPY --from=libtapi /opt/libtapi/lib/*.so /usr/lib/
-COPY --from=cctools-build /opt/cctools /usr
+COPY --link --from=libtapi /opt/libtapi/lib/*.so /usr/lib/
+COPY --link --from=cctools-build /opt/cctools /usr
 
-FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS sigtool-base
-RUN apk add --no-cache git clang lld cmake make pkgconf
-COPY --from=xx / /
-WORKDIR /work
-RUN git clone https://github.com/CLIUtils/CLI11 && \
-    cd CLI11 && \
-    cp -a include/CLI /usr/include/ && \
-    cd .. && rm -rf CLI11
-ARG SIGTOOL_VERSION
-RUN git clone https://github.com/thefloweringash/sigtool && \
-    cd sigtool && \
-    git checkout ${SIGTOOL_VERSION}
-WORKDIR ./sigtool
-RUN --mount=target=/tmp/sigtool-static.patch,source=sigtool-static.patch \
-    git apply /tmp/sigtool-static.patch
-ARG TARGETPLATFORM
-RUN xx-apk add --no-cache g++ openssl-dev openssl-libs-static
-ARG SIGTOOL_CXXFLAGS="-Wl,-s -Os"
-RUN if xx-info is-cross; then cp -a /usr/include/CLI /$(xx-info triple)/usr/include/; fi && \
-    export CXXFLAGS=${SIGTOOL_CXXFLAGS} && \
-    mkdir build && cd build && \
-    cmake $(xx-clang --print-cmake-defines) -DCMAKE_EXE_LINKER_FLAGS=-static .. && \
-    make -j $(nproc) && \
-    xx-verify --static ./gensig
-
-FROM scratch AS sigtool
-COPY --from=codesign-static / /
-COPY --from=sigtool-base /work/sigtool/build/gensig /sigtool-gensig
 
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS binutils-base0
 RUN apk add --no-cache file git clang lld linux-headers zlib-dev zstd-dev gcc patch make musl-dev musl-libintl bison flex texinfo
 WORKDIR /work
-ARG BINUTILS_PATCHES_VERSION
-RUN git clone --depth 1 -b ${BINUTILS_PATCHES_VERSION} https://github.com/alpinelinux/aports.git && \
-    mkdir patches && \
-    cp -a aports/main/binutils/*.patch patches/ && \
-    rm -rf aports
-COPY --from=xx / /
+COPY --link --from=xx / /
+COPY --link --from=patches-binutils / patches/
 ARG BINUTILS_VERSION
 RUN wget https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz
 ARG TARGETPLATFORM

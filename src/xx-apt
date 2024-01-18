@@ -140,6 +140,13 @@ if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ]; then
   echo "deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main" >>/etc/apt/sources.list.d/riscv64-sid.list
 fi
 
+if [ "$TARGETARCH" = "loong64" ] && [ "$(xx-info vendor)" = "debian" ]; then
+  apt-get update
+  apt-get install -y debian-ports-archive-keyring
+  echo "deb [ arch=loong64 ] http://ftp.ports.debian.org/debian-ports sid main
+	deb [ arch=loong64 ] http://ftp.ports.debian.org/debian-ports unreleased main" >>/etc/apt/sources.list.d/loong64-sid.list
+fi
+
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
   if [ "$XX_OS" = "linux" ]; then
     if [ "$(xx-info vendor)" = "ubuntu" ] && [ -z "$nocross" ]; then
