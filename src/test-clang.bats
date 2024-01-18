@@ -14,7 +14,11 @@ clean() {
 
 testHelloCLLD() {
   clean
-  add clang lld
+  if [ "$(xx-info arch)" = "loong64" ]; then
+    add clang binutils
+  else
+    add clang lld
+  fi
   xxadd xx-c-essentials
   run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
@@ -254,6 +258,14 @@ testBuildHello() {
   expectedSuffix=
 }
 
+@test "loong64-c-ld" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloCLLD
+}
+
 @test "ppc64le-c-lld" {
   export TARGETARCH=ppc64le
   testHelloCLLD
@@ -297,6 +309,12 @@ testBuildHello() {
     skip "RISC-V not supported"
   fi
   export TARGETARCH=riscv64
+  testHelloCPPLLD # actually runs with ld
+}
+
+@test "loong64-c++-ld" {
+  skip "LOONG64 not supported"
+  export TARGETARCH=loong64
   testHelloCPPLLD # actually runs with ld
 }
 

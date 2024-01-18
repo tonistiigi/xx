@@ -91,6 +91,21 @@ supportRiscVCGo() {
   versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.16"
 }
 
+supportLoongArchGo() {
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.19"
+}
+
+supportLoongArch() {
+  if [ -f /etc/debian_version ]; then
+    if grep "sid" /etc/apt/sources.list 2>/dev/null >/dev/null; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+  return 0
+}
+
 supportRC() {
   command -v llvm-rc >/dev/null 2>&1
 }
