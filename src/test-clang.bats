@@ -14,11 +14,7 @@ clean() {
 
 testHelloCLLD() {
   clean
-  if [ "$(xx-info arch)" = "loong64" ]; then
-    add clang binutils
-  else
-    add clang lld
-  fi
+  add clang binutils lld
   xxadd xx-c-essentials
   run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success
