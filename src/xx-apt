@@ -168,7 +168,7 @@ if [ "$TARGETARCH" = "loong64" ] && [ "$(xx-info vendor)" = "debian" ]; then
   apt-get update
   apt-get install -y debian-ports-archive-keyring
   echo "deb [ arch=loong64 ] http://ftp.ports.debian.org/debian-ports sid main
-	deb [ arch=loong64 ] http://ftp.ports.debian.org/debian-ports unreleased main" >>/etc/apt/sources.list.d/loong64-sid.list
+	      deb [ arch=loong64 ] http://ftp.ports.debian.org/debian-ports unreleased main" >>/etc/apt/sources.list.d/loong64-sid.list
 fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then

@@ -74,11 +74,6 @@ load 'assert'
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc xx-info pkg-arch)" # does not change
 }
 
-@test "loong64" {
-  assert_equal "loong64-alpine-linux-muslabi" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
-  assert_equal "loongarch64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
-}
-
 @test "custom-vendor" {
   assert_equal "riscv64-unknown-linux-musl" "$(TARGETPLATFORM=linux/riscv64 XX_VENDOR=unknown xx-info triple)"
 }

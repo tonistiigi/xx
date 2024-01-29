@@ -78,7 +78,7 @@ fi
 }
 
 @test "loong64" {
-  assert_equal "loong64-linux-gnuabi" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
+  assert_equal "loong64-linux-gnu" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
   assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
 }
 

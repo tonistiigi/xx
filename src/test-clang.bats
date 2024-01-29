@@ -14,7 +14,7 @@ clean() {
 
 testHelloCLLD() {
   clean
-  add clang binutils lld
+  add clang lld
   xxadd xx-c-essentials
   run sh -c 'xx-clang --print-target-triple | sed s/unknown-// | sed s/pc-//'
   assert_success

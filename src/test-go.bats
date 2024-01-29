@@ -9,11 +9,7 @@ ensureGo() {
   else
     add golang
   fi
-  if [ "$(xx-info arch)" = "loong64" ]; then
-    add clang binutils
-  else
-    add clang lld
-  fi
+  add clang lld
 }
 
 setup_file() {

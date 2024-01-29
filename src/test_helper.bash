@@ -102,6 +102,8 @@ supportLoongArch() {
     else
       return 1
     fi
+  elif [ -f /etc/alpine-release ]; then
+    return 1
   fi
   return 0
 }
