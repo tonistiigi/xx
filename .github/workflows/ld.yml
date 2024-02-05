@@ -5,6 +5,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  schedule:
+    - cron: '0 8 */6 * *' # every 6 days
   workflow_dispatch:
     inputs:
       release:
@@ -26,10 +28,6 @@ on:
       - 'src/ld/**'
       - 'docker-bake.hcl'
 
-env:
-  # needs latest for output platform-split support
-  BUILDKIT_IMAGE: "moby/buildkit:latest"
-
 jobs:
   binutils-targets:
     runs-on: ubuntu-latest
@@ -38,7 +36,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Create targets matrix
         id: targets
@@ -61,16 +59,16 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@v4
         with:
           targets: ${{ matrix.target }}
           set: |
@@ -82,34 +80,44 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
+        uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@v4
         with:
           targets: ld64-static-tgz
           set: |
             ld64-static-tgz.cache-from=type=gha,scope=ld64-static-tgz
             ld64-static-tgz.cache-to=type=gha,scope=ld64-static-tgz
-            ld64-static-tgz.output=type=local,dest=./dist,platform-split=false
+            ld64-static-tgz.output=type=local,dest=./dist
       -
-        name: List artifacts
+        name: Rename provenance
         run: |
+          for pdir in ./dist/*/; do
+            (
+              cd "$pdir"
+              binname=$(find . -name '*.tar.gz')
+              filename=$(basename "${binname%.tar.gz}")
+              mv "provenance.json" "${filename}.provenance.json"
+            )
+          done
+      -
+        name: Move and list artifacts
+        run: |
+          mv ./dist/**/* ./dist/
           tree -nh ./dist
       -
         name: Upload artifacts
         if: ${{ inputs.release }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ld
+          name: ld-ld64
           path: ./dist/*
           if-no-files-found: error
           retention-days: 1
@@ -121,7 +129,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Create targets matrix
         id: targets
@@ -144,34 +152,44 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
+        uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@v4
         with:
           targets: ${{ matrix.target }}
           set: |
             *.cache-from=type=gha,scope=${{ matrix.target }}
             *.cache-to=type=gha,scope=${{ matrix.target }}
-            *.output=type=local,dest=./dist,platform-split=false
+            *.output=type=local,dest=./dist
       -
-        name: List artifacts
+        name: Rename provenance
         run: |
+          for pdir in ./dist/*/; do
+            (
+              cd "$pdir"
+              binname=$(find . -name '*.tar.gz')
+              filename=$(basename "${binname%.tar.gz}")
+              mv "provenance.json" "${filename}.provenance.json"
+            )
+          done
+      -
+        name: Move and list artifacts
+        run: |
+          mv ./dist/**/* ./dist/
           tree -nh ./dist
       -
         name: Upload artifacts
         if: ${{ inputs.release }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ld
+          name: ld-${{ matrix.target }}
           path: ./dist/*
           if-no-files-found: error
           retention-days: 1
@@ -181,18 +199,16 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
+        uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@v4
         with:
           targets: lipo
           set: |
@@ -204,18 +220,16 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: image=${{ env.BUILDKIT_IMAGE }}
+        uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v2
+        uses: docker/bake-action@v4
         with:
           targets: sigtool
           set: |
@@ -231,7 +245,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
         name: Prepare
         run: |
@@ -239,10 +253,11 @@ jobs:
           echo "VERSION=${version}" >> $GITHUB_ENV
       -
         name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: ld
           path: ./dist
+          pattern: ld-*
+          merge-multiple: true
       -
         name: GitHub Release
         uses: softprops/action-gh-release@v1
