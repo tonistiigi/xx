@@ -10,7 +10,12 @@ COPY xx-* /out/
 RUN ln -s xx-cc /out/xx-clang && \
     ln -s xx-cc /out/xx-clang++ && \
     ln -s xx-cc /out/xx-c++ && \
-    ln -s xx-apt /out/xx-apt-get
+    ln -s xx-apt /out/xx-apt-get && \
+    ln -s xx-dnf /out/xx-yum && \
+    ln -s xx-dnf /out/xx-microdnf && \
+    ln -s xx-dnf /out/xx-dnf5 && \
+    ln -s xx-dnf /out/xx-dnf4 && \
+    ln -s xx-dnf /out/xx-dnf-3
 
 # xx builds the xx image
 FROM scratch AS xx
@@ -34,27 +39,72 @@ RUN --mount=type=cache,target=/pkg-cache \
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-rhel
-RUN <<EOT
+RUN --mount=type=cache,target=/pkg-cache <<EOT
 set -ex
-if ! yum install -y epel-release; then
+
+if test -e /etc/os-release; then
+  . /etc/os-release
+fi
+
+if test -d /var/cache/yum; then
+  rm -rf /var/cache/yum
+  ln -s /pkg-cache /var/cache/yum
+fi
+
+if test -d /var/cache/dnf; then
+  rm -rf /var/cache/dnf
+  ln -s /pkg-cache /var/cache/dnf
+fi
+
+case "${ID}" in
+  centos)
+    sed 's/keepcache=0/keepcache=1/g' /etc/yum.conf
+    ;;
+  *)
+    echo 'keepcache=True' >> /etc/dnf/dnf.conf
+    ;;
+esac
+
+cmd_exists() {
+  command -v $1 >/dev/null 2>/dev/null
+}
+
+get_dnf() {
+  if cmd_exists dnf; then
+    echo dnf
+  elif cmd_exists yum; then
+    echo yum
+  elif cmd_exists dnf5; then
+    echo dnf5
+  elif cmd_exists dnf4; then
+    echo dnf4
+  elif cmd_exists dnf-3; then
+    echo dnf-3
+  elif cmd_exists microdnf; then
+    echo microdnf
+  else
+    echo "No supported package manager found"
+    exit 1
+  fi
+}
+
+arg0="$(get_dnf)"
+
+$arg0 makecache || true
+
+if ! $arg0 install -y epel-release; then
   if . /etc/os-release 2>/dev/null; then
     case "$ID" in
-      fedora) ;;
-      rocky)
-        dnf install -y epel-release
-        ;;
+      fedora|rocky) ;;
       *)
-        yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
-        yum update -y
+        $arg0 install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
+        $arg0 update -y
         ;;
     esac
   fi
 fi
-if command -v dnf >/dev/null 2>/dev/null; then
-  dnf install -y bats vim
-else
-  yum install -y bats vim
-fi
+
+$arg0 install -y bats vim
 EOT
 WORKDIR /work
 
@@ -82,6 +132,10 @@ RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/debian_versi
 FROM test-base AS test-apk
 COPY test-apk.bats .
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/alpine-release ] || ./test-apk.bats
+
+FROM test-base AS test-dnf
+COPY test-dnf.bats .
+RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/system-release ] || ./test-dnf.bats
 
 FROM test-base AS test-verify
 COPY test-verify.bats .

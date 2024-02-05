@@ -37,6 +37,9 @@ installwget() {
   if command -v apk >/dev/null 2>/dev/null; then
     apk add wget >/dev/null 2>/dev/null
   fi
+  if command -v dnf >/dev/null 2>/dev/null; then
+    dnf install wget >/dev/null 2>/dev/null
+  fi
 }
 
 writexcrun() {
@@ -300,6 +303,10 @@ if [ -f /.xx-cc-autowrap ]; then
 fi
 
 setup() {
+  # shellcheck source=./xx-common
+  . "$(command -v xx-common)"
+
+  flock_setup
   if [ -z "$XX_CC_NOLOCK" ]; then
     lock="/var/lock/xx-cc"
     exec 9>$lock
@@ -464,7 +471,20 @@ export PKG_CONFIG_LIBDIR=/${target}/usr/lib/pkgconfig/
 exec pkg-config "\$@"
 EOT
       chmod +x "/usr/bin/${target}-pkg-config"
+    elif [ -f /etc/fedora-release ]; then
+      config="${config} --sysroot=/${target}/"
 
+      if [ -n "$is_bfd" ]; then
+        config="${config} -Wl,-rpath-link,/${target}/usr/lib"
+      fi
+
+      cat <<EOT >"/usr/bin/${target}-pkg-config"
+#!/usr/bin/env sh
+export PKG_CONFIG_SYSROOT_DIR=/${target}
+export PKG_CONFIG_LIBDIR=/${target}/usr/lib/pkgconfig/
+exec pkg-config "\$@"
+EOT
+      chmod +x "/usr/bin/${target}-pkg-config"
     fi
   elif [ ! -f "/usr/bin/${target}-pkg-config" ] && [ ! -h "/usr/bin/${target}-pkg-config" ]; then
     ln -s pkg-config "/usr/bin/${target}-pkg-config"
@@ -526,6 +546,17 @@ EOT
       # shellcheck disable=SC2044
       for f in $(find / -type d -name "$alpinetriple"); do
         ln -s "$alpinetriple" "$(dirname "$f")/$target"
+      done
+    fi
+  fi
+
+  if [ -f /etc/fedora-release ]; then
+    # if vendor is not fedora then sysroot needs to be linked to the custom vendor
+    fedoratriple=$(echo "$target" | sed s/-[[:alpha:]][[:alpha:]]*-/-fedora-/ | sed s/^riscv64gc-/riscv64-/)
+    if [ "$target" != "$fedoratriple" ]; then
+      # shellcheck disable=SC2044
+      for f in $(find / -type d -name "$fedoratriple"); do
+        ln -s "$fedoratriple" "$(dirname "$f")/$target"
       done
     fi
   fi
@@ -637,7 +668,7 @@ if [ -n "${printSysroot}" ]; then
   setup
 
   if xx-info is-cross; then
-    if [ -f "/etc/alpine-release" ]; then
+    if [ -f "/etc/alpine-release" ] || [ -f "/etc/fedora-release" ]; then
       echo "/${target}/"
       exit 0
     fi

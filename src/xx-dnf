@@ -6,18 +6,18 @@ set -e
 . "$(command -v xx-common)"
 
 flock_setup
-if [ -z "$XX_APK_NOLOCK" ]; then
-  lock="/var/lock/xx-apk"
+if [ -z "$XX_DNF_NOLOCK" ]; then
+  lock="/var/lock/xx-dnf"
   exec 9>$lock
   flock -x 9
-  export XX_APK_NOLOCK=1
+  export XX_DNF_NOLOCK=1
 fi
 
-if [ -n "$XX_DEBUG_APK" ]; then
+if [ -n "$XX_DEBUG_DNF" ]; then
   set -x
 fi
 
-unset XX_VENDOR # vendor for installing packages is always alpine
+unset XX_VENDOR # vendor for installing packages is always fedora
 
 for l in $(xx-info env); do
   export "${l?}"
@@ -28,14 +28,34 @@ if [ "${TARGETOS}" != "linux" ]; then
   exit 0
 fi
 
-# these are not supported yet
-case "${TARGETARCH}" in
-  mips*)
-    echo >&2 "skipping packages installation on ${XX_ARCH}"
-    exit 0
-    ;;
-  *) ;;
+arg0="$(basename "$0")"
+case $arg0 in
+  xx-dnf) arg0="dnf" ;;
+  xx-yum) arg0="yum" ;;
+  xx-dnf5) arg0="dnf5" ;;
+  xx-dnf4) arg0="dnf4" ;;
+  xx-dnf-3) arg0="dnf-3" ;;
+  xx-microdnf) arg0="microdnf" ;;
 esac
+
+if ! cmd_exists "$arg0"; then
+  echo "Couldn't find '${arg0}', detecting dnf..."
+  arg0="$(get_dnf)"
+  echo "Found '${arg0}'"
+fi
+
+suffix=$XX_TRIPLE
+if [ "$suffix" = "x86_64-linux-gnu" ]; then
+  suffix="x86-64-linux-gnu"
+fi
+if [ "$XX_OS" = "windows" ]; then
+  case "$XX_ARCH" in
+    amd64) suffix="mingw-w64-x86-64" ;;
+    386) suffix="mingw-w64-i686" ;;
+    arm64) suffix="mingw-w64-aarch64" ;;
+    arm) suffix="mingw-w64-arm" ;;
+  esac
+fi
 
 setup() {
   if ! xx-info is-cross; then
@@ -45,25 +65,21 @@ setup() {
   if [ -f "$done_file" ]; then
     return
   fi
-  apk_dir="/${XX_TRIPLE}/etc/apk"
-  mkdir -p "$apk_dir"
+  yum_dir="/${XX_TRIPLE}/etc/yum.repos.d"
+  mkdir -p "$yum_dir"
 
-  cp /etc/apk/repositories "$apk_dir/"
+  cp -r /etc/yum.repos.d/* "$yum_dir/"
 
-  # riscv supported since alpine 3.20
-  if [ "$TARGETARCH" = "riscv64" ] && ! supportRiscV; then
-    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" >"$apk_dir/repositories"
-    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >>"$apk_dir/repositories"
-  fi
-  mkdir "$apk_dir/keys"
-  mkdir "$apk_dir/protected_paths.d"
-  echo "$XX_PKG_ARCH" >"$apk_dir/arch"
-  apk add --no-cache --initdb -p "/${XX_TRIPLE}" --allow-untrusted alpine-keys
-
-  if [ -d "/etc/apk/cache" ]; then
-    mkdir -p "/etc/apk/cache/_$XX_PKG_ARCH"
-    ln -s "/etc/apk/cache/_$XX_PKG_ARCH" "$apk_dir/cache"
-  fi
+  . /etc/os-release
+  basepkg=""
+  case "${ID}" in
+    fedora) basepkg="fedora-repos" ;;
+    rhel) basepkg="subscription-manager coreutils findutils" ;;
+    ol) basepkg="oraclelinux-release" ;;
+    centos) basepkg="centos-release" ;;
+    *) ;;
+  esac
+  $arg0 install -y --forcearch "$(xx-info rhel-arch)" --installroot "/${XX_TRIPLE}" --releasever "${VERSION_ID}" $basepkg
 
   touch "$done_file"
 }
@@ -93,17 +109,17 @@ cmd() {
     if [ $# = $n ]; then set --; fi
     case "$a" in
       "xx-c-essentials")
-        set -- "$@" musl-dev gcc
+        set -- "$@" glibc-devel gcc
         ;;
       "xx-cxx-essentials")
-        set -- "$@" g++
+        set -- "$@" gcc-c++
         ;;
       "compiler-rt" | "compiler-rt-static")
         iscompilerrt="$a"
         set -- "$@" "$a"
         ;;
       "rust-stdlib")
-        set -- "$@" rust-stdlib
+        set -- "$@" rust-std-static
         isrustlib=1
         ;;
       *)
@@ -112,16 +128,16 @@ cmd() {
     esac
   done
   if [ "$#" != "0" ]; then
-    set -- "--root" "$root" "$@"
-    echo "+ apk " "$@"
+    set -- "--installroot" "$root" "--forcearch" "$(xx-info rhel-arch)" "$@"
+    echo "+ $arg0 " "$@"
   fi
-  apk "$@"
+  dnf "$@"
   if xx-info is-cross; then
-    if [ -z "$XX_APK_KEEP_BINARIES" ]; then
+    if [ -z "$XX_DNF_KEEP_BINARIES" ]; then
       rm -rf "/${XX_TRIPLE:?}/usr/bin/*"
     fi
     if [ -n "$iscompilerrt" ]; then
-      for f in $(apk --root "$root" info -qL "$iscompilerrt" | grep 'clang_rt.'); do
+      for f in $($arg0 --installroot "$root" info -qL "$iscompilerrt" | grep 'clang_rt.'); do
         ff="/${f}"
         if [ ! -f "${ff}" ]; then
           mkdir -p "$(dirname "${ff}")"
@@ -134,10 +150,6 @@ cmd() {
       ln -s "$root/usr/lib/rustlib/$(xx-info)" "/usr/lib/rustlib/$(xx-info)" || true
     fi
   fi
-}
-
-supportRiscV() {
-  versionGTE "$(xx-info os-version | cut -d'.' -f1-2)" "3.20"
 }
 
 case "$1" in

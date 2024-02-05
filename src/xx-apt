@@ -2,6 +2,10 @@
 
 set -e
 
+# shellcheck source=./xx-common
+. "$(command -v xx-common)"
+
+flock_setup
 if [ -z "$XX_APT_NOLOCK" ]; then
   lock="/var/lock/xx-apt"
   exec 9>$lock

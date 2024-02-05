@@ -9,6 +9,10 @@ execSilent() {
   fi
 }
 
+# shellcheck source=./xx-common
+. "$(command -v xx-common)"
+
+flock_setup
 if [ -z "$XX_CARGO_NOLOCK" ]; then
   lock="/var/lock/xx-cargo"
   exec 9>$lock
@@ -62,12 +66,28 @@ if [ ! -f "$done_file" ]; then
   if [ ! -d "$(rustc --print sysroot)/lib/rustlib/$(xx-info)" ]; then
     if [ -n "$rustup" ]; then
       execSilent rustup target add "$(xx-info)"
-    elif [ -f /etc/alpine-release ]; then
-      # XX_VENDOR overrided to match the distrib one to install packages
-      XX_VENDOR=$vendor execSilent xx-apk add rust-stdlib
     else
-      # XX_VENDOR overrided to match the distrib one to install packages
-      XX_VENDOR=$vendor execSilent xx-apt-get install -y libstd-rust-dev
+      # shellcheck disable=SC1090
+      . /etc/os-release
+
+      case "${ID_LIKE}${ID}" in
+        alpine | adelie | chimera)
+          # XX_VENDOR overrided to match the distrib one to install packages
+          XX_VENDOR=$vendor execSilent xx-apk add rust-stdlib
+          ;;
+        fedora*)
+          # XX_VENDOR overrided to match the distrib one to install packages
+          XX_VENDOR=$vendor execSilent xx-dnf install -y rust-std-static
+          ;;
+        debian*)
+          # XX_VENDOR overrided to match the distrib one to install packages
+          XX_VENDOR=$vendor execSilent xx-apt-get install -y libstd-rust-dev
+          ;;
+        *)
+          echo "unknown OS"
+          exit 1
+          ;;
+      esac
     fi
   fi
   touch "$done_file"

@@ -1,0 +1,56 @@
+#!/usr/bin/env sh
+
+set -e
+
+cmd_exists() {
+  command -v "$1" >/dev/null 2>/dev/null
+}
+
+get_dnf() {
+  if cmd_exists dnf; then
+    echo dnf
+  elif cmd_exists yum; then
+    echo yum
+  elif cmd_exists dnf5; then
+    echo dnf5
+  elif cmd_exists dnf4; then
+    echo dnf4
+  elif cmd_exists dnf-3; then
+    echo dnf-3
+  elif cmd_exists microdnf; then
+    echo microdnf
+  else
+    echo "No supported package manager found"
+    exit 1
+  fi
+}
+
+add_package() {
+  if cmd_exists apk; then
+    apk add --no-cache "$1" >"$2"
+  elif cmd_exists apt; then
+    apt update && apt install -y "$1"
+  elif cmd_exists dnf; then
+    $(get_dnf) install -y "$1" >"$2"
+  else
+    echo >&2 "$1 not installed and no package manager not found"
+    exit 1
+  fi
+}
+
+flock_setup() {
+  if ! test -d /var/run/lock; then
+    mkdir -p /var/run/lock
+  fi
+
+  if ! command -v flock >/dev/null 2>/dev/null; then
+    # shellcheck disable=SC1090
+    . /etc/os-release
+    case "${ID}" in
+      fedora)
+        add_package util-linux-core /dev/null
+        ;;
+      *) ;;
+    esac
+  fi
+}

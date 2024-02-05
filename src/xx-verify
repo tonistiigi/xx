@@ -2,6 +2,10 @@
 
 set -e
 
+# shellcheck source=./xx-common
+. "$(command -v xx-common)"
+
+flock_setup
 if [ -z "$XX_VERIFY_NOLOCK" ]; then
   lock="/var/lock/xx-verify"
   exec 9>$lock
@@ -19,14 +23,7 @@ done
 
 setup() {
   if ! command -v file >/dev/null 2>/dev/null; then
-    if command -v apk >/dev/null; then
-      apk add --no-cache file >"$1"
-    elif command -v apt >/dev/null; then
-      apt update && apt install -y file
-    else
-      echo >&2 "file not installed and no package manager not found"
-      exit 1
-    fi
+    add_package file "$1"
   fi
 }
 

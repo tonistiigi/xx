@@ -1,35 +1,78 @@
 #!/usr/bin/env bash
 
+pkg() {
+  case "${op}" in
+    add | install)
+      alpine_op="add"
+      op="install"
+      apt_opts="--no-install-recommends"
+      ;;
+    del | remove)
+      alpine_op="del"
+      op="remove"
+      apt_opts="--autoremove"
+      ;;
+    *)
+      printf "Unknown op"
+      exit 1
+      ;;
+  esac
+
+  case "${xx}" in
+    true) xx="xx-" ;;
+    *) xx="" ;;
+  esac
+
+  . /etc/os-release
+  # Little magic using asterisk matching with 'case'
+  # ID_LIKE exists on OSes that derive from other, e.g.:
+  # - Debian: ID_LIKE=""        ID="debian"
+  # - Ubuntu: ID_LIKE="debian"  ID="ubuntu"
+  # - Fedora: ID_LIKE=""        ID="fedora"
+  # - Redhat: ID_LIKE="fedora"  ID="rhel"
+  case "${ID_LIKE}${ID}" in
+    alpine | chimera | adelie)
+      if [ "${op}" = "install" ]; then
+        ${xx}apk ${alpine_op} "$@"
+      else
+        ${xx}apk ${alpine_op} "$@" 2>/dev/null || true
+      fi
+      ;;
+    debian*)
+      if [ "${op}" = "install" ]; then
+        xxrun ${xx}apt ${op} -y ${apt_opts} "$@"
+      else
+        xxrun ${xx}apt ${op} -y ${apt_opts} "$@" 2>/dev/null || true
+      fi
+      ;;
+    fedora*)
+      if [ "${op}" = "install" ]; then
+        xxrun ${xx}dnf ${op} -y "$@"
+      else
+        xxrun ${xx}dnf ${op} -y "$@" 2>/dev/null || true
+      fi
+      ;;
+    *)
+      printf "Unknown OS:\n\t%s\n\t%s" "${ID}" "${ID_LIKE}"
+      exit 1
+      ;;
+  esac
+}
+
 add() {
-  if [ -f /etc/alpine-release ]; then
-    apk add "$@"
-  else
-    xxrun apt install -y --no-install-recommends "$@"
-  fi
+  op="add" pkg "$@"
 }
 
 del() {
-  if [ -f /etc/alpine-release ]; then
-    apk del "$@" 2>/dev/null || true
-  else
-    xxrun apt remove --autoremove -y "$@" 2>/dev/null || true
-  fi
+  op="del" pkg "$@"
 }
 
 xxadd() {
-  if [ -f /etc/alpine-release ]; then
-    xx-apk add "$@"
-  else
-    xxrun xx-apt install -y --no-install-recommends "$@"
-  fi
+  op="add" xx="true" pkg "$@"
 }
 
 xxdel() {
-  if [ -f /etc/alpine-release ]; then
-    xx-apk del "$@" 2>/dev/null || true
-  else
-    xxrun xx-apt remove -y --autoremove "$@" 2>/dev/null || true
-  fi
+  op="del" xx="true" pkg "$@"
 }
 
 xxrun() {
