@@ -16,7 +16,7 @@ LD_SHAS=\$(
   cat <<'EOT'
 EOL
 
-for file in "${DIST}"/*-ld-*; do
+for file in "${DIST}"/*-ld-*.tar.gz; do
   echo "$(basename -- "${file%.tar.gz}") $(sha1sum "$file" | cut -d' ' -f1)" >>./src/xx-ld-shas
 done
 
@@ -29,7 +29,7 @@ LD64_SHAS=\$(
   cat <<'EOT'
 EOL
 
-for file in "${DIST}"/ld64-*; do
+for file in "${DIST}"/ld64-*.tar.gz; do
   echo "$(basename -- "${file%.tar.gz}") $(sha1sum "$file" | cut -d' ' -f1)" >>./src/xx-ld-shas
 done
 
