@@ -9,31 +9,50 @@ done
 export GOOS=${TARGETOS}
 export GOARCH=${TARGETARCH}
 
-if [ "$TARGETARCH" = "arm" ]; then
-  if [ -n "$TARGETVARIANT" ]; then
-    case "$TARGETVARIANT" in
-      "v5")
-        export GOARM="5"
-        ;;
-      "v6")
-        export GOARM="6"
-        ;;
-      *)
-        export GOARM="7"
-        ;;
-    esac
-  else
-    export GOARM="7"
-  fi
-fi
+case "$TARGETARCH" in
+  "amd64")
+    if [ -z "$GOAMD64" ]; then
+      case "$TARGETVARIANT" in
+        "v2")
+          export GOAMD64="v2"
+          ;;
+        "v3")
+          export GOAMD64="v3"
+          ;;
+        "v4")
+          export GOAMD64="v4"
+          ;;
+      esac
+    fi
+    ;;
+  "arm")
+    if [ -z "$GOARM" ]; then
+      case "$TARGETVARIANT" in
+        "v5")
+          export GOARM="5"
+          ;;
+        "v6")
+          export GOARM="6"
+          ;;
+        *)
+          export GOARM="7"
+          ;;
+      esac
+    fi
+    ;;
+esac
 
 if [ -n "$TARGETVARIANT" ]; then
   case "$TARGETARCH" in
     "mips64"*)
-      export GOMIPS64="${TARGETVARIANT}"
+      if [ -z "$GOMIPS64" ]; then
+        export GOMIPS64="${TARGETVARIANT}"
+      fi
       ;;
     "mips"*)
-      export GOMIPS="${TARGETVARIANT}"
+      if [ -z "$GOMIPS" ]; then
+        export GOMIPS="${TARGETVARIANT}"
+      fi
       ;;
   esac
 fi
@@ -89,6 +108,9 @@ wrap() {
   mkdir -p "$(dirname "$f")"
   echo "GOOS=$GOOS" >"$f"
   echo "GOARCH=$GOARCH" >>"$f"
+  if [ -n "$GOAMD64" ]; then
+    echo "GOAMD64=$GOAMD64" >>"$f"
+  fi
   if [ -n "$GOARM" ]; then
     echo "GOARM=$GOARM" >>"$f"
   fi

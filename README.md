@@ -309,7 +309,7 @@ RUN mkdir build && cd build && \
 
 ## Go / Cgo
 
-Building Go can be achieved with the `xx-go` wrapper that automatically sets up values for `GOOS`, `GOARCH`, `GOARM` etc. It also sets up `pkg-config` and C compiler if building with CGo. Note that by default, CGo is enabled in Go when compiling for native architecture and disabled when cross-compiling. This can easily produce unexpected results; therefore, you should always define either `CGO_ENABLED=1` or `CGO_ENABLED=0` depending on if you expect your compilation to use CGo or not.
+Building Go can be achieved with the `xx-go` wrapper that automatically sets up values for `GOOS`, `GOARCH`, `GOARM`, `GOAMD64` etc. It also sets up `pkg-config` and C compiler if building with CGo. Note that by default, CGo is enabled in Go when compiling for native architecture and disabled when cross-compiling. This can easily produce unexpected results; therefore, you should always define either `CGO_ENABLED=1` or `CGO_ENABLED=0` depending on if you expect your compilation to use CGo or not.
 
 ```dockerfile
 FROM --platform=$BUILDPLATFORM golang:alpine
