@@ -18,6 +18,9 @@ COPY --from=build /out/ /usr/bin/
 
 FROM --platform=$BUILDPLATFORM tonistiigi/bats-assert AS bats-assert
 
+# osxcross for usage with macports: https://github.com/tpoechtrager/osxcross/blob/master/README.MACPORTS.md
+FROM --platform=$BUILDPLATFORM crazymax/osxcross:13.1 AS osxcross
+
 FROM ${TEST_BASE_IMAGE} AS test-base-alpine
 RUN --mount=type=cache,target=/pkg-cache \
     ln -s /pkg-cache /etc/apk/cache && \
@@ -92,6 +95,11 @@ FROM test-base-fixtures AS test-cargo
 COPY test-cargo.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked ./test-cargo.bats
 
+FROM test-base AS test-macports
+COPY test-macports.bats test_helper.bash ./
+ENV PATH="/osxcross/bin:$PATH"
+ENV OSXCROSS_TARGET_DIR=/osxcross
+RUN --mount=type=cache,target=/pkg-cache,sharing=locked --mount=from=osxcross,source=/osxcross,target=/osxcross,rw ./test-macports.bats
 
 # these targets can be overwritten with build contexts
 FROM scratch AS sdk-extras
