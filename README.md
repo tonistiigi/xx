@@ -1,7 +1,9 @@
 # xx - Dockerfile cross-compilation helpers
 
-[![CI Status](https://github.com/tonistiigi/xx/workflows/build/badge.svg)](https://github.com/tonistiigi/xx/actions?query=workflow%3Abuild)
-[![Docker Pulls](https://img.shields.io/docker/pulls/tonistiigi/xx.svg?logo=docker)](https://hub.docker.com/r/tonistiigi/xx/)
+[![GitHub release](https://img.shields.io/github/release/tonistiigi/xx.svg?style=flat-square)](https://github.com/tonistiigi/xx/releases/latest)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/tonistiigi/xx/build.yml?label=build&logo=github&style=flat-square)](https://github.com/tonistiigi/xx/actions?query=workflow%3Abuild)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tonistiigi/xx?style=flat-square)](https://goreportcard.com/report/github.com/tonistiigi/xx)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tonistiigi/xx.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tonistiigi/xx/)
 
 `xx` provides tools to support cross-compilation from Dockerfiles that understand the `--platform` flag passed in from `docker build` or `docker buildx build`. These helpers allow you to build multi-platform images from any architecture into any architecture supported by your compiler with native performance. Adding `xx` to your Dockerfile should only need minimal updates and should not require custom conditions for specific architectures.
 
@@ -309,7 +311,7 @@ RUN mkdir build && cd build && \
 
 ## Go / Cgo
 
-Building Go can be achieved with the `xx-go` wrapper that automatically sets up values for `GOOS`, `GOARCH`, `GOARM` etc. It also sets up `pkg-config` and C compiler if building with CGo. Note that by default, CGo is enabled in Go when compiling for native architecture and disabled when cross-compiling. This can easily produce unexpected results; therefore, you should always define either `CGO_ENABLED=1` or `CGO_ENABLED=0` depending on if you expect your compilation to use CGo or not.
+Building Go can be achieved with the `xx-go` wrapper that automatically sets up values for `GOOS`, `GOARCH`, `GOARM`, `GOAMD64` etc. It also sets up `pkg-config` and C compiler if building with CGo. Note that by default, CGo is enabled in Go when compiling for native architecture and disabled when cross-compiling. This can easily produce unexpected results; therefore, you should always define either `CGO_ENABLED=1` or `CGO_ENABLED=0` depending on if you expect your compilation to use CGo or not.
 
 ```dockerfile
 FROM --platform=$BUILDPLATFORM golang:alpine
@@ -513,7 +515,7 @@ These projects, as well as [xx Dockerfile](https://github.com/tonistiigi/xx/blob
 
 - [BuildKit](https://github.com/moby/buildkit/blob/8d5c5f197489f76e2663c417a9e71d42464fa3cd/Dockerfile)
 - [Docker CLI](https://github.com/docker/cli/blob/86e1f04b5f115fb0b4bbd51e0e4a68233072d24b/Dockerfile)
-- [Binfmt (Qemu)](https://github.com/tonistiigi/binfmt/blob/8703596e93946b9e31161c060a9ac41a8b578c3f/Dockerfile)
+- [Binfmt (Qemu)](https://github.com/tonistiigi/xx/blob/8703596e93946b9e31161c060a9ac41a8b578c3f/Dockerfile)
 - [Docker Buildx](https://github.com/docker/buildx/blob/4fec647b9d8f34f8569141124d8462c912858144/Dockerfile)
 - [Containerd](https://github.com/containerd/containerd/blob/9e7910ebdcbf3bf10ebd0a282ab9996572e38749/.github/workflows/release/Dockerfile)
 

@@ -45,6 +45,11 @@ testEnv() {
   assert_output --partial "GOHOSTARCH=$(TARGETOS= TARGETARCH= xx-info arch)"
 
   case "$(xx-info arch)" in
+    "amd64")
+      if supportAmd64VariantGo; then
+        assert_output --partial "GOAMD64=$expAmd64"
+      fi
+      ;;
     "arm")
       assert_output --partial "GOARM=$expArm"
       ;;
@@ -76,6 +81,39 @@ testEnv() {
 @test "amd64-env" {
   export TARGETARCH=amd64
   testEnv
+}
+
+@test "amd64v2-env" {
+  if ! supportAmd64VariantGo; then
+    skip "Amd64 Variant GO not supported"
+  fi
+  export TARGETARCH=amd64
+  export TARGETVARIANT=v2
+  expAmd64=v2
+  testEnv
+  unset TARGETVARIANT
+}
+
+@test "amd64v3-env" {
+  if ! supportAmd64VariantGo; then
+    skip "Amd64 Variant GO not supported"
+  fi
+  export TARGETARCH=amd64
+  export TARGETVARIANT=v3
+  expAmd64=v3
+  testEnv
+  unset TARGETVARIANT
+}
+
+@test "amd64v4-env" {
+  if ! supportAmd64VariantGo; then
+    skip "Amd64 Variant GO not supported"
+  fi
+  export TARGETARCH=amd64
+  export TARGETVARIANT=v4
+  expAmd64=v4
+  testEnv
+  unset TARGETVARIANT
 }
 
 @test "arm64-env" {
@@ -224,6 +262,16 @@ testHelloGO() {
 @test "amd64-hellogo" {
   export TARGETARCH=amd64
   testHelloGO
+}
+
+@test "amd64v2-hellogo" {
+  if ! supportAmd64VariantGo; then
+    skip "Amd64 Variant GO not supported"
+  fi
+  export TARGETARCH=amd64
+  export TARGETVARIANT=v2
+  testHelloGO
+  unset TARGETVARIANT
 }
 
 @test "arm64-hellogo" {

@@ -91,6 +91,10 @@ supportRiscVCGo() {
   versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.16"
 }
 
+supportAmd64VariantGo() {
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.18"
+}
+
 supportLoongArchGo() {
   versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.19"
 }
