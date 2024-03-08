@@ -31,6 +31,11 @@ aptsourcesfile() {
   fi
 }
 
+check_deb822() {
+  # shellcheck disable=SC2046
+  [ "$(printf '%s' $(aptsourcesfile) | awk -F . '{if (NF>1) {print $NF}}')" = "sources" ] && return 0 || return 1
+}
+
 exitnolinux() {
   if [ "${TARGETOS}" != "linux" ]; then
     echo >&2 "skipping packages installation on ${XX_OS}"
@@ -88,13 +93,21 @@ fi
 fixubuntusources() {
   # fix all current sources to native arch
   nativearch="$(TARGETPLATFORM="" TARGETPAIR="" TARGETARCH="" TARGETOS="" xx-info arch)"
-  sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i "$(aptsourcesfile)"
+  if ! check_deb822; then
+    sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i "$(aptsourcesfile)"
+  else
+    sed -E "/Architectures:/! s/^(Types\: [a-z]+)/\1\nArchitectures: $nativearch/" -i "$(aptsourcesfile)"
+  fi
 
   if ! xx-info is-cross; then return; fi
 
   # add custom list for target
   debarch=$(xx-info debian-arch)
-  targetlist=/etc/apt/sources.list.d/xx-$debarch.list
+  if ! check_deb822; then
+    targetlist=/etc/apt/sources.list.d/xx-$debarch.list
+  else
+    targetlist=/etc/apt/sources.list.d/xx-$debarch.sources
+  fi
   if [ -f "$targetlist" ]; then return; fi
 
   mainurl=archive.ubuntu.com/ubuntu
@@ -109,12 +122,30 @@ fixubuntusources() {
 
   # shellcheck disable=SC1091
   ubuntuname=$(. /etc/os-release && echo "$UBUNTU_CODENAME")
-  cat <<eot >"$targetlist"
+  if ! check_deb822; then
+    cat <<eot >"$targetlist"
 deb [arch=$debarch] http://$mainurl/ $ubuntuname main restricted universe multiverse
 deb [arch=$debarch] http://$mainurl/ $ubuntuname-updates main restricted universe multiverse
 deb [arch=$debarch] http://$mainurl/ $ubuntuname-backports main restricted universe multiverse
 deb [arch=$debarch] http://$securityurl/ $ubuntuname-security main restricted universe multiverse
 eot
+  else
+    cat <<eot >"$targetlist"
+Types: deb
+Architectures: $debarch
+URIs: http://$mainurl/
+Suites: $ubuntuname $ubuntuname-updates $ubuntuname-backports
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+Architectures: $debarch
+URIs: http://$securityurl/
+Suites: $ubuntuname-security
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+eot
+  fi
 }
 
 packages=
