@@ -97,6 +97,13 @@ fi
   assert_equal "mips64el" "$(TARGETPLATFORM=linux/mips64le xx-info pkg-arch)"
 }
 
+@test "wasm" {
+  assert_equal "wasm32-wasi" "$(TARGETPLATFORM=wasi/wasm xx-info triple)"
+  assert_equal "wasm64-wasi" "$(TARGETPLATFORM=wasi/wasm64 xx-info triple)"
+  assert_equal "wasm32-wasi" "$(TARGETPLATFORM=wasi/wasm32 xx-info triple)"
+  assert_equal "wasm32" "$(TARGETPLATFORM=linux/wasm xx-info pkg-arch)"
+}
+
 @test "sysroot" {
   assert_equal "/" "$(xx-info sysroot)"
   assert_equal "/" "$(TARGETPLATFORM=linux/amd64 xx-info sysroot)"
