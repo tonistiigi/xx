@@ -76,6 +76,10 @@ FROM test-base AS test-apk
 COPY test-apk.bats .
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/alpine-release ] || ./test-apk.bats
 
+FROM test-base AS test-dnf
+COPY test-dnf.bats .
+RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/fedora-release ] || ./test-dnf.bats
+
 FROM test-base AS test-verify
 COPY test-verify.bats .
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked ./test-verify.bats

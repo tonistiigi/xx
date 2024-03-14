@@ -3,6 +3,8 @@
 add() {
   if [ -f /etc/alpine-release ]; then
     apk add "$@"
+  elif [ -f /etc/fedora-release ]; then
+    xxrun dnf install "$@"
   else
     xxrun apt install -y --no-install-recommends "$@"
   fi
@@ -11,6 +13,8 @@ add() {
 del() {
   if [ -f /etc/alpine-release ]; then
     apk del "$@" 2>/dev/null || true
+  elif [ -f /etc/fedora-release ]; then
+    xxrun dnf remove "$@"
   else
     xxrun apt remove --autoremove -y "$@" 2>/dev/null || true
   fi
@@ -19,6 +23,8 @@ del() {
 xxadd() {
   if [ -f /etc/alpine-release ]; then
     xx-apk add "$@"
+  elif [ -f /etc/fedora-release ]; then
+    xxrun xx-dnf install "$@"
   else
     xxrun xx-apt install -y --no-install-recommends "$@"
   fi
@@ -27,6 +33,8 @@ xxadd() {
 xxdel() {
   if [ -f /etc/alpine-release ]; then
     xx-apk del "$@" 2>/dev/null || true
+  elif [ -f /etc/fedora-release ]; then
+    xxrun xx-dnf remove "$@"
   else
     xxrun xx-apt remove -y --autoremove "$@" 2>/dev/null || true
   fi

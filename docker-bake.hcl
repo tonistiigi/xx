@@ -7,7 +7,7 @@ variable "TEST_BASE_TYPE" {
 }
 
 variable "TEST_BASE_IMAGE" {
-    default = TEST_BASE_TYPE == "alpine" ? "alpine:3.19" : TEST_BASE_TYPE == "debian" ? "debian:bookworm" : null
+    default = TEST_BASE_TYPE == "alpine" ? "alpine:3.19" : TEST_BASE_TYPE == "debian" ? "debian:bookworm" : TEST_BASE_TYPE == "rhel" ? "fedora:39" : null
 }
 
 variable "DEV_SDK_PLATFORM" {
@@ -55,6 +55,7 @@ group "test" {
         "test-info",
         "test-apk",
         "test-apt",
+        "test-dnf",
         "test-verify",
         "test-clang",
         "test-go",
@@ -75,6 +76,11 @@ target "test-apk" {
 target "test-apt" {
     inherits = ["test-base"]
     target = "test-apt"
+}
+
+target "test-dnf" {
+    inherits = ["test-base"]
+    target = "test-dnf"
 }
 
 target "test-verify" {

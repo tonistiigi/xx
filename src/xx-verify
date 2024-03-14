@@ -23,6 +23,8 @@ setup() {
       apk add --no-cache file >"$1"
     elif command -v apt >/dev/null; then
       apt update && apt install -y file
+    elif command -v dnf >/dev/null; then
+      dnf install file
     else
       echo >&2 "file not installed and no package manager not found"
       exit 1
