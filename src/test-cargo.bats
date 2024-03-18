@@ -91,6 +91,14 @@ testHelloCargoRustup() {
   testHelloCargoRustup
 }
 
+@test "loong64-hellocargo-rustup" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported" # rust stdlib package not available
+  fi
+  export TARGETARCH=loongarch64
+  testHelloCargoRustup
+}
+
 @test "386-hellocargo-rustup" {
   export TARGETARCH=386
   testHelloCargoRustup
@@ -140,6 +148,15 @@ testHelloCargoRustup() {
   fi
   export TARGETARCH=riscv64
   export RISCV64_TARGET_ARCH=riscv64
+  testHelloCargo
+}
+
+@test "loong64-hellocargo-rustpkg" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported" # rust stdlib package not available
+  fi
+  export TARGETARCH=loongarch64
+  export LOONG64_TARGET_ARCH=loongarch64
   testHelloCargo
 }
 

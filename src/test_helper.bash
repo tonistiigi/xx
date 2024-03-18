@@ -45,7 +45,7 @@ xxrun() {
         wasclang=1
       fi
       if [ "$p" = "golang" ]; then
-        p="golang-1.15"
+        p="golang-1.19"
         wasgolang=1
       fi
       set -- "$@" "$p"
@@ -63,7 +63,7 @@ xxrun() {
     fi
   fi
   if [ -n "$wasgolang" ] && ! command -v go 2>/dev/null >/dev/null; then
-    ln -s /usr/lib/go-1.15/bin/go /usr/bin/go
+    ln -s /usr/lib/go-1.19/bin/go /usr/bin/go
   fi
 }
 
@@ -93,6 +93,23 @@ supportRiscVCGo() {
 
 supportAmd64VariantGo() {
   versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.18"
+}
+
+supportLoongArchGo() {
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.19"
+}
+
+supportLoongArch() {
+  if [ -f /etc/debian_version ]; then
+    if grep "sid" /etc/apt/sources.list 2>/dev/null >/dev/null; then
+      return 0
+    else
+      return 1
+    fi
+  elif [ -f /etc/alpine-release ]; then
+    return 1
+  fi
+  return 0
 }
 
 supportRC() {
