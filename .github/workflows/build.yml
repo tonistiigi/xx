@@ -36,10 +36,6 @@ jobs:
       matrix:
         include:
           -
-            image: alpine:3.15
-            typ: alpine
-            allow-failure: false
-          -
             image: alpine:3.16
             typ: alpine
             allow-failure: false
@@ -56,12 +52,12 @@ jobs:
             typ: alpine
             allow-failure: false
           -
+            image: alpine:3.20
+            typ: alpine
+            allow-failure: false
+          -
             image: alpine:edge
             typ: alpine
-            allow-failure: true
-          -
-            image: debian:buster-backports
-            typ: debian
             allow-failure: true
           -
             image: debian:bullseye-backports
@@ -104,15 +100,19 @@ jobs:
             typ: rhel
             allow-failure: false
           -
-            image: fedora:37
-            typ: rhel
-            allow-failure: false
-          -
             image: fedora:38
             typ: rhel
             allow-failure: false
           -
             image: fedora:39
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:40
+            typ: rhel
+            allow-failure: false
+          -
+            image: fedora:41
             typ: rhel
             allow-failure: false
           -
