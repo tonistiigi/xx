@@ -38,18 +38,25 @@ RUN <<EOT
 set -ex
 if ! yum install -y epel-release; then
   if . /etc/os-release 2>/dev/null; then
-    if [ "$ID" != "fedora" ]; then
-      yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
-    fi
+    case "$ID" in
+      fedora) ;;
+      rocky)
+        dnf install -y epel-release
+        ;;
+      *)
+        yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
+        yum update -y
+        ;;
+    esac
   fi
 fi
+if command -v dnf >/dev/null 2>/dev/null; then
+  dnf install -y bats vim
+else
+  yum install -y bats vim
+fi
 EOT
-RUN --mount=type=cache,target=/pkg-cache \
-    rm -rf /var/cache/yum && \
-    ln -s /pkg-cache /var/cache/yum && \
-    yum update -y && yum -y install bats vim
 WORKDIR /work
-
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base
 ADD --chmod=755 https://raw.githubusercontent.com/fsaintjacques/semver-tool/3.4.0/src/semver /usr/bin/semver
