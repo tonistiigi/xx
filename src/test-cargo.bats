@@ -111,6 +111,9 @@ testHelloCargoRustup() {
     debian | ubuntu)
       add cargo
       ;;
+    fedora)
+      add cargo
+      ;;
   esac
 }
 

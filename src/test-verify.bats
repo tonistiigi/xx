@@ -3,7 +3,7 @@
 load 'assert'
 
 @test "native" {
-  run xx-verify /bin/ls
+  run xx-verify /bin/sh
   assert_success
 }
 
@@ -23,7 +23,7 @@ load 'assert'
   assert_failure
   assert_output --partial "invalid flag"
 
-  run xx-verify --static /bin/ls
+  run xx-verify --static /bin/sh
   assert_failure
   assert_output --partial "not statically linked"
 }
