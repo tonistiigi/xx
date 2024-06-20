@@ -402,7 +402,7 @@ setup() {
     if [ "$exp" = "riscv64" ]; then
       exp="riscv"
     fi
-    if ld -V 2>/dev/null | grep $exp >/dev/null; then
+    if ld -V 2>/dev/null | grep "$exp" >/dev/null; then
       ln -s "$(command -v ld)" "/usr/bin/${target}-ld"
       linker="/usr/bin/${target}-ld"
       XX_CC_PREFER_LINKER=
@@ -538,7 +538,7 @@ EOT
 }
 
 check_compiler() {
-  if [ ! -f /usr/bin/$name ]; then
+  if [ ! -f "/usr/bin/$name" ]; then
     echo >&2 "/usr/bin/$name not found. Make sure package is installed. xx doesn't currently support binaries in custom location"
     exit
   fi
@@ -560,7 +560,7 @@ downloadLD=
 for p in "$@"; do
   # ignore if custom --config already set
   if [ "${p}" = "--config" ]; then
-    exec /usr/bin/$name "$@"
+    exec "/usr/bin/$name" "$@"
   fi
   if [ "${p}" = "--print-target-triple" ] || [ "${p}" = "-print-target-triple" ]; then
     printTarget=1
@@ -667,15 +667,15 @@ if [ -z "${target}" ] && [ ! -f /etc/llvm/xx-default.cfg ] && [ -n "$wrapped" ];
   setup
 fi
 
-if [ ! -f /usr/bin/$name ]; then
+if [ ! -f "/usr/bin/$name" ]; then
   echo >&2 "/usr/bin/$name not found. Make sure package is installed. xx doesn't currently support binaries in custom location"
   exit
 fi
 
 if [ -z "$target" ] && [ -f /etc/llvm/xx-default.cfg ]; then
-  exec /usr/bin/$name --config /etc/llvm/xx-default.cfg "$@"
+  exec "/usr/bin/$name" --config /etc/llvm/xx-default.cfg "$@"
 elif [ -f "/usr/bin/${target}.cfg" ]; then
-  exec /usr/bin/$name --config "/usr/bin/${target}.cfg" "$@"
+  exec "/usr/bin/$name" --config "/usr/bin/${target}.cfg" "$@"
 else
-  exec /usr/bin/$name "$@"
+  exec "/usr/bin/$name" "$@"
 fi

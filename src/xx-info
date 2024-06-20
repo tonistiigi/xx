@@ -76,14 +76,14 @@ fi
 
 # break up TARGETPLATFORM if provided
 if [ -n "$TARGETPLATFORM" ]; then
-  os="$(echo $TARGETPLATFORM | cut -d"/" -f1)"
-  arch="$(echo $TARGETPLATFORM | cut -d"/" -f2)"
+  os="$(echo "$TARGETPLATFORM" | cut -d"/" -f1)"
+  arch="$(echo "$TARGETPLATFORM" | cut -d"/" -f2)"
   if [ -n "$os" ] && [ -n "$arch" ]; then
     TARGETOS="$os"
     TARGETARCH="$arch"
     case "$arch" in
       "amd64")
-        case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
+        case "$(echo "$TARGETPLATFORM" | cut -d"/" -f3)" in
           "v2")
             TARGETVARIANT="v2"
             ;;
@@ -96,7 +96,7 @@ if [ -n "$TARGETPLATFORM" ]; then
         esac
         ;;
       "arm")
-        case "$(echo $TARGETPLATFORM | cut -d"/" -f3)" in
+        case "$(echo "$TARGETPLATFORM" | cut -d"/" -f3)" in
           "v5")
             TARGETVARIANT="v5"
             ;;
@@ -112,7 +112,7 @@ if [ -n "$TARGETPLATFORM" ]; then
         esac
         ;;
       "mips"*)
-        TARGETVARIANT="$(echo $TARGETPLATFORM | cut -d"/" -f3)"
+        TARGETVARIANT="$(echo "$TARGETPLATFORM" | cut -d"/" -f3)"
         ;;
     esac
   fi
@@ -375,31 +375,31 @@ case "$1" in
     fi
     ;;
   "arch")
-    echo $TARGETARCH
+    echo "$TARGETARCH"
     ;;
   "variant")
-    echo $TARGETVARIANT
+    echo "$TARGETVARIANT"
     ;;
   "os")
-    echo $TARGETOS # TODO:
+    echo "$TARGETOS" # TODO:
     ;;
   "os-version")
     echo "$XX_OS_VERSION"
     ;;
   "march")
-    echo $XX_MARCH
+    echo "$XX_MARCH"
     ;;
   "debian-arch")
-    echo $XX_DEBIAN_ARCH
+    echo "$XX_DEBIAN_ARCH"
     ;;
   "alpine-arch")
-    echo $XX_ALPINE_ARCH
+    echo "$XX_ALPINE_ARCH"
     ;;
   "rhel-arch")
-    echo $XX_RHEL_ARCH
+    echo "$XX_RHEL_ARCH"
     ;;
   "pkg-arch")
-    echo $XX_PKG_ARCH
+    echo "$XX_PKG_ARCH"
     ;;
   "triple")
     echo "$XX_TRIPLE"
@@ -408,7 +408,7 @@ case "$1" in
     echo "$XX_VENDOR"
     ;;
   "libc") # this is not abi, just the prefix
-    echo $XX_LIBC
+    echo "$XX_LIBC"
     ;;
   "env")
     echo "XX_OS=${TARGETOS}"

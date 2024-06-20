@@ -360,14 +360,14 @@ else
 fi
 
 if [ "$outputf" = "res" ]; then
-  run cp $resfile $output
+  run cp "$resfile" "$output"
 else
   if ! command -v llvm-cvtres 2>/dev/null >/dev/null; then
     echo >&2 "llvm-cvtres not installed"
     exit 1
   fi
 
-  run llvm-cvtres -machine:$machine -out:$output $resfile
+  run llvm-cvtres -machine:$machine "-out:$output" "$resfile"
 fi
 
 if [ -f "$tmpfile" ]; then
