@@ -7,7 +7,7 @@ variable "TEST_BASE_TYPE" {
 }
 
 variable "TEST_BASE_IMAGE" {
-    default = TEST_BASE_TYPE == "alpine" ? "alpine:3.19" : TEST_BASE_TYPE == "debian" ? "debian:bookworm" : null
+    default = TEST_BASE_TYPE == "alpine" ? "alpine:3.20" : TEST_BASE_TYPE == "debian" ? "debian:bookworm" : null
 }
 
 variable "DEV_SDK_PLATFORM" {
