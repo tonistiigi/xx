@@ -1,7 +1,9 @@
 #syntax=docker/dockerfile:1.8
 #check=error=true
 
-FROM --platform=$BUILDPLATFORM alpine AS build
+ARG ALPINE_VERSION=3.20
+
+FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS build
 RUN apk add --no-cache git
 WORKDIR /work
 RUN git clone --bare https://github.com/ztombol/bats-support && \
@@ -19,7 +21,7 @@ RUN echo 'source "$(dirname "${BASH_SOURCE[0]}")/bats-support/load.bash"' > /out
 FROM scratch AS release
 COPY --from=build /out /
 
-FROM alpine:3.19 AS test-gen
+FROM alpine:${ALPINE_VERSION} AS test-gen
 RUN apk add --no-cache bats
 WORKDIR /work
 COPY --from=release . .
