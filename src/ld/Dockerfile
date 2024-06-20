@@ -1,4 +1,5 @@
-#syntax=docker/dockerfile:1.5
+#syntax=docker/dockerfile:1.8
+#check=error=true
 
 ARG ALPINE_VERSION=3.20
 ARG LIBTAPI_VERSION=1300.6.5
@@ -14,8 +15,9 @@ FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libtapi-base
 RUN apk add --no-cache git clang lld cmake make python3 bash
 COPY --link --from=xx / /
 ARG LIBTAPI_VERSION
+WORKDIR /work
 RUN git clone https://github.com/tpoechtrager/apple-libtapi --depth 1 -b ${LIBTAPI_VERSION}
-WORKDIR ./apple-libtapi
+WORKDIR apple-libtapi
 RUN --mount=target=/tmp/libtapi-cmake-args.patch,source=libtapi-cmake-args.patch \
     git apply /tmp/libtapi-cmake-args.patch
 RUN apk add --no-cache gcc g++
@@ -61,11 +63,12 @@ FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libdispatch-base
 RUN apk add git clang lld cmake samurai patch
 ARG LIBDISPATCH_VERSION
 COPY --link --from=xx / /
+WORKDIR /work
 RUN --mount=target=/patches,from=patches-libdispatch \
     git clone -b ${LIBDISPATCH_VERSION} --depth 1 https://github.com/apple/swift-corelibs-libdispatch.git && \
     cd swift-corelibs-libdispatch && \
     for f in /patches/*; do patch -p1 < $f; done
-WORKDIR ./swift-corelibs-libdispatch
+WORKDIR swift-corelibs-libdispatch
 ARG TARGETPLATFORM
 RUN xx-apk add --no-cache gcc g++ musl-dev linux-headers bsd-compat-headers
 RUN cmake $(xx-clang --print-cmake-defines) -G Ninja -B build -DCMAKE_INSTALL_PREFIX=/out/libdispatch -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=False -DCMAKE_BUILD_TYPE=MinSizeRel && \
@@ -85,7 +88,7 @@ WORKDIR /work
 ARG CCTOOLS_REPO=https://github.com/tpoechtrager/cctools-port
 ARG CCTOOLS_VERSION
 RUN git clone $CCTOOLS_REPO -b ${CCTOOLS_VERSION}
-WORKDIR ./cctools-port/cctools
+WORKDIR cctools-port/cctools
 ARG TARGETPLATFORM
 RUN --mount=target=/libdispatch,from=libdispatch \
     xx-apk add --no-cache musl-dev gcc g++ libdispatch-dev && \
@@ -129,7 +132,7 @@ ARG SIGTOOL_VERSION
 RUN git clone https://github.com/thefloweringash/sigtool && \
     cd sigtool && \
     git checkout ${SIGTOOL_VERSION}
-WORKDIR ./sigtool
+WORKDIR sigtool
 RUN --mount=target=/tmp/sigtool-static.patch,source=sigtool-static.patch \
     git apply /tmp/sigtool-static.patch
 ARG TARGETPLATFORM

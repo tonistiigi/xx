@@ -1,3 +1,6 @@
+#syntax=docker/dockerfile:1.8
+#check=error=true
+
 FROM --platform=$BUILDPLATFORM alpine AS build
 RUN apk add --no-cache git
 WORKDIR /work

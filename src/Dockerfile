@@ -1,4 +1,5 @@
-# syntax=docker/dockerfile:1.5
+# syntax=docker/dockerfile:1.8
+# check=error=true
 
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
@@ -113,4 +114,4 @@ COPY fixtures fixtures
 COPY *.bats test_helper.bash ./
 
 # default is alias to build xx image
-FROM xx as default
+FROM xx AS default
