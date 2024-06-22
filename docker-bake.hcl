@@ -58,7 +58,8 @@ group "test" {
         "test-verify",
         "test-clang",
         "test-go",
-        "test-cargo"
+        "test-cargo",
+        "test-macports"
     ]
 }
 
@@ -95,6 +96,11 @@ target "test-go" {
 target "test-cargo" {
     inherits = ["test-base"]
     target = "test-cargo"
+}
+
+target "test-macports" {
+    inherits = ["test-base"]
+    target = "test-macports"
 }
 
 group "validate" {
