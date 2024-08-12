@@ -37,19 +37,23 @@ WORKDIR /work
 FROM ${TEST_BASE_IMAGE} AS test-base-rhel
 RUN <<EOT
 set -ex
+. /etc/os-release
+if [[ "$ID" = "centos" ]] && [[ "$VERSION_ID" = "7" ]]; then
+  # CentOS 7 is EOL since June 30, 2024, use vault.centos.org
+  sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+  sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+fi
 if ! yum install -y epel-release; then
-  if . /etc/os-release 2>/dev/null; then
-    case "$ID" in
-      fedora) ;;
-      rocky)
-        dnf install -y epel-release
-        ;;
-      *)
-        yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
-        yum update -y
-        ;;
-    esac
-  fi
+  case "$ID" in
+    fedora) ;;
+    rocky)
+      dnf install -y epel-release
+      ;;
+    *)
+      yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION:0:1}.noarch.rpm
+      yum update -y
+      ;;
+  esac
 fi
 if command -v dnf >/dev/null 2>/dev/null; then
   dnf install -y bats vim
