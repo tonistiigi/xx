@@ -10,6 +10,11 @@ execSilent() {
 }
 
 if [ -z "$XX_CARGO_NOLOCK" ]; then
+  if [ -L /var/lock ] && [ ! -e "$(readlink -f /var/lock)" ]; then
+    mkdir -p "$(readlink -f /var/lock)"
+  elif [ ! -d /var/lock ]; then
+    mkdir -p /var/lock
+  fi
   lock="/var/lock/xx-cargo"
   exec 9>$lock
   flock -x 9
