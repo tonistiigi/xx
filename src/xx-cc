@@ -301,6 +301,11 @@ fi
 
 setup() {
   if [ -z "$XX_CC_NOLOCK" ]; then
+    if [ -L /var/lock ] && [ ! -e "$(readlink -f /var/lock)" ]; then
+      mkdir -p "$(readlink -f /var/lock)"
+    elif [ ! -d /var/lock ]; then
+      mkdir -p /var/lock
+    fi
     lock="/var/lock/xx-cc"
     exec 9>$lock
     flock -x 9

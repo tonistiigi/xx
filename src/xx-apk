@@ -3,6 +3,11 @@
 set -e
 
 if [ -z "$XX_APK_NOLOCK" ]; then
+  if [ -L /var/lock ] && [ ! -e "$(readlink -f /var/lock)" ]; then
+    mkdir -p "$(readlink -f /var/lock)"
+  elif [ ! -d /var/lock ]; then
+    mkdir -p /var/lock
+  fi
   lock="/var/lock/xx-apk"
   exec 9>$lock
   flock -x 9
