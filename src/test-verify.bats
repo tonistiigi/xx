@@ -147,6 +147,11 @@ load 'assert'
   run xx-verify /idontexist
   assert_failure
 
+  export XX_VERIFY_FILE_CMD_OUTPUT=": PE32 executable (console) Intel i386 (stripped to external PDB), for MS Windows"
+  export TARGETPLATFORM=windows/386
+  run xx-verify /idontexist
+  assert_success
+
   export XX_VERIFY_FILE_CMD_OUTPUT=": PE32 executable (console) Intel 80386 (stripped to external PDB), for MS Windows"
   export TARGETPLATFORM=windows/386
   run xx-verify /idontexist
@@ -207,6 +212,11 @@ load 'assert'
   export TARGETPLATFORM=linux/arm64
   run xx-verify /idontexist
   assert_failure
+
+  export XX_VERIFY_FILE_CMD_OUTPUT=": ELF 32-bit LSB executable, Intel i386, version 1 (SYSV), statically linked, Go BuildID=GUb5psm2_Qmc_LlEF7GP/wcIHIg_4MjQh8NC5wfep/LSmTmWKKZ5smuAQbfeFE/FBYRjFmbJQpV--JKtz4i, not stripped"
+  export TARGETPLATFORM=linux/386
+  run xx-verify /idontexist
+  assert_success
 
   export XX_VERIFY_FILE_CMD_OUTPUT=": ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, Go BuildID=GUb5psm2_Qmc_LlEF7GP/wcIHIg_4MjQh8NC5wfep/LSmTmWKKZ5smuAQbfeFE/FBYRjFmbJQpV--JKtz4i, not stripped"
   export TARGETPLATFORM=linux/386
