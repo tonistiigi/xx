@@ -95,6 +95,12 @@ supportAmd64VariantGo() {
   versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.18"
 }
 
+# Supported since Go 1.13: https://go.dev/wiki/GoMips
+# But fails on Ubuntu 22.04 with Go 1.18.1: https://github.com/tonistiigi/xx/issues/177
+supportMipsBuildGo() {
+  ! grep -q 'ID=ubuntu' /etc/os-release && ! grep -q 'VERSION_ID="22.04"' /etc/os-release && versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.13"
+}
+
 supportRC() {
   command -v llvm-rc >/dev/null 2>&1
 }

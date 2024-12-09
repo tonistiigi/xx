@@ -307,11 +307,17 @@ testHelloGO() {
 }
 
 @test "mipsle-hellogo" {
+  if ! supportMipsBuildGo; then
+    skip "MIPS build not supported"
+  fi
   export TARGETARCH=mipsle
   testHelloGO
 }
 
 @test "mipsle-softfloat-hellogo" {
+  if ! supportMipsBuildGo; then
+    skip "MIPS build not supported"
+  fi
   export TARGETARCH=mipsle
   export TARGETVARIANT=softfloat
   testHelloGO
@@ -319,11 +325,17 @@ testHelloGO() {
 }
 
 @test "mips64le-hellogo" {
+  if ! supportMipsBuildGo; then
+    skip "MIPS build not supported"
+  fi
   export TARGETARCH=mips64le
   testHelloGO
 }
 
 @test "mips64le-softfloat-hellogo" {
+  if ! supportMipsBuildGo; then
+    skip "MIPS build not supported"
+  fi
   export TARGETARCH=mips64le
   export TARGETVARIANT=softfloat
   testHelloGO
