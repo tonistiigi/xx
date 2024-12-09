@@ -144,7 +144,8 @@ for f in "$@"; do
   fi
 
   expArch=""
-  expArch2="" # extra check for endianness
+  expArchAlt="" # alternate arch name
+  expArch2=""   # extra check for endianness
   case "$TARGETARCH" in
     "arm64")
       case "$TARGETOS" in
@@ -152,7 +153,8 @@ for f in "$@"; do
           expArch="arm64"
           ;;
         "windows")
-          expArch="Aarch64"
+          expArch="ARM64"
+          expArchAlt="Aarch64"
           ;;
         *)
           expArch="ARM aarch64"
@@ -226,7 +228,8 @@ for f in "$@"; do
       expArch2="64-bit LSB"
       ;;
     "386")
-      expArch="Intel 80386"
+      expArch="Intel i386"
+      expArchAlt="Intel 80386"
       if [ "$TARGETOS" != "windows" ]; then
         expArch2="32-bit LSB"
       fi
@@ -239,8 +242,15 @@ for f in "$@"; do
   fi
 
   if ! echo "$out" | grep "$expArch" >/dev/null; then
-    echo >&2 "file ${f} does not match expected target architecture ${TARGETARCH}: $out"
-    exit 1
+    if [ -n "$expArchAlt" ]; then
+      if ! echo "$out" | grep "$expArchAlt" >/dev/null; then
+        echo >&2 "file ${f} does not match expected target architecture ${TARGETARCH}: $out"
+        exit 1
+      fi
+    else
+      echo >&2 "file ${f} does not match expected target architecture ${TARGETARCH}: $out"
+      exit 1
+    fi
   fi
 
   if [ -n "$expArch2" ]; then

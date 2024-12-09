@@ -101,6 +101,10 @@ supportMipsBuildGo() {
   ! grep -q 'ID=ubuntu' /etc/os-release && ! grep -q 'VERSION_ID="22.04"' /etc/os-release && versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.13"
 }
 
+supportWindowsArm64Go() {
+  versionGTE "$(go version | awk '{print $3}' | sed 's/^go//')" "1.17"
+}
+
 supportRC() {
   command -v llvm-rc >/dev/null 2>&1
 }

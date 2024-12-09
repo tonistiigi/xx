@@ -37,10 +37,10 @@ load 'assert'
   assert_output "$(xx-info alpine-arch)"
   run xx-apk add --no-cache zlib
   assert_success
-  [ -f "/$(xx-info)/lib/libz.so.1" ]
+  [ -f "/$(xx-info)/lib/libz.so.1" ] || [ -f "/$(xx-info)/usr/lib/libz.so.1" ]
   run xx-apk del zlib
   assert_success
-  [ ! -f "/$(xx-info)/lib/libz.so.1" ]
+  [ ! -f "/$(xx-info)/lib/libz.so.1" ] && [ ! -f "/$(xx-info)/usr/lib/libz.so.1" ]
   run xx-apk clean
   assert_success
   [ ! -d "/$(xx-info)" ]
