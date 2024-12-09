@@ -10,11 +10,14 @@ execSilent() {
 }
 
 if [ -z "$XX_CARGO_NOLOCK" ]; then
+  # readlink -f in ash can not resolve symlinks from deep workdir
+  cd / >/dev/null
   if [ -L /var/lock ] && [ ! -e "$(readlink -f /var/lock)" ]; then
     mkdir -p "$(readlink -f /var/lock)"
   elif [ ! -d /var/lock ]; then
     mkdir -p /var/lock
   fi
+  cd - >/dev/null
   lock="/var/lock/xx-cargo"
   exec 9>$lock
   flock -x 9
