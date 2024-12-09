@@ -62,6 +62,13 @@ testEnv() {
   esac
 }
 
+@test "version" {
+  run go version 2>/dev/null
+  assert_success
+  assert_output --partial "go version "
+  echo "# $(go version 2>/dev/null)" >&3
+}
+
 @test "nogo" {
   if command -v apk >/dev/null 2>/dev/null; then
     del go
