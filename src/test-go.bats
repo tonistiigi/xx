@@ -226,10 +226,32 @@ testEnv() {
   export TARGETOS=darwin
   export TARGETARCH=amd64
   testEnv
+  unset TARGETOS
 }
 
 @test "darwin-arm64-env" {
   export TARGETOS=darwin
+  export TARGETARCH=arm64
+  testEnv
+  unset TARGETOS
+}
+
+@test "windows-386-env" {
+  export TARGETOS=windows
+  export TARGETARCH=386
+  testEnv
+  unset TARGETOS
+}
+
+@test "windows-amd64-env" {
+  export TARGETOS=windows
+  export TARGETARCH=amd64
+  testEnv
+  unset TARGETOS
+}
+
+@test "windows-arm64-env" {
+  export TARGETOS=windows
   export TARGETARCH=arm64
   testEnv
   unset TARGETOS
@@ -346,6 +368,35 @@ testHelloGO() {
   export TARGETARCH=amd64
   export TARGETOS=darwin
   testHelloGO
+  unset TARGETOS
+}
+
+@test "darwin-arm64-hellogo" {
+  export TARGETARCH=arm64
+  export TARGETOS=darwin
+  testHelloGO
+  unset TARGETOS
+}
+
+@test "windows-386-hellogo" {
+  export TARGETARCH=386
+  export TARGETOS=windows
+  testHelloGO
+  unset TARGETOS
+}
+
+@test "windows-amd64-hellogo" {
+  export TARGETARCH=amd64
+  export TARGETOS=windows
+  testHelloGO
+  unset TARGETOS
+}
+
+@test "windows-arm64-hellogo" {
+  export TARGETARCH=arm64
+  export TARGETOS=windows
+  testHelloGO
+  unset TARGETOS
 }
 
 testHelloCGO() {
