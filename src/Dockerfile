@@ -4,6 +4,7 @@
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
 ARG TEST_WITH_DARWIN=false
+ARG BATS_VERSION=v1.8.2
 
 # build prepares the sources
 FROM --platform=$BUILDPLATFORM alpine AS build
@@ -17,12 +18,16 @@ RUN ln -s xx-cc /out/xx-clang && \
 FROM scratch AS xx
 COPY --from=build /out/ /usr/bin/
 
+FROM scratch AS bats-src
+ARG BATS_VERSION
+ADD "https://github.com/bats-core/bats-core.git#$BATS_VERSION" .
+
 FROM --platform=$BUILDPLATFORM tonistiigi/bats-assert AS bats-assert
 
 FROM ${TEST_BASE_IMAGE} AS test-base-alpine
 RUN --mount=type=cache,target=/pkg-cache \
     ln -s /pkg-cache /etc/apk/cache && \
-    apk add bats vim
+    apk add bash vim
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-debian
@@ -31,7 +36,7 @@ RUN --mount=type=cache,target=/pkg-cache \
     ln -s /pkg-cache /var/cache/apt/archives && \
     rm /etc/apt/apt.conf.d/docker-clean && \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "1";' > /etc/apt/apt.conf.d/keep-downloads && \
-    apt update && apt install --no-install-recommends -y bats vim
+    apt update && apt install --no-install-recommends -y bash vim
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-rhel
@@ -56,15 +61,17 @@ if ! yum install -y epel-release; then
   esac
 fi
 if command -v dnf >/dev/null 2>/dev/null; then
-  dnf install -y bats vim
+  dnf install -y bash vim
 else
-  yum install -y bats vim
+  yum install -y bash vim
 fi
 EOT
 WORKDIR /work
 
 FROM test-base-${TEST_BASE_TYPE} AS test-base
 ADD --chmod=755 https://raw.githubusercontent.com/fsaintjacques/semver-tool/3.4.0/src/semver /usr/bin/semver
+COPY --from=bats-src / /opt/bats
+RUN /opt/bats/install.sh /usr && bats --version
 COPY --from=bats-assert . .
 COPY --from=xx / /
 
