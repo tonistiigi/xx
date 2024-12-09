@@ -121,6 +121,11 @@ load 'assert'
   run xx-verify /idontexist
   assert_failure
 
+  export XX_VERIFY_FILE_CMD_OUTPUT=": PE32+ executable (console) ARM64 (stripped to external PDB), for MS Windows"
+  export TARGETPLATFORM=windows/arm64
+  run xx-verify /idontexist
+  assert_success
+
   export XX_VERIFY_FILE_CMD_OUTPUT=": PE32+ executable (console) Aarch64 (stripped to external PDB), for MS Windows"
   export TARGETPLATFORM=windows/arm64
   run xx-verify /idontexist
