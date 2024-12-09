@@ -22,7 +22,8 @@ FROM --platform=$BUILDPLATFORM tonistiigi/bats-assert AS bats-assert
 FROM ${TEST_BASE_IMAGE} AS test-base-alpine
 RUN --mount=type=cache,target=/pkg-cache \
     ln -s /pkg-cache /etc/apk/cache && \
-    apk add bats vim
+    apk add bats vim && \
+    bats --version
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-debian
@@ -31,7 +32,8 @@ RUN --mount=type=cache,target=/pkg-cache \
     ln -s /pkg-cache /var/cache/apt/archives && \
     rm /etc/apt/apt.conf.d/docker-clean && \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "1";' > /etc/apt/apt.conf.d/keep-downloads && \
-    apt update && apt install --no-install-recommends -y bats vim
+    apt update && apt install --no-install-recommends -y bats vim && \
+    bats --version
 WORKDIR /work
 
 FROM ${TEST_BASE_IMAGE} AS test-base-rhel
@@ -60,6 +62,7 @@ if command -v dnf >/dev/null 2>/dev/null; then
 else
   yum install -y bats vim
 fi
+bats --version
 EOT
 WORKDIR /work
 
