@@ -88,10 +88,6 @@ jobs:
             typ: debian
             allow-failure: false
           -
-            image: ubuntu:23.04
-            typ: debian
-            allow-failure: false
-          -
             image: ubuntu:24.04
             typ: debian
             allow-failure: false
