@@ -12,11 +12,11 @@ ensureGo() {
   add clang lld
 }
 
-setup_file() {
+setup() {
   ensureGo
 }
 
-teardown_file() {
+teardown() {
   for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64; do
     TARGETPLATFORM=$p xxdel xx-c-essentials
     root=/$(TARGETPLATFORM=$p xx-info triple)
