@@ -17,7 +17,7 @@ setup_file() {
 }
 
 teardown_file() {
-  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64; do
+  for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6 linux/riscv64 linux/loong64; do
     TARGETPLATFORM=$p xxdel xx-c-essentials
     root=/$(TARGETPLATFORM=$p xx-info triple)
     if [ -d "$root" ] && [ "$root" != "/" ]; then
@@ -170,6 +170,14 @@ testEnv() {
 
 @test "ppc64le-env" {
   export TARGETARCH=ppc64le
+  testEnv
+}
+
+@test "loong64-env" {
+  if ! supportLoong64Go; then
+    skip "LOONGARCH64 not supported"
+  fi
+  export TARGETARCH=loong64
   testEnv
 }
 
@@ -333,6 +341,14 @@ testHelloGO() {
   testHelloGO
 }
 
+@test "loong64-hellogo" {
+  if ! supportLoong64Go; then
+    skip "LOONGARCH64 not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloGO
+}
+
 @test "386-hellogo" {
   export TARGETARCH=386
   testHelloGO
@@ -449,6 +465,24 @@ testHelloCGO() {
     skip "RISC-V CGO not supported"
   fi
   export TARGETARCH=riscv64
+  testHelloCGO
+}
+
+@test "loong64-hellocgo" {
+  if ! supportLoong64CGo; then
+    skip "LOONGARCH64 not supported"
+  fi
+  if [ -f /etc/alpine-release ]; then
+    # FIXME: loong64-hellocgo issue on alpine < 3.21
+    #  ld.lld: error: unknown emulation: elf64loongarch
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x0): unknown relocation (102) against symbol
+    #  error: unknown target triple 'loongarch64-alpine-linux-musl', please use -triple or -arch
+    alpineRelease=$(cat /etc/alpine-release)
+    if ! grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"' | grep -q "edge$" || [ "$(semver compare "$alpineRelease" "3.21.0")" -lt 0 ]; then
+      skip
+    fi
+  fi
+  export TARGETARCH=loong64
   testHelloCGO
 }
 

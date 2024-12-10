@@ -60,6 +60,10 @@ fi
   assert_equal "riscv64" "$(TARGETPLATFORM=linux/riscv64 xx-info pkg-arch)"
 }
 
+@test "loong64" {
+  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
+}
+
 @test "mips" {
   assert_equal "mips-linux-gnu" "$(TARGETPLATFORM=linux/mips xx-info triple)"
   assert_equal "mips" "$(TARGETPLATFORM=linux/mips xx-info pkg-arch)"
