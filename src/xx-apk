@@ -59,6 +59,11 @@ setup() {
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" >"$apk_dir/repositories"
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >>"$apk_dir/repositories"
   fi
+  # loong64 supported since alpine 3.21
+  if [ "$TARGETARCH" = "loong64" ] && ! supportLoong64; then
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/main" >"$apk_dir/repositories"
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.21/community" >>"$apk_dir/repositories"
+  fi
   mkdir -p "$apk_dir/keys"
   mkdir -p "$apk_dir/protected_paths.d"
   echo "$XX_PKG_ARCH" >"$apk_dir/arch"
@@ -144,6 +149,10 @@ versionGTE() { test "$(printf '%s\n' "$@" | sort -V | tail -n 1)" = "$1"; }
 
 supportRiscV() {
   versionGTE "$(xx-info os-version | cut -d'.' -f1-2)" "3.20"
+}
+
+supportLoong64() {
+  versionGTE "$(xx-info os-version | cut -d'.' -f1-2)" "3.21"
 }
 
 case "$1" in

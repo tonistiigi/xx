@@ -136,7 +136,8 @@ target "_all-platforms" {
         "linux/mips64le",
         "linux/ppc64le",
         "linux/s390x",
-        "linux/riscv64"
+        "linux/riscv64",
+        "linux/loong64"
     ]
 }
 
@@ -171,6 +172,7 @@ target "sdk-extras" {
         "linux/ppc64le",
         "linux/riscv64",
         "linux/s390x",
+        "linux/loong64",
         "windows/386",
         "windows/amd64",
         "windows/arm",
