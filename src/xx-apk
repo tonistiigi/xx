@@ -140,6 +140,8 @@ cmd() {
   fi
 }
 
+versionGTE() { test "$(printf '%s\n' "$@" | sort -V | tail -n 1)" = "$1"; }
+
 supportRiscV() {
   versionGTE "$(xx-info os-version | cut -d'.' -f1-2)" "3.20"
 }
