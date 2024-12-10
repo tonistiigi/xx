@@ -259,6 +259,14 @@ testBuildHello() {
   testHelloCLLD
 }
 
+@test "loong64-c-ld" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloCLLD
+}
+
 @test "386-c-lld" {
   export TARGETARCH=386
   testHelloCPPLLD
@@ -298,6 +306,14 @@ testBuildHello() {
   fi
   export TARGETARCH=riscv64
   testHelloCPPLLD # actually runs with ld
+}
+
+@test "loong64-c++-lld" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloCPPLLD
 }
 
 @test "386-c++-lld" {

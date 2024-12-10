@@ -76,6 +76,14 @@ testHelloCargoRustup() {
   testHelloCargoRustup
 }
 
+@test "loong64-hellocargo-rustup" {
+  if ! supportLoong64Go; then
+    skip "LOONGARCH64 not supported"
+  fi
+  export TARGETARCH=loong64
+  testHelloCargoRustup
+}
+
 @test "ppc64le-hellocargo-rustup" {
   if [ -f /etc/alpine-release ]; then
     skip "rust stdlib not yet available for powerpc64le-unknown-linux-musl"
@@ -127,6 +135,14 @@ testHelloCargoRustup() {
 
 @test "arm-hellocargo-rustpkg" {
   export TARGETARCH=arm
+  testHelloCargo
+}
+
+@test "loong64-hellocargo-rustpkg" {
+  if ! supportLoong64Go; then
+    skip "LOONGARCH64 not supported" # rust stdlib package not available
+  fi
+  export TARGETARCH=loong64
   testHelloCargo
 }
 
