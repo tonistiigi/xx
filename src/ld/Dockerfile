@@ -193,7 +193,7 @@ WORKDIR /work
 COPY --link --from=xx / /
 COPY --link --from=patches-binutils / patches/
 ARG BINUTILS_VERSION
-RUN wget https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz
+RUN wget https://sourceware.org/pub/binutils/releases/binutils-${BINUTILS_VERSION}.tar.gz
 ARG TARGETPLATFORM
 # first build version for current architecture that is used then cross compiling
 RUN export CC=xx-clang CXX=xx-clang++ LD=lld BINUTILS_TARGET=${TARGETPLATFORM} && unset TARGETPLATFORM && \
