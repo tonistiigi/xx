@@ -59,8 +59,8 @@ setup() {
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" >"$apk_dir/repositories"
     echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >>"$apk_dir/repositories"
   fi
-  mkdir "$apk_dir/keys"
-  mkdir "$apk_dir/protected_paths.d"
+  mkdir -p "$apk_dir/keys"
+  mkdir -p "$apk_dir/protected_paths.d"
   echo "$XX_PKG_ARCH" >"$apk_dir/arch"
   apk add --no-cache --initdb -p "/${XX_TRIPLE}" --allow-untrusted alpine-keys
 
