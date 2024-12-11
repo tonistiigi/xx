@@ -29,136 +29,112 @@ jobs:
           targets: validate
 
   test:
-    runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.allow-failure }}
+    uses: ./.github/workflows/.test.yml
+    secrets: inherit
     strategy:
       fail-fast: false
       matrix:
         include:
           -
             image: alpine:3.17
-            typ: alpine
+            base: alpine
             allow-failure: false
           -
             image: alpine:3.18
-            typ: alpine
+            base: alpine
             allow-failure: false
           -
             image: alpine:3.19
-            typ: alpine
+            base: alpine
             allow-failure: false
           -
             image: alpine:3.20
-            typ: alpine
+            base: alpine
             allow-failure: false
           -
             image: alpine:3.21
-            typ: alpine
+            base: alpine
             allow-failure: false
           -
             image: alpine:edge
-            typ: alpine
+            base: alpine
             allow-failure: true
           -
             image: debian:bullseye-backports
-            typ: debian
+            base: debian
             allow-failure: true
           -
             image: debian:bookworm
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: debian:bookworm-backports
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: debian:trixie
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: debian:sid
-            typ: debian
+            base: debian
             allow-failure: true
           -
             image: ubuntu:20.04
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: ubuntu:22.04
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: ubuntu:24.04
-            typ: debian
+            base: debian
             allow-failure: false
           -
             image: redhat/ubi8
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: fedora:38
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: fedora:39
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: fedora:40
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: fedora:41
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: centos:7
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: rockylinux/rockylinux:8
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: rockylinux/rockylinux:9
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: oraclelinux:8
-            typ: rhel
+            base: rhel
             allow-failure: false
           -
             image: oraclelinux:9
-            typ: rhel
+            base: rhel
             allow-failure: false
-    env:
-      TEST_BASE_TYPE: ${{ matrix.typ }}
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      -
-        name: Test
-        if: ${{ matrix.typ != 'rhel' }}
-        uses: docker/bake-action@v5
-        with:
-          targets: test
-          set: |
-            test-${{ matrix.typ }}.args.TEST_BASE_IMAGE=${{ matrix.image }}
-      -
-        name: Test (info)
-        if: ${{ matrix.typ == 'rhel' }}
-        uses: docker/bake-action@v5
-        with:
-          targets: test-info
-          set: |
-            test-${{ matrix.typ }}.args.TEST_BASE_IMAGE=${{ matrix.image }}
+    with:
+      image: ${{ matrix.image }}
+      base: ${{ matrix.base }}
+      allow-failure: ${{ matrix.allow-failure }}
 
   build:
     runs-on: ubuntu-latest

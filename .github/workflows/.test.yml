@@ -1,0 +1,98 @@
+# reusable workflow
+name: .test
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+      base:
+        required: true
+        type: string
+      allow-failure:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.generate.outputs.targets }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: List targets
+        id: generate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const base = `${{ inputs.base }}`;
+            
+            await core.group(`Validating definition`, async () => {
+              const res = await exec.getExecOutput('docker', ['buildx', 'bake', 'test', '--print'], {
+                ignoreReturnCode: true,
+                silent: true
+              });
+              if (res.stderr.length > 0 && res.exitCode != 0) {
+                throw new Error(res.stderr);
+              }
+              def = JSON.parse(res.stdout.trim());
+              core.info(JSON.stringify(def, null, 2));
+            });
+            
+            const targets = [];
+            for (const target of Object.keys(def.target)) {
+              switch (base) {
+                case 'alpine':
+                  if (target !== 'test-apt') {
+                    targets.push(target);
+                  }
+                  break;
+                case 'debian':
+                  if (target !== 'test-apk') {
+                    targets.push(target);
+                  }
+                  break;
+                case 'rhel':
+                  if (target === 'test-info') {
+                    targets.push(target);
+                  }
+                  break;
+                default:
+                  targets.push(target);
+              }
+            }
+  
+            await core.group(`Set output`, async () => {
+              core.info(`targets: ${JSON.stringify(targets)}`);
+              core.setOutput('targets', JSON.stringify(targets));
+            });
+
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ inputs.allow-failure }}
+    needs:
+      - prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.prepare.outputs.targets) }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Test
+        uses: docker/bake-action@v5
+        with:
+          provenance: false
+          targets: ${{ matrix.target }}
+          set: |
+            test-${{ inputs.base }}.args.TEST_BASE_IMAGE=${{ inputs.image }}
+        env:
+          TEST_BASE_TYPE: ${{ inputs.base }}
+          DOCKER_BUILD_SUMMARY: false
