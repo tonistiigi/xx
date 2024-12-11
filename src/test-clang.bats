@@ -4,12 +4,12 @@ load 'assert'
 load 'test_helper'
 
 clean() {
-  rm /etc/llvm/xx-default.cfg || true
-  rm /usr/bin/*-linux-*-clang || true
-  rm /usr/bin/*-linux-*-clang++ || true
-  rm /usr/bin/*-apple-*-clang || true
-  rm /usr/bin/*-apple-*-clang++ || true
-  rm /usr/bin/*.cfg || true
+  rm /etc/llvm/xx-default.cfg 2>/dev/null || true
+  rm /usr/bin/*-linux-*-clang 2>/dev/null || true
+  rm /usr/bin/*-linux-*-clang++ 2>/dev/null || true
+  rm /usr/bin/*-apple-*-clang 2>/dev/null || true
+  rm /usr/bin/*-apple-*-clang++ 2>/dev/null || true
+  rm /usr/bin/*.cfg 2>/dev/null || true
 }
 
 testHelloCLLD() {
