@@ -372,6 +372,53 @@ load 'assert'
   export TARGETPLATFORM=linux/amd64
   run xx-verify /idontexist
   assert_failure
+}
+
+@test "not-binary" {
+  export XX_VERIFY_FILE_CMD_OUTPUT="POSIX shell script, ASCII text executable"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="Bourne-Again shell script, ASCII text executable"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="Python script, ASCII text executable"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="C source, ASCII text"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="UTF-8 Unicode text"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="XML document text"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="Markdown document text"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="YAML document text"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
+
+  export XX_VERIFY_FILE_CMD_OUTPUT="JSON data"
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_success
 
   unset XX_VERIFY_FILE_CMD_OUTPUT
   unset TARGETPLATFORM

@@ -122,6 +122,13 @@ for f in "$@"; do
       ;;
   esac
 
+  case "$out" in
+    *"ASCII text"* | *"Unicode text"* | *"document text"* | *"JSON data"*)
+      echo "skipping verification of non-binary file ${f}: $out"
+      exit 0
+      ;;
+  esac
+
   if [ -z "$expOS" ]; then
     echo >&2 "unsupported target os ${TARGETOS}"
     exit 1
