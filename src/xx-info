@@ -190,6 +190,9 @@ if [ -z "$TARGETARCH" ]; then
     "s390x")
       TARGETARCH="s390x"
       ;;
+    "loong64")
+      TARGETARCH="loong64"
+      ;;
     "mips")
       TARGETARCH="mips"
       ;;
@@ -221,6 +224,8 @@ if [ "$TARGETOS" = "darwin" ] && [ -z "$MACOSX_VERSION_MIN" ]; then
   fi
 fi
 
+# debian: https://git.dpkg.org/cgit/dpkg/dpkg.git/tree/data/cputable
+# alpine: https://gitlab.alpinelinux.org/alpine/apk-tools/-/blob/master/src/apk_arch.h?ref_type=heads
 case "$TARGETARCH" in
   "amd64")
     XX_MARCH="x86_64"
@@ -308,6 +313,13 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="s390x"
     XX_RHEL_ARCH="s390x"
     XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
+    ;;
+  "loong64")
+    XX_MARCH="loong64"
+    XX_DEBIAN_ARCH="loong64"
+    XX_ALPINE_ARCH="loongarch64"
+    XX_RHEL_ARCH="loong64"
+    XX_TRIPLE="loongarch64${vendor}-linux-${XX_LIBC}"
     ;;
   "386")
     XX_MARCH="i386"

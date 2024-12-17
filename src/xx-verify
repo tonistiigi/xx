@@ -214,6 +214,10 @@ for f in "$@"; do
       expArch="IBM S/390"
       expArch2="64-bit MSB"
       ;;
+    "loong64")
+      expArch="LoongArch"
+      expArch2="64-bit LSB"
+      ;;
     "mips")
       expArch="MIPS"
       expArch2="32-bit MSB"
