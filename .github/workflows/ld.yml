@@ -58,9 +58,6 @@ jobs:
         target: ${{ fromJson(needs.binutils-targets.outputs.matrix) }}
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -68,7 +65,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           targets: ${{ matrix.target }}
           set: |
@@ -79,9 +76,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -89,7 +83,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           targets: ld64-static-tgz
           set: |
@@ -151,9 +145,6 @@ jobs:
         target: ${{ fromJson(needs.ld-targets.outputs.matrix) }}
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -161,7 +152,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           targets: ${{ matrix.target }}
           set: |
@@ -198,9 +189,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -208,7 +196,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           targets: lipo
           set: |
@@ -219,9 +207,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
@@ -229,7 +214,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Build
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           targets: sigtool
           set: |

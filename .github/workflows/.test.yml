@@ -83,11 +83,8 @@ jobs:
         target: ${{ fromJson(needs.prepare.outputs.targets) }}
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v4
-      -
         name: Test
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           provenance: false
           targets: ${{ matrix.target }}
