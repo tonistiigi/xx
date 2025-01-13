@@ -330,7 +330,11 @@ RUN <<EOT
   make install
   cd ..
   rm -rf binutils-${BINUTILS_VERSION}
-  for f in /out/bin/*; do xx-verify $f; done
+  for f in /out/bin/*; do
+    if ! file "$f" | grep -q 'ASCII text'; then
+      xx-verify $f
+    fi
+  done
 EOT
 FROM scratch AS binutils
 COPY --from=binutils-base /out /usr/
