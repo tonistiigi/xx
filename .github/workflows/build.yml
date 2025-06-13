@@ -121,6 +121,10 @@ jobs:
             base: rhel
             allow-failure: false
           -
+            image: rockylinux/rockylinux:10
+            base: rhel
+            allow-failure: false
+          -
             image: oraclelinux:8
             base: rhel
             allow-failure: false
