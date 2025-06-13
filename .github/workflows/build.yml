@@ -93,10 +93,6 @@ jobs:
             base: rhel
             allow-failure: false
           -
-            image: fedora:38
-            base: rhel
-            allow-failure: false
-          -
             image: fedora:39
             base: rhel
             allow-failure: false
@@ -106,6 +102,10 @@ jobs:
             allow-failure: false
           -
             image: fedora:41
+            base: rhel
+            allow-failure: false
+          -
+            image: fedora:42
             base: rhel
             allow-failure: false
           -
