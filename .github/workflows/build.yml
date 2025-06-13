@@ -33,10 +33,6 @@ jobs:
       matrix:
         include:
           -
-            image: alpine:3.17
-            base: alpine
-            allow-failure: false
-          -
             image: alpine:3.18
             base: alpine
             allow-failure: false
@@ -50,6 +46,10 @@ jobs:
             allow-failure: false
           -
             image: alpine:3.21
+            base: alpine
+            allow-failure: false
+          -
+            image: alpine:3.22
             base: alpine
             allow-failure: false
           -
