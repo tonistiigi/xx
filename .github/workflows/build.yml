@@ -33,10 +33,6 @@ jobs:
       matrix:
         include:
           -
-            image: alpine:3.17
-            base: alpine
-            allow-failure: false
-          -
             image: alpine:3.18
             base: alpine
             allow-failure: false
@@ -50,6 +46,10 @@ jobs:
             allow-failure: false
           -
             image: alpine:3.21
+            base: alpine
+            allow-failure: false
+          -
+            image: alpine:3.22
             base: alpine
             allow-failure: false
           -
@@ -93,10 +93,6 @@ jobs:
             base: rhel
             allow-failure: false
           -
-            image: fedora:38
-            base: rhel
-            allow-failure: false
-          -
             image: fedora:39
             base: rhel
             allow-failure: false
@@ -109,6 +105,10 @@ jobs:
             base: rhel
             allow-failure: false
           -
+            image: fedora:42
+            base: rhel
+            allow-failure: false
+          -
             image: centos:7
             base: rhel
             allow-failure: false
@@ -118,6 +118,10 @@ jobs:
             allow-failure: false
           -
             image: rockylinux/rockylinux:9
+            base: rhel
+            allow-failure: false
+          -
+            image: rockylinux/rockylinux:10
             base: rhel
             allow-failure: false
           -
