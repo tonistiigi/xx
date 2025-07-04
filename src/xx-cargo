@@ -63,10 +63,11 @@ fi
 vendor=$XX_VENDOR
 if [ -n "$rustup" ] || [ ! -f /etc/alpine-release ]; then
   export XX_VENDOR="unknown"
+  export XX_RUSTUP=1 # this sets the correct target triple for rust libraries for subsequent calls
 fi
 
 if [ ! -f "$done_file" ]; then
-  xx-clang --setup-target-triple
+  XX_RUSTUP="" XX_VENDOR=$vendor xx-clang --setup-target-triple
   if [ ! -d "$(rustc --print sysroot)/lib/rustlib/$(xx-info)" ]; then
     if [ -n "$rustup" ]; then
       execSilent rustup target add "$(xx-info)"
@@ -81,13 +82,20 @@ if [ ! -f "$done_file" ]; then
   touch "$done_file"
 fi
 
-export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(xx-info)-clang"
+export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(XX_RUSTUP='' XX_VENDOR=$vendor xx-info)-clang"
 if [ -n "$XX_RUSTFLAGS" ]; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUSTFLAGS=$XX_RUSTFLAGS"
 fi
-export "CC_$(xx-info | tr - _)=$(xx-info)-clang"
+export "CC_$(xx-info | tr - _)=$(XX_RUSTUP='' XX_VENDOR=$vendor xx-info)-clang"
 
-if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1; then
+if xx-info is-cross; then
+  nativeRustTriple="$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' xx-info)"
+  nativeClangTriple="$(TARGETPLATFORM='' TARGETPAIR='' TARGETOS='' TARGETARCH='' TARGETVARIANT='' XX_RUSTUP='' XX_VENDOR='' xx-clang --print-target-triple)"
+  export "CARGO_TARGET_$(echo "$nativeRustTriple" | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$nativeClangTriple-clang"
+  export "CC_$(echo "$nativeRustTriple" | tr - _)=$nativeClangTriple-clang"
+fi
+
+if command -v "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1 && [ "$XX_OS" = "linux" ]; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)"
   if [ -f /etc/alpine-release ]; then
     export "QEMU_LD_PREFIX=/$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info)/"

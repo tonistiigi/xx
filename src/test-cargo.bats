@@ -24,15 +24,55 @@ cleanPackages() {
   assert_output --partial "cargo: not found"
 }
 
+@test "aarch64" {
+  assert_equal "aarch64-alpine-linux-musl" "$(TARGETPLATFORM=linux/arm64 xx-cargo --print-target-triple)"
+}
+
+@test "arm" {
+  assert_equal "armv7-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm xx-cargo --print-target-triple)"
+}
+
+@test "armv6" {
+  assert_equal "armv6-alpine-linux-musleabihf" "$(TARGETPLATFORM=linux/arm/v6 xx-cargo --print-target-triple)"
+}
+
+@test "armv5" {
+  assert_equal "armv5-alpine-linux-musleabi" "$(TARGETPLATFORM=linux/arm/v5 xx-cargo --print-target-triple)"
+}
+
+@test "amd64" {
+  assert_equal "x86_64-alpine-linux-musl" "$(TARGETPLATFORM=linux/amd64 xx-cargo --print-target-triple)"
+}
+
+@test "386" {
+  assert_equal "i586-alpine-linux-musl" "$(TARGETPLATFORM=linux/386 xx-cargo --print-target-triple)"
+}
+
+@test "riscv64" {
+  assert_equal "riscv64gc-alpine-linux-musl" "$(TARGETPLATFORM=linux/riscv64 xx-cargo --print-target-triple)"
+}
+
+@test "s390x" {
+  assert_equal "s390x-alpine-linux-musl" "$(TARGETPLATFORM=linux/s390x xx-cargo --print-target-triple)"
+}
+
+@test "ppc64le" {
+  assert_equal "powerpc64le-alpine-linux-musl" "$(TARGETPLATFORM=linux/ppc64le xx-cargo --print-target-triple)"
+}
+
 testHelloCargo() {
   rm -f "/.xx-cargo.$(xx-info arch)"
   run xxadd xx-c-essentials
   assert_success
   run xx-cargo build --verbose --color=never --manifest-path=./fixtures/hello_cargo/Cargo.toml --release --target-dir /tmp/cargobuild
   assert_success
-  xx-verify /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
+
+  if [ "$TARGETARCH" = "wasm" ]; then
+    sfx=".wasm"
+  fi
+  xx-verify /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo$sfx
   if ! xx-info is-cross; then
-    run /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo
+    run /tmp/cargobuild/$(xx-cargo --print-target-triple)/release/hello_cargo$sfx
     assert_success
     assert_output "hello cargo"
   fi
@@ -94,6 +134,14 @@ testHelloCargoRustup() {
 @test "386-hellocargo-rustup" {
   export TARGETARCH=386
   testHelloCargoRustup
+}
+
+@test "wasm-hellocargo-rustup" {
+  export TARGETARCH=wasm
+  export TARGETOS=wasi
+  testHelloCargoRustup
+  unset TARGETOS
+  unset TARGETARCH
 }
 
 @test "uninstall-rustup" {
