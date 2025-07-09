@@ -74,14 +74,14 @@ case "${TARGETARCH}" in
   riscv*)
     case "${XX_VENDOR}" in
       debian)
-        if ! grep "sid main" "$(aptsourcesfile)" >/dev/null; then
-          echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 currently only supported on sid"
+        if [ "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+          echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 requires debian 13+"
           exit 0
         fi
         ;;
       ubuntu)
         if ! grep 'VERSION="2' /etc/os-release >/dev/null 2>/dev/null; then
-          echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 requires 20.04+"
+          echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 requires ubuntu 20.04+"
           exit 0
         fi
         ;;

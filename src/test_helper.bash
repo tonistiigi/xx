@@ -68,13 +68,22 @@ xxrun() {
 }
 
 supportRiscV() {
-  if [ -f /etc/debian_version ]; then
-    if grep "sid main" /etc/apt/sources.list 2>/dev/null >/dev/null; then
-      return 0
-    else
-      return 1
-    fi
-  fi
+  case "$(. /etc/os-release; echo "$ID")" in
+    debian)
+      if [  "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+        return 1
+      else
+        return 0
+      fi
+      ;;
+    ubuntu)
+      if ! grep 'VERSION="2' /etc/os-release >/dev/null 2>/dev/null; then
+        return 1
+      else
+        return 0
+      fi
+      ;;
+  esac
   return 0
 }
 
