@@ -88,7 +88,7 @@ COPY test-windres.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked ./test-windres.bats
 
 FROM test-base AS test-apt
-COPY test-apt.bats .
+COPY test-apt.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked [ ! -f /etc/debian_version ] || ./test-apt.bats
 
 FROM test-base AS test-apk
