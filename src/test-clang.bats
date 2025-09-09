@@ -259,6 +259,28 @@ testBuildHello() {
   testHelloCLLD
 }
 
+@test "loong64-c-ld" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported"
+  fi
+  if [ -f /etc/alpine-release ]; then
+    # FIXME: loong64-c-lld issue on alpine < 3.21
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x0): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x3c): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x64): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0xb4): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0xdc): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x154): unknown relocation (102) against symbol
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x198): unknown relocation (102) against symbol
+    alpineRelease=$(cat /etc/alpine-release)
+    if ! grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"' | grep -q "edge$" || [ "$(semver compare "$alpineRelease" "3.21.0")" -lt 0 ]; then
+      skip
+    fi
+  fi
+  export TARGETARCH=loong64
+  testHelloCLLD
+}
+
 @test "386-c-lld" {
   export TARGETARCH=386
   testHelloCPPLLD
@@ -298,6 +320,24 @@ testBuildHello() {
   fi
   export TARGETARCH=riscv64
   testHelloCPPLLD # actually runs with ld
+}
+
+@test "loong64-c++-lld" {
+  if ! supportLoongArch; then
+    skip "LOONGARCH64 not supported"
+  fi
+  if [ -f /etc/alpine-release ]; then
+    # FIXME: loong64-c++-lld issue on alpine < 3.21
+    #  ld.lld: error: unknown emulation: elf64loongarch
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x0): unknown relocation (102) against symbol
+    #  error: unknown target triple 'loongarch64-alpine-linux-musl', please use -triple or -arch
+    alpineRelease=$(cat /etc/alpine-release)
+    if ! grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"' | grep -q "edge$" || [ "$(semver compare "$alpineRelease" "3.21.0")" -lt 0 ]; then
+      skip
+    fi
+  fi
+  export TARGETARCH=loong64
+  testHelloCPPLLD
 }
 
 @test "386-c++-lld" {

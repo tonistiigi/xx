@@ -250,6 +250,15 @@ load 'assert'
   run xx-verify /idontexist
   assert_failure
 
+  export XX_VERIFY_FILE_CMD_OUTPUT=": ELF 64-bit LSB executable, LoongArch, version 1 (SYSV), statically linked, BuildID[sha1]=4d126b33c220ba2efd23ed68a46ef0db96c31f76, not stripped"
+  export TARGETPLATFORM=linux/loong64
+  run xx-verify /idontexist
+  assert_success
+
+  export TARGETPLATFORM=linux/amd64
+  run xx-verify /idontexist
+  assert_failure
+
   unset XX_VERIFY_FILE_CMD_OUTPUT
   unset TARGETPLATFORM
 }
