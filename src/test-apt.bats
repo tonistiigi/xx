@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load 'assert'
+load 'test_helper'
 
 @test "no_cmd" {
   run xx-apt
@@ -202,6 +203,33 @@ load 'assert'
   run xx-apt show gcc
   assert_success
   assert_line "Package: gcc-i686-linux-gnu"
+}
+
+@test "riscv64" {
+  if ! supportRiscV; then
+    skip "RISC-V not supported"
+  fi
+
+  export TARGETARCH=riscv64
+  if ! xx-info is-cross; then return; fi
+
+  run xx-apt show file
+  assert_success
+  assert_line "Package: file:riscv64"
+
+  run xx-apt show libc6-dev
+  assert_success
+  assert_line "Package: libc6-dev:riscv64"
+
+  export XX_APT_PREFER_CROSS=1
+  run xx-apt show libc6-dev
+  assert_success
+  assert_line "Package: libc6-dev-riscv64-cross"
+  unset XX_APT_PREFER_CROSS
+
+  run xx-apt show gcc
+  assert_success
+  assert_line "Package: gcc-riscv64-linux-gnu"
 }
 
 @test "skip-nolinux" {
