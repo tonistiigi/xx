@@ -57,10 +57,6 @@ jobs:
             base: alpine
             allow-failure: true
           -
-            image: debian:bullseye-backports
-            base: debian
-            allow-failure: true
-          -
             image: debian:bookworm
             base: debian
             allow-failure: false
