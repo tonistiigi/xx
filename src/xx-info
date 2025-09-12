@@ -15,6 +15,7 @@
 : "${XX_RHEL_ARCH=unknown}"
 : "${XX_OS_VERSION=}"
 : "${XX_TRIPLE=unknown-unknown-none}"
+: "${XX_ZIG_TRIPLE=unknown-unknown-none}"
 : "${XX_VENDOR=}"
 : "${XX_LIBC=}"
 
@@ -228,10 +229,17 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="x86_64"
     XX_RHEL_ARCH="x86_64"
     XX_TRIPLE="x86_64${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="x86_64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="x86_64-linux-gnu"
+    fi
     if [ "$TARGETOS" = "darwin" ]; then
       XX_TRIPLE="x86_64${vendor}-macos${MACOSX_VERSION_MIN}"
+      XX_ZIG_TRIPLE="x86_64-macos-none"
     elif [ "$TARGETOS" = "windows" ]; then
       XX_TRIPLE="x86_64-w64-mingw32"
+      XX_ZIG_TRIPLE="x86_64-windows-gnu"
     fi
     ;;
   "arm64")
@@ -240,11 +248,18 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="aarch64"
     XX_RHEL_ARCH="aarch64"
     XX_TRIPLE="aarch64${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="aarch64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="aarch64-linux-gnu"
+    fi
     if [ "$TARGETOS" = "darwin" ]; then
       XX_MARCH="arm64"
       XX_TRIPLE="arm64${vendor}-macos${MACOSX_VERSION_MIN}"
+      XX_ZIG_TRIPLE="aarch64-macos-none"
     elif [ "$TARGETOS" = "windows" ]; then
       XX_TRIPLE="aarch64-w64-mingw32"
+      XX_ZIG_TRIPLE="aarch64-windows-gnu"
     fi
     ;;
   "arm")
@@ -259,6 +274,11 @@ case "$TARGETARCH" in
       triplearch="armv7"
     fi
     XX_TRIPLE="${triplearch}${vendor}-linux-${XX_LIBC}eabihf"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="arm-linux-musleabihf"
+    else
+      XX_ZIG_TRIPLE="arm-linux-gnueabihf"
+    fi
     if [ "$TARGETVARIANT" = "v6" ]; then
       XX_MARCH="armv6l"
       XX_DEBIAN_ARCH="armel"
@@ -267,6 +287,11 @@ case "$TARGETARCH" in
       XX_TRIPLE="arm${vendor}-linux-${XX_LIBC}eabi"
       if [ "$XX_VENDOR" = "alpine" ]; then
         XX_TRIPLE="armv6${vendor}-linux-${XX_LIBC}eabihf"
+      fi
+      if [ "$XX_LIBC" = "musl" ]; then
+        XX_ZIG_TRIPLE="arm-linux-musleabi"
+      else
+        XX_ZIG_TRIPLE="arm-linux-gnueabi"
       fi
     fi
     if [ "$TARGETVARIANT" = "v5" ]; then
@@ -278,10 +303,15 @@ case "$TARGETARCH" in
       if [ "$XX_VENDOR" = "alpine" ]; then
         XX_TRIPLE="armv5${vendor}-linux-${XX_LIBC}eabi"
       fi
+      if [ "$XX_LIBC" = "musl" ]; then
+        XX_ZIG_TRIPLE="arm-linux-musleabi"
+      else
+        XX_ZIG_TRIPLE="arm-linux-gnueabi"
+      fi
     fi
-
     if [ "$TARGETOS" = "windows" ]; then
       XX_TRIPLE="armv7-w64-mingw32"
+      XX_ZIG_TRIPLE="arm-windows-gnu"
     fi
     ;;
   "riscv64")
@@ -294,6 +324,11 @@ case "$TARGETARCH" in
       triplearch="${RISCV64_TARGET_ARCH}"
     fi
     XX_TRIPLE="${triplearch}${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="riscv64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="riscv64-linux-gnu"
+    fi
     ;;
   "ppc64le")
     XX_MARCH="ppc64le"
@@ -301,6 +336,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="ppc64le"
     XX_RHEL_ARCH="ppc64le"
     XX_TRIPLE="powerpc64le${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="powerpc64le-linux-musl"
+    else
+      XX_ZIG_TRIPLE="powerpc64le-linux-gnu"
+    fi
     ;;
   "s390x")
     XX_MARCH="s390x"
@@ -308,6 +348,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="s390x"
     XX_RHEL_ARCH="s390x"
     XX_TRIPLE="s390x${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="s390x-linux-musl"
+    else
+      XX_ZIG_TRIPLE="s390x-linux-gnu"
+    fi
     ;;
   "386")
     XX_MARCH="i386"
@@ -318,8 +363,14 @@ case "$TARGETARCH" in
     if [ "$XX_VENDOR" = "alpine" ]; then
       XX_TRIPLE="i586${vendor}-linux-${XX_LIBC}"
     fi
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="x86-linux-musl"
+    else
+      XX_ZIG_TRIPLE="x86-linux-gnu"
+    fi
     if [ "$TARGETOS" = "windows" ]; then
       XX_TRIPLE="i686-w64-mingw32"
+      XX_ZIG_TRIPLE="x86-windows-gnu"
     fi
     ;;
   "mips")
@@ -328,6 +379,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="mips"
     XX_RHEL_ARCH="mips"
     XX_TRIPLE="mips${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips-linux-gnueabi"
+    fi
     ;;
   "mipsle")
     XX_MARCH="mipsle"
@@ -335,6 +391,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="mipsle"
     XX_RHEL_ARCH="mipsel"
     XX_TRIPLE="mipsel${vendor}-linux-${XX_LIBC}"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mipsel-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mipsel-linux-gnueabi"
+    fi
     ;;
   "mips64")
     XX_MARCH="mips64"
@@ -342,6 +403,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="mips64"
     XX_RHEL_ARCH="mips64"
     XX_TRIPLE="mips64${vendor}-linux-${XX_LIBC}abi64"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips64-linux-gnuabi64"
+    fi
     ;;
   "mips64le")
     XX_MARCH="mips64le"
@@ -349,6 +415,11 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="mips64le"
     XX_RHEL_ARCH="mips64el"
     XX_TRIPLE="mips64el${vendor}-linux-${XX_LIBC}abi64"
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips64el-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips64el-linux-gnuabi64"
+    fi
     ;;
 esac
 
@@ -404,6 +475,9 @@ case "$1" in
   "triple")
     echo "$XX_TRIPLE"
     ;;
+  "zig-triple")
+    echo "$XX_ZIG_TRIPLE"
+    ;;
   "vendor")
     echo "$XX_VENDOR"
     ;;
@@ -420,6 +494,7 @@ case "$1" in
       echo "XX_PKG_ARCH=${XX_PKG_ARCH}"
     fi
     echo "XX_TRIPLE=${XX_TRIPLE}"
+    echo "XX_ZIG_TRIPLE=${XX_ZIG_TRIPLE}"
     echo "XX_LIBC=${XX_LIBC}"
     echo "TARGETOS=${TARGETOS}"
     echo "TARGETARCH=${TARGETARCH}"
