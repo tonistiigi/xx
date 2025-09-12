@@ -86,14 +86,20 @@ if command -v clang >/dev/null 2>/dev/null; then
   fi
 fi
 
-if command -v "$XX_TRIPLE-ar" >/dev/null 2>/dev/null; then
-  export AR="$XX_TRIPLE-ar"
-  ar_set=1
-fi
-
-if command -v "$XX_TRIPLE-pkg-config" >/dev/null 2>/dev/null; then
-  export PKG_CONFIG="$XX_TRIPLE-pkg-config"
-  pkgconfig_set=1
+if command -v "zig" >/dev/null 2>/dev/null; then
+  export CC="zig cc -target $XX_ZIG_TRIPLE"
+  c_set=1
+  export CXX="zig c++ -target $XX_ZIG_TRIPLE"
+  cxx_set=1
+else
+  if command -v "$XX_TRIPLE-ar" >/dev/null 2>/dev/null; then
+    export AR="$XX_TRIPLE-ar"
+    ar_set=1
+  fi
+  if command -v "$XX_TRIPLE-pkg-config" >/dev/null 2>/dev/null; then
+    export PKG_CONFIG="$XX_TRIPLE-pkg-config"
+    pkgconfig_set=1
+  fi
 fi
 
 if [ -z "$GOBIN" ] && [ -n "$GOPATH" ] && [ -n "$GOARCH" ] && [ -n "$GOOS" ]; then

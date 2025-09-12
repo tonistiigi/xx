@@ -477,6 +477,76 @@ testHelloCGO() {
   assert_output --partial "PKG_CONFIG=$(xx-info triple)-pkg-config"
 }
 
+testHelloCGOZig() {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  export CGO_ENABLED=1
+  add zig
+  run xx-go build -x -o /tmp/a.out ./fixtures/hello_cgo.go
+  assert_success
+  run xx-verify /tmp/a.out
+  assert_success
+  if ! xx-info is-cross; then
+    run /tmp/a.out
+    assert_success
+    assert_output "hello cgo"
+  fi
+}
+
+@test "native-hellocgo-zig" {
+  unset TARGETARCH
+  testHelloCGOZig
+}
+
+@test "amd64-hellocgo-zig" {
+  export TARGETARCH=amd64
+  testHelloCGOZig
+}
+
+@test "arm64-hellocgo-zig" {
+  export TARGETARCH=arm64
+  testHelloCGOZig
+}
+
+@test "arm-hellocgo-zig" {
+  export TARGETARCH=arm
+  testHelloCGOZig
+}
+
+@test "ppc64le-hellocgo-zig" {
+  export TARGETARCH=ppc64le
+  testHelloCGOZig
+}
+
+@test "riscv64-hellocgo-zig" {
+  if ! supportRiscVCGo; then
+    skip "RISC-V CGO not supported"
+  fi
+  export TARGETARCH=riscv64
+  testHelloCGOZig
+}
+
+@test "386-hellocgo-zig" {
+  export TARGETARCH=386
+  testHelloCGOZig
+}
+
+@test "arm64-cgoenv-zig" {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  export TARGETARCH=arm64
+  export CGO_ENABLED=1
+
+  add zig
+  # single/double quotes changed in between go versions
+  run sh -c "xx-go env | sed 's/[\"'\'']//g'"
+  assert_success
+  assert_output --partial "CC=zig cc -target $(xx-info zig-triple)"
+  assert_output --partial "CXX=zig c++ -target $(xx-info zig-triple)"
+}
+
 @test "wrap-unwrap" {
   target="arm64"
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
@@ -500,4 +570,11 @@ testHelloCGO() {
   run go env GOARCH
   assert_success
   assert_output "$nativeArch"
+}
+
+@test "clean-packages" {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  del zig
 }

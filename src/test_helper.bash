@@ -117,3 +117,7 @@ supportWindowsArm64Go() {
 supportRC() {
   command -v llvm-rc >/dev/null 2>&1
 }
+
+supportZig() {
+  [ -f /etc/alpine-release ] && versionGTE "$(xx-info os-version | cut -d'.' -f1-2)" "3.20"
+}
