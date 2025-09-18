@@ -120,6 +120,9 @@ for f in "$@"; do
     "windows")
       expOS="MS Windows"
       ;;
+    "wasi")
+      expOS="WebAssembly"
+      ;;
   esac
 
   if [ -z "$expOS" ]; then
@@ -236,6 +239,9 @@ for f in "$@"; do
       if [ "$TARGETOS" != "windows" ]; then
         expArch2="32-bit LSB"
       fi
+      ;;
+    "wasm" | "wasm64")
+      expArch="WebAssembly"
       ;;
   esac
 

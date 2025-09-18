@@ -123,7 +123,9 @@ distro=""
 # shellcheck disable=SC1091
 if . /etc/os-release 2>/dev/null; then
   distro=$ID
-  XX_OS_VERSION=$VERSION_ID
+  if [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "" ]; then
+    XX_OS_VERSION=$VERSION_ID
+  fi
 fi
 
 vendor=""
@@ -143,6 +145,10 @@ case "$XX_VENDOR" in
   *) vendor="-${XX_VENDOR}" ;;
 esac
 
+if [ -n "$XX_RUSTUP" ] && [ "$TARGETOS" = "wasi" ]; then
+  vendor=""
+fi
+
 if [ -z "$XX_LIBC" ]; then
   if [ "$distro" = "alpine" ]; then
     XX_LIBC="musl"
@@ -151,6 +157,9 @@ if [ -z "$XX_LIBC" ]; then
   fi
   if [ "$TARGETOS" = "windows" ]; then
     XX_LIBC="mingw32"
+  fi
+  if [ "$TARGETOS" = "wasi" ]; then
+    XX_LIBC=""
   fi
 fi
 
@@ -219,6 +228,11 @@ if [ "$TARGETOS" = "darwin" ] && [ -z "$MACOSX_VERSION_MIN" ]; then
   else
     MACOSX_VERSION_MIN=10.16
   fi
+fi
+
+# normalize wasm because early implementation didn't have strict convention
+if [ "$TARGETARCH" = "wasm32" ]; then
+  TARGETARCH="wasm"
 fi
 
 case "$TARGETARCH" in
@@ -349,6 +363,26 @@ case "$TARGETARCH" in
     XX_ALPINE_ARCH="mips64le"
     XX_RHEL_ARCH="mips64el"
     XX_TRIPLE="mips64el${vendor}-linux-${XX_LIBC}abi64"
+    ;;
+  "wasm")
+    XX_MARCH="wasm32"
+    XX_DEBIAN_ARCH="wasm32"
+    XX_ALPINE_ARCH="wasm32"
+    XX_RHEL_ARCH="wasm32"
+    XX_TRIPLE="wasm32${vendor}-unknown"
+    if [ "$TARGETOS" = "wasi" ]; then
+      XX_TRIPLE="wasm32${vendor}-wasi"
+    fi
+    ;;
+  "wasm64")
+    XX_MARCH="wasm64"
+    XX_DEBIAN_ARCH="wasm64"
+    XX_ALPINE_ARCH="wasm64"
+    XX_RHEL_ARCH="wasm64"
+    XX_TRIPLE="wasm64${vendor}-unknown"
+    if [ "$TARGETOS" = "wasi" ]; then
+      XX_TRIPLE="wasm64${vendor}-wasi"
+    fi
     ;;
 esac
 
