@@ -19,7 +19,8 @@ target "all" {
         "linux/386",
         "linux/riscv64",
         "linux/s390x",
-        "linux/ppc64le"
+        "linux/ppc64le",
+        "linux/loong64"
     ]
 }
 

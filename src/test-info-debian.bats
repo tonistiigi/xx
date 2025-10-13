@@ -77,6 +77,11 @@ fi
   assert_equal "riscv64gc-unknown-linux-gnu" "$(TARGETPLATFORM=linux/riscv64 RISCV64_TARGET_ARCH=riscv64gc XX_VENDOR=unknown xx-info triple)"
 }
 
+@test "loong64" {
+  assert_equal "loongarch64-linux-gnu" "$(TARGETPLATFORM=linux/loong64 xx-info triple)"
+  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
+}
+
 @test "mips" {
   assert_equal "mips-linux-gnu" "$(TARGETPLATFORM=linux/mips xx-info triple)"
   assert_equal "mips" "$(TARGETPLATFORM=linux/mips xx-info pkg-arch)"
