@@ -6,6 +6,9 @@ for l in $(xx-info env); do
   export "${l?}"
 done
 
+: "${XX_GO_PREFER_C_COMPILER=clang}"
+: "${XX_ZIG_TRIPLE=unknown-unknown-none}"
+
 export GOOS="${TARGETOS}"
 export GOARCH="${TARGETARCH}"
 
@@ -24,6 +27,28 @@ case "$TARGETARCH" in
           ;;
       esac
     fi
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="x86_64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="x86_64-linux-gnu"
+    fi
+    if [ "$TARGETOS" = "darwin" ]; then
+      XX_ZIG_TRIPLE="x86_64-macos-none"
+    elif [ "$TARGETOS" = "windows" ]; then
+      XX_ZIG_TRIPLE="x86_64-windows-gnu"
+    fi
+    ;;
+  "arm64")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="aarch64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="aarch64-linux-gnu"
+    fi
+    if [ "$TARGETOS" = "darwin" ]; then
+      XX_ZIG_TRIPLE="aarch64-macos-none"
+    elif [ "$TARGETOS" = "windows" ]; then
+      XX_ZIG_TRIPLE="aarch64-windows-gnu"
+    fi
     ;;
   "arm")
     if [ -z "$GOARM" ]; then
@@ -38,6 +63,94 @@ case "$TARGETARCH" in
           export GOARM="7"
           ;;
       esac
+    fi
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="arm-linux-musleabihf"
+    else
+      XX_ZIG_TRIPLE="arm-linux-gnueabihf"
+    fi
+    if [ "$TARGETVARIANT" = "v6" ]; then
+      if [ "$XX_LIBC" = "musl" ]; then
+        XX_ZIG_TRIPLE="arm-linux-musleabi"
+      else
+        XX_ZIG_TRIPLE="arm-linux-gnueabi"
+      fi
+    fi
+    if [ "$TARGETVARIANT" = "v5" ]; then
+      if [ "$XX_LIBC" = "musl" ]; then
+        XX_ZIG_TRIPLE="arm-linux-musleabi"
+      else
+        XX_ZIG_TRIPLE="arm-linux-gnueabi"
+      fi
+    fi
+    if [ "$TARGETOS" = "windows" ]; then
+      XX_ZIG_TRIPLE="arm-windows-gnu"
+    fi
+    ;;
+  "riscv64")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="riscv64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="riscv64-linux-gnu"
+    fi
+    ;;
+  "ppc64le")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="powerpc64le-linux-musl"
+    else
+      XX_ZIG_TRIPLE="powerpc64le-linux-gnu"
+    fi
+    ;;
+  "s390x")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="s390x-linux-musl"
+    else
+      XX_ZIG_TRIPLE="s390x-linux-gnu"
+    fi
+    ;;
+  "loong64")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="loongarch64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="loongarch64-linux-gnu"
+    fi
+    ;;
+  "386")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="x86-linux-musl"
+    else
+      XX_ZIG_TRIPLE="x86-linux-gnu"
+    fi
+    if [ "$TARGETOS" = "windows" ]; then
+      XX_ZIG_TRIPLE="x86-windows-gnu"
+    fi
+    ;;
+  "mips")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips-linux-gnueabi"
+    fi
+    ;;
+  "mipsle")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mipsel-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mipsel-linux-gnueabi"
+    fi
+    ;;
+  "mips64")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips64-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips64-linux-gnuabi64"
+    fi
+    ;;
+  "mips64le")
+    if [ "$XX_LIBC" = "musl" ]; then
+      XX_ZIG_TRIPLE="mips64el-linux-musl"
+    else
+      XX_ZIG_TRIPLE="mips64el-linux-gnuabi64"
     fi
     ;;
 esac
@@ -76,24 +189,31 @@ if command -v "$XX_TRIPLE-g++" >/dev/null 2>/dev/null; then
   cxx_set=1
 fi
 
-if command -v clang >/dev/null 2>/dev/null; then
-  triple=$(xx-clang --print-target-triple || true)
-  if [ -n "$triple" ]; then
-    export CC="$triple-clang"
-    export CXX="$triple-clang++"
+if [ "$XX_GO_PREFER_C_COMPILER" = "clang" ]; then
+  if command -v clang >/dev/null 2>/dev/null; then
+    triple=$(xx-clang --print-target-triple || true)
+    if [ -n "$triple" ]; then
+      export CC="$triple-clang"
+      export CXX="$triple-clang++"
+      c_set=1
+      cxx_set=1
+    fi
+  fi
+  if command -v "$XX_TRIPLE-ar" >/dev/null 2>/dev/null; then
+    export AR="$XX_TRIPLE-ar"
+    ar_set=1
+  fi
+  if command -v "$XX_TRIPLE-pkg-config" >/dev/null 2>/dev/null; then
+    export PKG_CONFIG="$XX_TRIPLE-pkg-config"
+    pkgconfig_set=1
+  fi
+elif [ "$XX_GO_PREFER_C_COMPILER" = "zig" ]; then
+  if command -v "zig" >/dev/null 2>/dev/null; then
+    export CC="zig cc -target $XX_ZIG_TRIPLE"
     c_set=1
+    export CXX="zig c++ -target $XX_ZIG_TRIPLE"
     cxx_set=1
   fi
-fi
-
-if command -v "$XX_TRIPLE-ar" >/dev/null 2>/dev/null; then
-  export AR="$XX_TRIPLE-ar"
-  ar_set=1
-fi
-
-if command -v "$XX_TRIPLE-pkg-config" >/dev/null 2>/dev/null; then
-  export PKG_CONFIG="$XX_TRIPLE-pkg-config"
-  pkgconfig_set=1
 fi
 
 if [ -z "$GOBIN" ] && [ -n "$GOPATH" ] && [ -n "$GOARCH" ] && [ -n "$GOOS" ]; then

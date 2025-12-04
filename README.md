@@ -342,6 +342,28 @@ RUN go build -o hello hello.go && \
     xx-verify hello
 ```
 
+`xx-go` can also drive [Zig](https://ziglang.org/) as the underlying C
+toolchain for CGo builds. This can be useful when you want a single
+cross-compiling toolchain that works across multiple platforms, or when you
+already rely on Zig in your build pipeline.
+
+Zig support is **opt-in** and is enabled by setting the `XX_GO_PREFER_C_COMPILER`
+environment variable to `zig`. When this variable is set and the `zig` binary
+is available in `PATH`, `xx-go` will configure CGo to use Zig as the C compiler
+for the current target.
+
+```dockerfile
+FROM --platform=$BUILDPLATFORM golang:alpine
+RUN apk add zig
+# ...
+ARG TARGETPLATFORM
+RUN xx-apk add musl-dev
+ENV CGO_ENABLED=1
+ENV XX_GO_PREFER_C_COMPILER=zig
+RUN xx-go build -o hello ./hello.go && \
+    xx-verify hello
+```
+
 ## Rust
 
 Building Rust can be achieved with the `xx-cargo` wrapper that automatically

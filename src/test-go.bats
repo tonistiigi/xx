@@ -511,6 +511,96 @@ testHelloCGO() {
   assert_output --partial "PKG_CONFIG=$(xx-info triple)-pkg-config"
 }
 
+testHelloCGOZig() {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  export CGO_ENABLED=1
+  export XX_GO_PREFER_C_COMPILER=zig
+  add zig
+  run xx-go build -x -o /tmp/a.out ./fixtures/hello_cgo.go
+  assert_success
+  run xx-verify /tmp/a.out
+  assert_success
+  if ! xx-info is-cross; then
+    run /tmp/a.out
+    assert_success
+    assert_output "hello cgo"
+  fi
+}
+
+@test "native-hellocgo-zig" {
+  unset TARGETARCH
+  testHelloCGOZig
+}
+
+@test "amd64-hellocgo-zig" {
+  export TARGETARCH=amd64
+  testHelloCGOZig
+}
+
+@test "arm64-hellocgo-zig" {
+  export TARGETARCH=arm64
+  testHelloCGOZig
+}
+
+@test "arm-hellocgo-zig" {
+  export TARGETARCH=arm
+  testHelloCGOZig
+}
+
+@test "ppc64le-hellocgo-zig" {
+  export TARGETARCH=ppc64le
+  testHelloCGOZig
+}
+
+@test "riscv64-hellocgo-zig" {
+  if ! supportRiscVCGo; then
+    skip "RISC-V CGO not supported"
+  fi
+  export TARGETARCH=riscv64
+  testHelloCGOZig
+}
+
+@test "loong64-hellocgo-zig" {
+  if ! supportLoong64CGo; then
+    skip "LOONGARCH64 not supported"
+  fi
+  if [ -f /etc/alpine-release ]; then
+    # FIXME: loong64-hellocgo issue on alpine < 3.21
+    #  ld.lld: error: unknown emulation: elf64loongarch
+    #  ld.lld: error: /loongarch64-alpine-linux-musl/usr/lib/gcc/loongarch64-alpine-linux-musl/14.2.0/crtbeginS.o:(.text+0x0): unknown relocation (102) against symbol
+    #  error: unknown target triple 'loongarch64-alpine-linux-musl', please use -triple or -arch
+    alpineRelease=$(cat /etc/alpine-release)
+    if ! grep PRETTY_NAME /etc/os-release | cut -d '=' -f 2 | tr -d '"' | grep -q "edge$" || [ "$(semver compare "$alpineRelease" "3.21.0")" -lt 0 ]; then
+      skip
+    fi
+  fi
+  export TARGETARCH=loong64
+  testHelloCGOZig
+}
+
+@test "386-hellocgo-zig" {
+  export TARGETARCH=386
+  testHelloCGOZig
+}
+
+@test "arm64-cgoenv-zig" {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  export TARGETARCH=arm64
+  export XX_GO_PREFER_C_COMPILER=zig
+  export CGO_ENABLED=1
+
+  add zig
+  # single/double quotes changed in between go versions
+  run sh -c "xx-go env | sed 's/[\"'\'']//g'"
+  assert_success
+  assert_output --partial "CC=zig cc -target"
+  assert_output --partial "CXX=zig c++ -target"
+}
+
 @test "wrap-unwrap" {
   target="arm64"
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
@@ -534,4 +624,11 @@ testHelloCGO() {
   run go env GOARCH
   assert_success
   assert_output "$nativeArch"
+}
+
+@test "clean-packages" {
+  if ! supportZig; then
+    skip "Zig not supported"
+  fi
+  del zig
 }
