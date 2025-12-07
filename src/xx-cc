@@ -175,7 +175,7 @@ detectTargetOSArch() {
     targetarch="s390x"
   elif [ "$arch" = "powerpc64le" ]; then
     targetarch="ppc64le"
-  elif [ "$arch" = "loong64" ]; then
+  elif [ "$arch" = "loongarch64" ]; then
     targetarch="loong64"
   fi
 
