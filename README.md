@@ -11,6 +11,7 @@ ___
 
 * [Dockerfile cross-compilation primer](#dockerfile-cross-compilation-primer)
 * [Installation](#installation)
+* [Verifying release integrity](#verifying-release-integrity)
 * [Supported targets](#supported-targets)
 * [`xx-info` - Information about the build context](#xx-info---information-about-the-build-context)
   * [Parsing current target](#parsing-current-target)
@@ -65,6 +66,48 @@ RUN xx-info env
 ```
 
 `xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-cargo`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
+
+## Verifying release integrity
+
+Latest `xx` releases are built and signed using [Docker Github Builder](https://github.com/docker/github-builder-experimental). You can verify the authenticity of the release with [Rego policy](https://docs.docker.com/build/policies/) in latest Docker Buildx.
+
+```rego
+is_xx if input.image.repo == "tonistiigi/xx"
+
+is_xx_valid if {
+  is_xx
+  docker_github_builder_tag(input.image, input.image.repo, sprintf("v%s", [input.image.tag]))
+}
+```
+
+Optionally, you can also include shortlist of previous releases before signatures were introduced. `xx` version tags are always guaranteed to be immutable.
+
+```rego
+xx_releases = [
+  {"version": "1.8.0", "checksum": "sha256:add602d55daca18914838a78221f6bbe4284114b452c86a48f96d59aeb00f5c6"},
+  {"version": "1.7.0", "checksum": "sha256:010d4b66aed389848b0694f91c7aaee9df59a6f20be7f5d12e53663a37bd14e2"},
+  {"version": "1.6.1", "checksum": "sha256:923441d7c25f1e2eb5789f82d987693c47b8ed987c4ab3b075d6ed2b5d6779a3"},
+  {"version": "1.5.0", "checksum": "sha256:0c6a569797744e45955f39d4f7538ac344bfb7ebf0a54006a0a4297b153ccf0f"},
+]
+
+is_xx_valid if {
+  is_xx
+  some release in xx_releases
+  release.version == input.image.tag
+  release.checksum == input.image.checksum
+}
+```
+
+Include master branch builds:
+
+```rego
+is_xx_valid if {
+  is_xx
+  input.image.tag == "master"
+  docker_github_builder(input.image, input.image.repo)
+}
+```
+
 
 ## Supported targets
 
