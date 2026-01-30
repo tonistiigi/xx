@@ -86,7 +86,7 @@ load 'assert'
 }
 
 @test "loong64" {
-  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info march)"
+  assert_equal "loongarch64" "$(TARGETPLATFORM=linux/loong64 xx-info march)"
 }
 
 @test "mips" {

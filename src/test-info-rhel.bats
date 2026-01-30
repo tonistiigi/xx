@@ -61,7 +61,7 @@ fi
 }
 
 @test "loong64" {
-  assert_equal "loong64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
+  assert_equal "loongarch64" "$(TARGETPLATFORM=linux/loong64 xx-info pkg-arch)"
 }
 
 @test "mips" {
