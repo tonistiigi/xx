@@ -238,7 +238,7 @@ jobs:
           echo "VERSION=${version}" >> $GITHUB_ENV
       -
         name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: ./dist
           pattern: ld-*
