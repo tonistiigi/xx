@@ -84,7 +84,7 @@ jobs:
     steps:
       -
         name: Test
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           provenance: false
           targets: ${{ matrix.target }}
