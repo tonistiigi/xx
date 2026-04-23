@@ -21,6 +21,16 @@ allow if {
 
 allow if {
 	input.git.remote == "https://github.com/tonistiigi/xx.git"
+	valid_xx_ref(input.git)
+}
+
+valid_xx_ref(git) if {
+	not git.tagName
+}
+
+valid_xx_ref(git) if {
+	git.isAnnotatedTag
+	git.tag.pgpSignature != null
 }
 
 allow if {
