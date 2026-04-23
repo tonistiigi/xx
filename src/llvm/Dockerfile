@@ -1,4 +1,4 @@
-#syntax=docker/dockerfile:1.8
+#syntax=docker/dockerfile:1.23
 #check=error=true
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
