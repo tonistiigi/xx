@@ -4,7 +4,7 @@
 ARG TEST_BASE_TYPE=alpine
 ARG TEST_BASE_IMAGE=${TEST_BASE_TYPE}
 ARG TEST_WITH_DARWIN=false
-ARG BATS_VERSION=v1.8.2
+ARG BATS_VERSION=v1.13.0
 
 # build prepares the sources
 FROM --platform=$BUILDPLATFORM alpine AS build

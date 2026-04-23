@@ -57,6 +57,6 @@ allow if {
 
 allow if {
 	input.git.remote == "https://github.com/bats-core/bats-core.git"
-	input.git.tagName == "v1.8.2"
-	input.git.checksum == "978dffd98b6793b09594e5e96ef797146be8bc9f"
+	input.git.tagName == "v1.13.0"
+	input.git.checksum == "d6a46f2cc2d3025ee3ffb59991c6d93ef903e339"
 }
