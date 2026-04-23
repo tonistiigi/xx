@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.8
+# syntax=docker/dockerfile:1.23
 # check=error=true
 
 ARG TEST_BASE_TYPE=alpine
