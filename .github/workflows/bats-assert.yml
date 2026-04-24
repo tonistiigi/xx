@@ -33,13 +33,13 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Test
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           source: "{{defaultContext}}:util/bats-assert"
           targets: test
       -
         name: Publish
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           source: "{{defaultContext}}:util/bats-assert"
           targets: all
