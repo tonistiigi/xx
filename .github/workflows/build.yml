@@ -150,6 +150,8 @@ jobs:
       target: xx-all
       output: image
       push: ${{ github.event_name != 'pull_request' }}
+      set: |
+        *.args.release=1
       set-meta-labels: true
       meta-images: |
         tonistiigi/xx

@@ -1,7 +1,7 @@
-#syntax=docker/dockerfile:1.8
+#syntax=docker/dockerfile:1.23
 #check=error=true
 
-ARG ALPINE_VERSION=3.20
+ARG ALPINE_VERSION=3.23
 
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS build
 RUN apk add --no-cache git

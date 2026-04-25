@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.8
+# syntax=docker/dockerfile:1.23
 # check=error=true
 
-FROM mvdan/shfmt:v3.8.0-alpine AS shfmt
+FROM mvdan/shfmt:v3.13.1-alpine AS shfmt
 WORKDIR /src
 ARG SHFMT_FLAGS="-i 2 -ci"
 

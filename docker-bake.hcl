@@ -98,7 +98,7 @@ target "test-cargo" {
 }
 
 group "validate" {
-    targets = ["shfmt-validate", "shellcheck"]
+    targets = ["shfmt-validate", "shellcheck", "opafmt-validate"]
 }
 
 target "shfmt-validate" {
@@ -116,6 +116,18 @@ target "shfmt" {
 target "shellcheck" {
     dockerfile = "./hack/dockerfiles/shellcheck.Dockerfile"
     output = ["type=cacheonly"]
+}
+
+target "opafmt-validate" {
+    dockerfile = "./hack/dockerfiles/opafmt.Dockerfile"
+    target = "validate"
+    output = ["type=cacheonly"]
+}
+
+target "opafmt" {
+    dockerfile = "./hack/dockerfiles/opafmt.Dockerfile"
+    target = "update"
+    output = ["."]
 }
 
 group "default" {
