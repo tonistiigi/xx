@@ -360,12 +360,12 @@ testBuildHello() {
 
   export TARGETARCH=arm64
   xx-clang --setup-target-triple
-  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
-  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang++ ]
 
-  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  run cat /usr/bin/arm64-apple-macos11.0.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=ld64 -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos11.0 -fuse-ld=ld64 -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
 
   touch /usr/bin/ld64.signed
   chmod +x /usr/bin/ld64.signed
@@ -373,23 +373,23 @@ testBuildHello() {
   clean
 
   xx-clang --setup-target-triple
-  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
-  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang++ ]
 
-  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  run cat /usr/bin/arm64-apple-macos11.0.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos11.0 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.1.sdk -stdlib=libc++"
 
   clean
 
   mkdir -p /xx-sdk/MacOSX11.2.sdk
   xx-clang --setup-target-triple
-  [ -f /usr/bin/arm64-apple-macos10.16-clang ]
-  [ -f /usr/bin/arm64-apple-macos10.16-clang++ ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang ]
+  [ -f /usr/bin/arm64-apple-macos11.0-clang++ ]
 
-  run cat /usr/bin/arm64-apple-macos10.16.cfg
+  run cat /usr/bin/arm64-apple-macos11.0.cfg
   assert_success
-  assert_output "--target=arm64-apple-macos10.16 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.2.sdk -stdlib=libc++"
+  assert_output "--target=arm64-apple-macos11.0 -fuse-ld=/usr/bin/ld64.signed -isysroot /xx-sdk/MacOSX11.2.sdk -stdlib=libc++"
 
   rm -r /xx-sdk/MacOSX11.2.sdk
   rm /usr/bin/ld64.signed

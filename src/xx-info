@@ -216,11 +216,16 @@ if [ "$TARGETARCH" = "arm" ] && [ -z "$TARGETVARIANT" ]; then
   TARGETVARIANT="v7"
 fi
 
+# Default deployment targets for Darwin.
+#
+# Keep 10.6 for Intel. Apple Silicon starts at macOS 11; older toolchains
+# used "10.16" as an alias for Big Sur, but newer Clang maps it to "11.0"
+# and warns about the override.
 if [ "$TARGETOS" = "darwin" ] && [ -z "$MACOSX_VERSION_MIN" ]; then
   if [ "$TARGETARCH" = "amd64" ]; then
     MACOSX_VERSION_MIN=10.6
   else
-    MACOSX_VERSION_MIN=10.16
+    MACOSX_VERSION_MIN=11.0
   fi
 fi
 
