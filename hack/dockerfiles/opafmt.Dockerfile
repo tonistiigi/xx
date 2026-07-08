@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.23
+# syntax=docker/dockerfile:1
 # check=error=true
 
 FROM openpolicyagent/opa:1.15.2-static AS opa-bin

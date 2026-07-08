@@ -556,7 +556,7 @@ In addition to Linux targets, `xx` can also build binaries for MacOS and Windows
 Building Windows binaries from C/CGo is currently a work in progress and not functional.
 
 ```dockerfile
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1
 # ...
 RUN apk add clang lld
 ARG TARGETPLATFORM

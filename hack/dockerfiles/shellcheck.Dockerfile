@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.23
+# syntax=docker/dockerfile:1
 # check=error=true
 
 FROM koalaman/shellcheck-alpine:v0.11.0
