@@ -4,7 +4,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
 permissions:
   contents: read
 
@@ -25,13 +24,12 @@ jobs:
     steps:
       -
         name: Validate
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@5be5f02ff8819ecd3092ea6b2e6261c31774f2b4 # v6.10.0
         with:
           targets: validate
 
   test:
     uses: ./.github/workflows/.test.yml
-    secrets: inherit
     strategy:
       fail-fast: false
       matrix:
@@ -138,7 +136,7 @@ jobs:
       allow-failure: ${{ matrix.allow-failure }}
 
   build:
-    uses: docker/github-builder/.github/workflows/bake.yml@v1
+    uses: docker/github-builder/.github/workflows/bake.yml@5f637c833aa76bc99372a1dc9a6f8bcd8056fb85 # v1.12.0
     permissions:
       contents: read # same as global permission
       id-token: write # for signing attestation(s) with GitHub OIDC Token
