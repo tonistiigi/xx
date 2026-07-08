@@ -1,5 +1,5 @@
-#syntax=docker/dockerfile:1.23
-#check=error=true
+# syntax=docker/dockerfile:1
+# check=error=true
 
 ARG ALPINE_VERSION=3.22
 ARG LIBTAPI_VERSION=1300.6.5
