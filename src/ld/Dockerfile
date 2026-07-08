@@ -1,4 +1,4 @@
-#syntax=docker/dockerfile:1.23
+# syntax=docker/dockerfile:1
 #check=error=true
 
 ARG ALPINE_VERSION=3.22
