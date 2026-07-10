@@ -32,7 +32,7 @@ testHelloCLLD() {
     assert_success
     assert_output "-fuse-ld=lld"
   else
-    if [ -z "$expectedLinker"]; then expectedLinker="lld"; fi
+    if [ -z "$expectedLinker" ]; then expectedLinker="lld"; fi
     if [ -f /etc/alpine-release ]; then
       assert_output "--target=$(xx-info triple) -fuse-ld=$expectedLinker --sysroot=/$(xx-info triple)/$expectedSuffix"
     else
@@ -259,7 +259,7 @@ testBuildHello() {
   testHelloCLLD
 }
 
-@test "loong64-c-ld" {
+@test "loong64-c-lld" {
   if ! supportLoongArch; then
     skip "LOONGARCH64 not supported"
   fi

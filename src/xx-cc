@@ -344,11 +344,6 @@ setup() {
   if [ "${target#riscv64}" != "${target}" ]; then
     prefer_lld=
   fi
-  # lld has no support for loong64
-  if [ "${target#loong64}" != "${target}" ]; then
-    prefer_lld=
-  fi
-
   if [ -n "${XX_CC_PREFER_STATIC_LINKER}" ] && { [ "${target#386}" != "${target}" ] || [ "${target#powerpc64le}" != "${target}" ]; }; then
     prefer_lld=
   fi
