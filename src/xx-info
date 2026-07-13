@@ -121,7 +121,8 @@ fi
 distro=""
 # detect distro vendor
 # shellcheck disable=SC1091
-if . /etc/os-release 2>/dev/null; then
+if [ -r /etc/os-release ]; then
+  . /etc/os-release
   distro=$ID
   XX_OS_VERSION=$VERSION_ID
 fi

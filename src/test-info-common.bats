@@ -16,6 +16,19 @@ load 'assert'
   [ "$output" != "" ]
 }
 
+@test "missing os-release uses generic linux fallback" {
+  if [ ! -e /etc/os-release ]; then
+    skip "/etc/os-release already missing"
+  fi
+
+  mv /etc/os-release /tmp/os-release.bak
+  TARGETPLATFORM=linux/arm64 run xx-info triple
+  mv /tmp/os-release.bak /etc/os-release
+
+  assert_success
+  assert_output "aarch64-unknown-linux-gnu"
+}
+
 @test "is-cross" {
   run xx-info is-cross
   assert_failure
