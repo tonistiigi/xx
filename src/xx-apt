@@ -198,10 +198,14 @@ if ! xx-info is-cross; then
   nocross=1
 fi
 
-if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ]; then
-  apt-get update
-  apt-get install -y debian-ports-archive-keyring
-  echo "deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main" >>/etc/apt/sources.list.d/riscv64-sid.list
+if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ] && [ "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+  riscv64_sid_list=/etc/apt/sources.list.d/riscv64-sid.list
+  riscv64_sid_repo="deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main"
+  if ! grep -Fx "$riscv64_sid_repo" "$riscv64_sid_list" >/dev/null 2>&1; then
+    apt-get update
+    apt-get install -y debian-ports-archive-keyring
+    echo "$riscv64_sid_repo" >>"$riscv64_sid_list"
+  fi
 fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then
