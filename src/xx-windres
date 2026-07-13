@@ -177,10 +177,13 @@ while :; do
     --preprocessor-arg=*)
       preprocessorargs="$preprocessorargs ${1#--preprocessor-arg=}"
       ;;
-    -I | --include-path)
+    -I | --include-dir | --include-path)
       isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs -I$2"
       shift
+      ;;
+    --include-dir=*)
+      preprocessorargs="$preprocessorargs -I${1#--include-dir=}"
       ;;
     --include-path=*)
       preprocessorargs="$preprocessorargs -I${1#--include-path=}"
