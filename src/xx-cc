@@ -278,6 +278,10 @@ download_ld() {
 
 basename=$(basename "$0")
 name=${basename#xx-}
+wrapped=
+if [ "xx-$name" = "$basename" ]; then
+  wrapped=1
+fi
 
 # XX_CC_PREFER_LINKER defines the linker to use if the compiler supports it
 : "${XX_CC_PREFER_LINKER=lld}"
@@ -290,11 +294,6 @@ fi
 
 if [ "$name" = "c++" ]; then
   name="clang++"
-fi
-
-wrapped=
-if [ "xx-$name" = "$basename" ]; then
-  wrapped=1
 fi
 
 if [ -f /.xx-cc-autowrap ]; then

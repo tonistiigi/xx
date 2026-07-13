@@ -209,6 +209,27 @@ testBuildHello() {
   testHelloCPPLLD
 }
 
+@test "xx-cc and xx-c++ aliases use target platform from env" {
+  clean
+  add clang lld
+
+  targetArch="arm64"
+  if [ "$(TARGETPLATFORM= TARGETARCH= TARGETOS= TARGETPAIR= xx-info arch)" = "arm64" ]; then
+    targetArch="amd64"
+  fi
+
+  export TARGETPLATFORM="linux/${targetArch}"
+  expectedTriple="$(xx-info triple)"
+
+  for compiler in xx-cc xx-c++; do
+    run "$compiler" --print-target-triple
+    assert_success
+    assert_output "$expectedTriple"
+  done
+
+  unset TARGETPLATFORM
+}
+
 @test "amd64-c-lld" {
   export TARGETARCH=amd64
   testHelloCLLD
