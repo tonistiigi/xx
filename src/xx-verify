@@ -268,15 +268,16 @@ for f in "$@"; do
   fi
 
   if [ "$static" = "1" ] && { [ "$TARGETOS" = "linux" ] || [ "$TARGETOS" = "freebsd" ]; }; then
+    staticok=
     if echo "$out" | grep -E "statically linked|static-pie" >/dev/null; then
-      exit 0
+      staticok=1
+    elif echo "$out" | grep " pie " | grep -v ", interpreter " >/dev/null; then
+      staticok=1
     fi
-    if echo "$out" | grep " pie " | grep -v ", interpreter " >/dev/null; then
-      exit 0
+    if [ -z "$staticok" ]; then
+      echo >&2 "file ${f} is not statically linked: $out"
+      exit 1
     fi
-
-    echo >&2 "file ${f} is not statically linked: $out"
-    exit 1
   fi
 
 done

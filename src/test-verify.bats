@@ -72,6 +72,43 @@ load 'assert'
   unset TARGETPLATFORM
 }
 
+@test "static-multi-file" {
+  # XX_VERIFY_FILE_CMD_OUTPUT applies the same output to every file, so
+  # multi-file verification needs real files that file(1) classifies
+  # differently. These are handcrafted minimal ELF64 x86-64 executables
+  # (no toolchain in the test image): one with no dynamic section
+  # ("statically linked"), one with PT_INTERP+PT_DYNAMIC ("dynamically
+  # linked"). file(1) reads only the headers, so the host arch is irrelevant.
+  staticbin="$BATS_TEST_TMPDIR/static-amd64"
+  dynbin="$BATS_TEST_TMPDIR/dynamic-amd64"
+  base64 -d >"$staticbin" <<'EOF'
+f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAeABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAAOAABAAAAAAAAAAEAAAAFAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAAAAgAAAAAAAAACAAAAAAAAAAAAQAAAAAAAA
+EOF
+  base64 -d >"$dynbin" <<'EOF'
+f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAeABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAAOAADAAAAAAAAAAEAAAAFAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAAAAJAEAAAAAAAAkAQAAAAAAAAAQAAAAAAAAAwAAAAQAAADoAAAAAAAAAOgAQAAAAAAA6ABAAAAAAAAcAAAAAAAAABwAAAAAAAAAAQAAAAAAAAACAAAABgAAAAQBAAAAAAAABAFAAAAAAAAEAUAAAAAAACAAAAAAAAAAIAAAAAAAAAAIAAAAAAAAAC9saWI2NC9sZC1saW51eC14ODYtNjQuc28uMgABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+  export TARGETPLATFORM=linux/amd64
+
+  run xx-verify --static "$staticbin"
+  assert_success
+
+  run xx-verify --static "$dynbin"
+  assert_failure
+  assert_output --partial "not statically linked"
+
+  run xx-verify --static "$staticbin" "$staticbin"
+  assert_success
+
+  run xx-verify --static "$staticbin" "$dynbin"
+  assert_failure
+  assert_output --partial "not statically linked"
+
+  run xx-verify --static "$staticbin" /idontexist
+  assert_failure
+
+  unset TARGETPLATFORM
+}
+
 @test "darwin" {
   export XX_VERIFY_FILE_CMD_OUTPUT=": Mach-O 64-bit executable x86_64"
   export TARGETPLATFORM=darwin/amd64
