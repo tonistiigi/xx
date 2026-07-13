@@ -18,7 +18,7 @@ index 2ceb4c189..f16bca00d 100755
 +if [ -z "$NOMAKE" ]; then
 +
  echo ""
- echo "## Building clangBasic ##"
+ echo "## Building clangBasic and vt_gen ##"
  echo ""
 @@ -76,6 +78,8 @@ echo ""
 
