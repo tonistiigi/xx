@@ -31,6 +31,65 @@ load 'test_helper'
   assert_success
 }
 
+@test "fix-source-file-deb822" {
+  f="$BATS_TEST_TMPDIR/test.sources"
+  cat >"$f" <<EOF
+Types: deb deb-src
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe
+EOF
+
+  run xx-apt --fix-source-file "$f" arm64
+  assert_success
+  # rerunning must not duplicate the fields
+  run xx-apt --fix-source-file "$f" arm64
+  assert_success
+
+  run diff "$f" - <<EOF
+Types: deb deb-src
+Architectures: arm64
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe
+
+Types: deb
+Architectures: arm64
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe
+EOF
+  assert_success
+}
+
+@test "fix-source-file-classic" {
+  f="$BATS_TEST_TMPDIR/sources.list"
+  cat >"$f" <<EOF
+deb http://archive.ubuntu.com/ubuntu/ noble main universe
+deb-src http://archive.ubuntu.com/ubuntu/ noble main universe
+# deb http://archive.ubuntu.com/ubuntu/ noble-backports main
+deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports/ noble main
+EOF
+
+  run xx-apt --fix-source-file "$f" arm64
+  assert_success
+  run xx-apt --fix-source-file "$f" arm64
+  assert_success
+
+  run diff "$f" - <<EOF
+deb [arch=arm64] http://archive.ubuntu.com/ubuntu/ noble main universe
+deb-src [arch=arm64] http://archive.ubuntu.com/ubuntu/ noble main universe
+# deb [arch=arm64] http://archive.ubuntu.com/ubuntu/ noble-backports main
+deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports/ noble main
+EOF
+  assert_success
+}
+
 @test "amd64" {
   export TARGETARCH=amd64
   if ! xx-info is-cross; then skip; fi
