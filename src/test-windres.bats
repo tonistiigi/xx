@@ -19,6 +19,18 @@ load 'test_helper'
   run xx-windres -foo foobar
   assert_failure
   assert_output "invalid option -foo"
+
+  run xx-windres -J foo myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid input format foo"
+
+  run xx-windres -O foo myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid output format foo"
+
+  run xx-windres -F pe-mips myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid target pe-mips for xx-windres"
 }
 
 @test "basic" {

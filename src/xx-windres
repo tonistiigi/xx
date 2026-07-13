@@ -290,6 +290,7 @@ fi
 
 if [ "$inputf" != "res" ] && [ "$inputf" != "rc" ]; then
   echo >&2 "invalid input format $inputf"
+  exit 1
 fi
 
 if [ -z "$outputf" ]; then
@@ -304,6 +305,7 @@ fi
 
 if [ "$outputf" != "coff" ] && [ "$outputf" != "res" ]; then
   echo >&2 "invalid output format $outputf"
+  exit 1
 fi
 
 machine=
@@ -322,6 +324,7 @@ case $target in
     ;;
   *)
     echo >&2 "invalid target $target for xx-windres"
+    exit 1
     ;;
 esac
 
