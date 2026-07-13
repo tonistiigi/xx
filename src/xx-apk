@@ -95,11 +95,14 @@ cmd() {
   if xx-info is-cross; then
     root="/${XX_TRIPLE}"
   fi
-  n=$#
   iscompilerrt=
   isrustlib=
+  first=1
   for a in "$@"; do
-    if [ $# = $n ]; then set --; fi
+    if [ -n "$first" ]; then
+      set --
+      first=
+    fi
     case "$a" in
       "xx-c-essentials")
         set -- "$@" musl-dev gcc

@@ -16,6 +16,19 @@ load 'assert'
   [ "$output" != "" ]
 }
 
+@test "missing os-release uses generic linux fallback" {
+  if [ ! -e /etc/os-release ]; then
+    skip "/etc/os-release already missing"
+  fi
+
+  mv /etc/os-release /tmp/os-release.bak
+  TARGETPLATFORM=linux/arm64 run xx-info triple
+  mv /tmp/os-release.bak /etc/os-release
+
+  assert_success
+  assert_output "aarch64-unknown-linux-gnu"
+}
+
 @test "is-cross" {
   run xx-info is-cross
   assert_failure
@@ -37,6 +50,32 @@ load 'assert'
   TARGETPLATFORM=foo/bar run xx-info arch
   assert_success
   assert_output "bar"
+}
+
+@test "unmapped targets fail for mapped outputs" {
+  TARGETPLATFORM=linux/ppc64 run xx-info triple
+  assert_failure
+  assert_output --partial "unsupported target: os=linux arch=ppc64"
+
+  TARGETPAIR=linux-amd64v3 run xx-info
+  assert_failure
+  assert_output --partial "unsupported target: os=linux arch=amd64v3"
+
+  tmpbin="$BATS_TEST_TMPDIR/bin"
+  mkdir -p "$tmpbin"
+  cat >"$tmpbin/uname" <<'EOF'
+#!/usr/bin/env sh
+if [ "$1" = "-m" ]; then
+  echo not-a-machine
+  exit 0
+fi
+exec /bin/uname "$@"
+EOF
+  chmod +x "$tmpbin/uname"
+
+  PATH="$tmpbin:$PATH" run xx-info triple
+  assert_failure
+  assert_output --partial "unsupported target: os=linux arch=unknown"
 }
 
 @test "default arm variant" {

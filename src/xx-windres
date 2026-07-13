@@ -103,7 +103,8 @@ while :; do
       exit
       ;;
     -V | --version)
-      "xx-windres 0.1"
+      echo "xx-windres 0.1"
+      exit 0
       ;;
     -o | --output)
       isnextarg "$1" "$2"
@@ -176,10 +177,13 @@ while :; do
     --preprocessor-arg=*)
       preprocessorargs="$preprocessorargs ${1#--preprocessor-arg=}"
       ;;
-    -I | --include-path)
+    -I | --include-dir | --include-path)
       isnextarg "$1" "$2"
       preprocessorargs="$preprocessorargs -I$2"
       shift
+      ;;
+    --include-dir=*)
+      preprocessorargs="$preprocessorargs -I${1#--include-dir=}"
       ;;
     --include-path=*)
       preprocessorargs="$preprocessorargs -I${1#--include-path=}"
@@ -286,6 +290,7 @@ fi
 
 if [ "$inputf" != "res" ] && [ "$inputf" != "rc" ]; then
   echo >&2 "invalid input format $inputf"
+  exit 1
 fi
 
 if [ -z "$outputf" ]; then
@@ -300,6 +305,7 @@ fi
 
 if [ "$outputf" != "coff" ] && [ "$outputf" != "res" ]; then
   echo >&2 "invalid output format $outputf"
+  exit 1
 fi
 
 machine=
@@ -318,6 +324,7 @@ case $target in
     ;;
   *)
     echo >&2 "invalid target $target for xx-windres"
+    exit 1
     ;;
 esac
 

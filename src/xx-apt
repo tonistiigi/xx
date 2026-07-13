@@ -44,12 +44,31 @@ check_deb822() {
   [ "$(printf '%s' $(aptsourcesfile) | awk -F . '{if (NF>1) {print $NF}}')" = "sources" ] && return 0 || return 1
 }
 
+# restrict all repositories in a sources file to the given architecture
+fixsourcesfile() {
+  case "$1" in
+    *.sources)
+      if ! grep -q "^Architectures:" "$1"; then
+        sed -E "s/^(Types:.*)/\1\nArchitectures: $2/" -i "$1"
+      fi
+      ;;
+    *)
+      sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$2] /" -i "$1"
+      ;;
+  esac
+}
+
 exitnolinux() {
   if [ "${TARGETOS}" != "linux" ]; then
     echo >&2 "skipping packages installation on ${XX_OS}"
     exit 0
   fi
 }
+
+if [ "$1" = "--fix-source-file" ]; then
+  fixsourcesfile "$2" "$3"
+  exit 0
+fi
 
 n=$#
 for a in "$@"; do
@@ -102,11 +121,7 @@ fi
 fixubuntusources() {
   # fix all current sources to native arch
   nativearch="$(TARGETPLATFORM="" TARGETPAIR="" TARGETARCH="" TARGETOS="" xx-info arch)"
-  if ! check_deb822; then
-    sed -E "/arch=/! s/^(# )?(deb|deb-src) /\1\2 [arch=$nativearch] /" -i "$(aptsourcesfile)"
-  else
-    sed -E "/Architectures:/! s/^(Types\: [a-z]+)/\1\nArchitectures: $nativearch/" -i "$(aptsourcesfile)"
-  fi
+  fixsourcesfile "$(aptsourcesfile)" "$nativearch"
 
   if ! xx-info is-cross; then return; fi
 
@@ -198,10 +213,14 @@ if ! xx-info is-cross; then
   nocross=1
 fi
 
-if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ]; then
-  apt-get update
-  apt-get install -y debian-ports-archive-keyring
-  echo "deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main" >>/etc/apt/sources.list.d/riscv64-sid.list
+if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ] && [ "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+  riscv64_sid_list=/etc/apt/sources.list.d/riscv64-sid.list
+  riscv64_sid_repo="deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main"
+  if ! grep -Fx "$riscv64_sid_repo" "$riscv64_sid_list" >/dev/null 2>&1; then
+    apt-get update
+    apt-get install -y debian-ports-archive-keyring
+    echo "$riscv64_sid_repo" >>"$riscv64_sid_list"
+  fi
 fi
 
 if ! dpkg --print-foreign-architectures | grep "$XX_PKG_ARCH" >/dev/null; then

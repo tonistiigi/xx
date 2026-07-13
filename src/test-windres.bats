@@ -3,12 +3,34 @@
 load 'assert'
 load 'test_helper'
 
+@test "version" {
+  run xx-windres --version
+  assert_success
+  assert_output "xx-windres 0.1"
+
+  run xx-windres -V
+  assert_success
+  assert_output "xx-windres 0.1"
+}
+
 @test "invalid" {
   add llvm
 
   run xx-windres -foo foobar
   assert_failure
   assert_output "invalid option -foo"
+
+  run xx-windres -J foo myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid input format foo"
+
+  run xx-windres -O foo myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid output format foo"
+
+  run xx-windres -F pe-mips myinp.rc myout.syso
+  assert_failure
+  assert_output "invalid target pe-mips for xx-windres"
 }
 
 @test "basic" {
@@ -19,10 +41,10 @@ load 'test_helper'
   export TARGETPLATFORM=windows/arm
   export XX_TMP_FILE_FIXED=/tmp/foo
   export CC=clang
-  run xx-windres -i myinp.rc -o myout.syso --use-temp-file -I /foo -D FOO=bar -UNOT -DABC=def
+  run xx-windres -i myinp.rc -o myout.syso --use-temp-file -I /foo --include-dir /bar --include-dir=/baz -D FOO=bar -UNOT -DABC=def
   assert_success
   assert_output <<EOT
-clang -E -xc -D RC_INVOKED=1 -I/foo -D FOO=bar -U NOT -D ABC=def -o /tmp/foo myinp.rc
+clang -E -xc -D RC_INVOKED=1 -I/foo -I/bar -I/baz -D FOO=bar -U NOT -D ABC=def -o /tmp/foo myinp.rc
 llvm-rc -fo /tmp/foo_ -I . /tmp/foo
 llvm-cvtres -machine:ARM -out:myout.syso /tmp/foo_
 EOT

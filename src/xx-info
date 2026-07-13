@@ -121,7 +121,8 @@ fi
 distro=""
 # detect distro vendor
 # shellcheck disable=SC1091
-if . /etc/os-release 2>/dev/null; then
+if [ -r /etc/os-release ]; then
+  . /etc/os-release
   distro=$ID
   XX_OS_VERSION=$VERSION_ID
 fi
@@ -382,6 +383,22 @@ case "$XX_VENDOR" in
     XX_PKG_ARCH=${XX_RHEL_ARCH}
     ;;
 esac
+
+requires_target_mapping() {
+  case "$1" in
+    "arch" | "variant" | "os" | "os-version" | "vendor" | "libc" | "--help")
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+if requires_target_mapping "$1"; then
+  if [ -z "$TARGETARCH" ] || [ "$XX_MARCH" = "unknown" ] || [ "$XX_TRIPLE" = "unknown-unknown-none" ]; then
+    echo >&2 "unsupported target: os=${TARGETOS:-unknown} arch=${TARGETARCH:-unknown} variant=${TARGETVARIANT:-}"
+    exit 1
+  fi
+fi
 
 case "$1" in
   "is-cross")
