@@ -21,9 +21,16 @@ if [ -n "$XX_DEBUG_VERIFY" ]; then
   set -x
 fi
 
-for l in $(xx-info env); do
-  export "${l?}"
-done
+if envout=$(xx-info env 2>/dev/null); then
+  for l in $envout; do
+    export "${l?}"
+  done
+else
+  TARGETOS="$(xx-info os)"
+  TARGETARCH="$(xx-info arch)"
+  TARGETVARIANT="$(xx-info variant)"
+  export TARGETOS TARGETARCH TARGETVARIANT
+fi
 
 setup() {
   if ! command -v file >/dev/null 2>/dev/null; then
