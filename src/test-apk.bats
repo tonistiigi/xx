@@ -23,6 +23,14 @@ load 'assert'
   assert_success
 }
 
+@test "essentials can be listed together" {
+  run xx-apk list xx-c-essentials xx-cxx-essentials
+  assert_success
+  assert_output --partial "musl-dev"
+  assert_output --partial "gcc"
+  assert_output --partial "g++"
+}
+
 @test "cross" {
   target="arm64"
   if [ "$(xx-info arch)" = "arm64" ]; then target="amd64"; fi
