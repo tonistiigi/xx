@@ -103,7 +103,8 @@ while :; do
       exit
       ;;
     -V | --version)
-      "xx-windres 0.1"
+      echo "xx-windres 0.1"
+      exit 0
       ;;
     -o | --output)
       isnextarg "$1" "$2"

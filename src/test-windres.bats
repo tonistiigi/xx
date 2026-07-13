@@ -3,6 +3,16 @@
 load 'assert'
 load 'test_helper'
 
+@test "version" {
+  run xx-windres --version
+  assert_success
+  assert_output "xx-windres 0.1"
+
+  run xx-windres -V
+  assert_success
+  assert_output "xx-windres 0.1"
+}
+
 @test "invalid" {
   add llvm
 
