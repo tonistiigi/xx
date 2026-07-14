@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-ARG ALPINE_VERSION=3.22
-ARG LIBTAPI_VERSION=1300.6.5
-ARG CCTOOLS_VERSION=1009.2-ld64-907
+ARG ALPINE_VERSION=3.24
+ARG LIBTAPI_VERSION=1600.0.11.8
+ARG CCTOOLS_VERSION=1030.6.3-ld64-956.6
 ARG SIGTOOL_VERSION=c6242cb29c412168f771e97d75417e55af6cdb2e
-ARG LIBDISPATCH_VERSION=swift-5.9.2-RELEASE
-ARG APORTS_VERSION=3.22-stable
-ARG BINUTILS_VERSION=2.44
+ARG LIBDISPATCH_VERSION=swift-6.3.3-RELEASE
+ARG APORTS_VERSION=3.24-stable
+ARG BINUTILS_VERSION=2.46.1
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
@@ -73,19 +73,20 @@ COPY --from=aports /work/aports/community/libdispatch/*.patch /
 
 # libdispatch is needed because alpine does not provide static library in apk
 FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS libdispatch-base
-RUN apk add git clang lld cmake samurai patch
+RUN apk add git clang lld cmake samurai patch llvm
 ARG LIBDISPATCH_VERSION
 COPY --link --from=xx / /
 WORKDIR /work
 ADD "https://github.com/apple/swift-corelibs-libdispatch.git#${LIBDISPATCH_VERSION}" swift-corelibs-libdispatch
 WORKDIR swift-corelibs-libdispatch
 RUN --mount=target=/patches,from=patches-libdispatch \
-  for f in /patches/*; do patch -p1 < $f; done
+  for f in /patches/*; do [ "${f##*/}" = "remove-werror.patch" ] || patch -p1 < $f; done && \
+  sed -i '/:-Werror>/d' cmake/modules/DispatchCompilerWarnings.cmake
 ARG TARGETPLATFORM
 RUN xx-apk add --no-cache gcc g++ musl-dev linux-headers bsd-compat-headers
 RUN <<EOT
   set -ex
-  cmake $(xx-clang --print-cmake-defines) -G Ninja -B build -DCMAKE_INSTALL_PREFIX=/out/libdispatch -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=False -DCMAKE_BUILD_TYPE=MinSizeRel
+  cmake $(xx-clang --print-cmake-defines) -G Ninja -B build -DCMAKE_AR=/usr/bin/llvm-ar -DCMAKE_RANLIB=/usr/bin/llvm-ranlib -DCMAKE_INSTALL_PREFIX=/out/libdispatch -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=False -DCMAKE_BUILD_TYPE=MinSizeRel
   cmake --build build
   cmake --install build
   rm -rf build
@@ -143,12 +144,12 @@ RUN --mount=from=libtapi-static,source=/opt/libtapi,target=/opt/libtapi <<EOT
   set -ex
   export CXXFLAGS=${LD64_CXXFLAGS}
   ./configure --with-libtapi=/opt/libtapi --host=$(xx-clang --print-target-triple)
-  sed -i 's/-ltapi/-ltapi -ltapiCore -ltapiObjCMetadata -lLLVMObject -lLLVMTextAPI -lLLVMSupport -lLLVMDemangle -lLLVMMC -lLLVMBinaryFormat --static/' ld64/src/ld/Makefile
+  sed -i 's/-ltapi/-Wl,--start-group -ltapi -ltapiCore -ltapiObjCMetadata -lclangBasic -lLLVMObject -lLLVMTextAPI -lLLVMDebugInfoDWARF -lLLVMIRReader -lLLVMAsmParser -lLLVMBitReader -lLLVMBitstreamReader -lLLVMCore -lLLVMMCParser -lLLVMMC -lLLVMBinaryFormat -lLLVMTargetParser -lLLVMRemarks -lLLVMCASUtil -lLLVMCAS -lLLVMSupport -lLLVMDemangle -Wl,--end-group --static/' ld64/src/ld/Makefile
   make -j $(nproc) -C ld64
   xx-verify --static ld64/src/ld/ld
 EOT
 FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS sigtool-base
-RUN apk add --no-cache git clang lld cmake make pkgconf
+RUN apk add --no-cache git clang lld cmake make pkgconf llvm
 COPY --from=xx / /
 WORKDIR /work
 ARG SIGTOOL_VERSION
@@ -164,7 +165,7 @@ RUN <<EOT
   export CXXFLAGS=${SIGTOOL_CXXFLAGS}
   mkdir build
   cd build
-  cmake -DBUILD_SHARED_LIBS=False $(xx-clang --print-cmake-defines) -DCMAKE_EXE_LINKER_FLAGS=-static ..
+  cmake -DBUILD_SHARED_LIBS=False $(xx-clang --print-cmake-defines) -DCMAKE_AR=/usr/bin/llvm-ar -DCMAKE_RANLIB=/usr/bin/llvm-ranlib -DCMAKE_C_COMPILER_AR=/usr/bin/llvm-ar -DCMAKE_CXX_COMPILER_AR=/usr/bin/llvm-ar -DCMAKE_C_COMPILER_RANLIB=/usr/bin/llvm-ranlib -DCMAKE_CXX_COMPILER_RANLIB=/usr/bin/llvm-ranlib -DCMAKE_EXE_LINKER_FLAGS=-static ..
   make -j $(nproc)
   xx-verify --static ./sigtool ./codesign
 EOT
@@ -210,7 +211,7 @@ RUN --mount=from=libtapi,source=/opt/libtapi,target=/opt/libtapi <<EOT
 EOT
 
 FROM scratch AS cctools
-COPY --link --from=libtapi /opt/libtapi/lib/*.so /usr/lib/
+COPY --link --from=libtapi /opt/libtapi/lib/ /usr/lib/
 COPY --link --from=cctools-build /opt/cctools /usr
 
 
@@ -229,7 +230,7 @@ RUN <<EOT
   unset TARGETPLATFORM
   tar xf binutils-${BINUTILS_VERSION}.tar.gz
   cd binutils-${BINUTILS_VERSION}
-  for f in ../patches/*; do patch -p1 < $f; done
+  for f in ../patches/*; do [ "${f##*/}" = "s390x-pie.patch" ] || patch -p1 < $f; done
   ./configure --disable-separate-code --libdir=/lib --prefix=/usr --disable-multilib --enable-deterministic-archives --target=$(TARGETPLATFORM=$BINUTILS_TARGET xx-info) --disable-nls --disable-gprofng
   make -j $(nproc)
   make install
@@ -252,7 +253,7 @@ RUN <<EOT
   export CC=xx-clang CXX=xx-clang++ CFLAGS="$LD_CFLAGS --static" CXXFLAGS="$LD_CFLAGS" LD_TARGET_TRIPLE=$(TARGETPLATFORM= TARGETPAIR=$LD_TARGET xx-info) XX_CC_PREFER_LINKER=ld
   tar xf binutils-${BINUTILS_VERSION}.tar.gz
   cd binutils-${BINUTILS_VERSION}
-  for f in ../patches/*; do patch -p1 < $f; done
+  for f in ../patches/*; do [ "${f##*/}" = "s390x-pie.patch" ] || patch -p1 < $f; done
   ./configure \
     --disable-separate-code \
     --libdir=/lib \
@@ -308,7 +309,7 @@ RUN <<EOT
   export CC=xx-clang CXX=xx-clang++ CFLAGS="$BINUTILS_CFLAGS" CXXFLAGS="$BINUTILS_CFLAGS"
   tar xf binutils-${BINUTILS_VERSION}.tar.gz
   cd binutils-${BINUTILS_VERSION}
-  for f in ../patches/*; do patch -p1 < $f; done
+  for f in ../patches/*; do [ "${f##*/}" = "s390x-pie.patch" ] || patch -p1 < $f; done
   ./configure \
     --disable-separate-code \
     --libdir=/lib \

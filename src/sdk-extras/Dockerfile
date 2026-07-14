@@ -1,4 +1,4 @@
-ARG OSXCROSS_VERSION=12.3
+ARG OSXCROSS_VERSION=26.1
 
 # Make sure to read XCode license agreement before using this code
 # same for all arch therefore hardcoded to arm64
