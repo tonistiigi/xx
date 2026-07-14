@@ -1,0 +1,69 @@
+#!/usr/bin/env sh
+
+set -e
+
+for l in $(xx-info env); do
+  export "${l?}"
+done
+
+if [ "$(xx-info os)" != "darwin" ]; then
+  echo >&2 "WARN: skipping macports on $(xx-info os)"
+  exit 0
+fi
+
+if [ -z "$MACOSX_DEPLOYMENT_TARGET" ]; then
+  export MACOSX_DEPLOYMENT_TARGET=10.10
+  if [ "$(xx-info march)" = "arm64" ]; then
+    export MACOSX_DEPLOYMENT_TARGET=11.2
+  fi
+fi
+
+packages=
+parsed=
+n=$#
+for p in "$@"; do
+  if [ $# = $n ]; then set --; fi
+  arg=
+  case "$p" in
+    -*)
+      arg="$p"
+      ;;
+    "install" | "search")
+      parsed=1
+      arg="$p"
+      ;;
+    *)
+      if [ -n "$parsed" ]; then
+        if [ -z "${packages}" ]; then
+          packages="$p"
+        else
+          packages="${packages} ${p}"
+        fi
+      else
+        arg="$p"
+      fi
+      ;;
+  esac
+  if [ -n "$arg" ]; then
+    set -- "$@" "$arg"
+  fi
+done
+
+for p in ${packages}; do
+  n=${p}
+  set -- "$@" "$n"
+done
+
+flags=""
+if [ "$(xx-info march)" = "arm64" ]; then
+  flags="--arm64"
+fi
+
+if ! command -v "osxcross-macports" >/dev/null 2>/dev/null; then
+  echo >&2 'WARN: osxcross-macports command not found. Is osxcross installed?'
+  exit 0
+fi
+
+echo 1 | osxcross-macports select-mirror >/dev/null 2>&1 || true
+
+exec osxcross-macports $flags "$@"
