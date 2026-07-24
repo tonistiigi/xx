@@ -66,7 +66,7 @@ if [ -n "$rustup" ] || [ ! -f /etc/alpine-release ]; then
 fi
 
 if [ ! -f "$done_file" ]; then
-  xx-clang --setup-target-triple
+  XX_VENDOR=$vendor xx-clang --setup-target-triple
   if [ ! -d "$(rustc --print sysroot)/lib/rustlib/$(xx-info)" ]; then
     if [ -n "$rustup" ]; then
       execSilent rustup target add "$(xx-info)"
@@ -81,11 +81,11 @@ if [ ! -f "$done_file" ]; then
   touch "$done_file"
 fi
 
-export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(xx-info)-clang"
+export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(XX_VENDOR=$vendor xx-info)-clang"
 if [ -n "$XX_RUSTFLAGS" ]; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUSTFLAGS=$XX_RUSTFLAGS"
 fi
-export "CC_$(xx-info | tr - _)=$(xx-info)-clang"
+export "CC_$(xx-info | tr - _)=$(XX_VENDOR=$vendor xx-info)-clang"
 
 if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev/null 2>&1; then
   export "CARGO_TARGET_$(xx-info | tr '[:lower:]' '[:upper:]' | tr - _)_RUNNER=qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)"
@@ -96,8 +96,8 @@ if which "qemu-$(RISCV64_TARGET_ARCH='' ARM_TARGET_ARCH='' xx-info march)" >/dev
   fi
 fi
 
-if command -v "$(xx-info)-pkg-config" >/dev/null 2>/dev/null; then
-  export "PKG_CONFIG=$(xx-info)-pkg-config"
+if command -v "$(XX_VENDOR=$vendor xx-info)-pkg-config" >/dev/null 2>/dev/null; then
+  export "PKG_CONFIG=$(XX_VENDOR=$vendor xx-info)-pkg-config"
 fi
 
 if [ -n "$printtarget" ]; then
