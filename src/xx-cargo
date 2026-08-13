@@ -106,5 +106,5 @@ if [ -n "$printtarget" ]; then
 fi
 
 if [ -z "$setuponly" ]; then
-  exec cargo "$@" --target="$(xx-info)"
+  exec "${XX_CARGO:-cargo}" "$@" --target="$(xx-info)"
 fi
