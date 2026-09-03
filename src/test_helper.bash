@@ -35,6 +35,7 @@ xxdel() {
 xxrun() {
   wasclang=
   wasgolang=
+  preferCrossEssentials=
   # need to replace clang with clang-11 on buster as clang-7 is not supported
   if grep -q "buster-backports" /etc/apt/sources.list.d/backports.list 2>/dev/null; then
     n=$#
@@ -51,7 +52,21 @@ xxrun() {
       set -- "$@" "$p"
     done
   fi
-  "$@" || return $?
+  # bookworm-security does not publish armel, so native linux-libc-dev can
+  # advance beyond the target package and break Multi-Arch: same resolution.
+  if [ "$(xx-info vendor)" = "debian" ] && [ "$(cut -d. -f 1 /etc/debian_version)" = "12" ] && [ "$(xx-info debian-arch)" = "armel" ]; then
+    for xxrunArg in "$@"; do
+      if [ "$xxrunArg" = "xx-c-essentials" ] || [ "$xxrunArg" = "xx-cxx-essentials" ]; then
+        preferCrossEssentials=1
+        break
+      fi
+    done
+  fi
+  if [ -n "$preferCrossEssentials" ]; then
+    XX_APT_PREFER_CROSS=1 "$@" || return $?
+  else
+    "$@" || return $?
+  fi
   if [ -n "$wasclang" ]; then
     if [ -f /usr/bin/clang-11 ] && [ ! -e /usr/bin/clang ]; then
       ln -s clang-11 /usr/bin/clang
