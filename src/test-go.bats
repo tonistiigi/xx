@@ -549,6 +549,12 @@ testHelloCGOZig() {
   testHelloCGOZig
 }
 
+@test "armv6-hellocgo-zig" {
+  export TARGETARCH=arm
+  export TARGETVARIANT=v6
+  testHelloCGOZig
+}
+
 @test "ppc64le-hellocgo-zig" {
   export TARGETARCH=ppc64le
   testHelloCGOZig
@@ -597,8 +603,8 @@ testHelloCGOZig() {
   # single/double quotes changed in between go versions
   run sh -c "xx-go env | sed 's/[\"'\'']//g'"
   assert_success
-  assert_output --partial "CC=zig cc -target"
-  assert_output --partial "CXX=zig c++ -target"
+  assert_output --partial "CC=zig cc -target $(xx-zig --print-target-triple)"
+  assert_output --partial "CXX=zig c++ -target $(xx-zig --print-target-triple)"
 }
 
 @test "wrap-unwrap" {

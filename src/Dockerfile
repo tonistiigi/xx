@@ -103,6 +103,10 @@ FROM test-base-fixtures AS test-clang
 COPY test-clang.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked ./test-clang.bats
 
+FROM test-base-fixtures AS test-zig
+COPY test-zig.bats test_helper.bash ./
+RUN --mount=type=cache,target=/pkg-cache,sharing=locked --mount=type=cache,target=/root/.cache ./test-zig.bats
+
 FROM test-base-fixtures AS test-go
 COPY test-go.bats test_helper.bash ./
 RUN --mount=type=cache,target=/pkg-cache,sharing=locked --mount=type=cache,target=/root/.cache ./test-go.bats
