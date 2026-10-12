@@ -9,6 +9,15 @@ load 'test_helper'
   assert_output --partial "Usage: apt"
 }
 
+@test "apt-get-passthrough" {
+  # "check" is only implemented by apt-get, apt rejects it
+  run xx-apt-get check
+  assert_success
+
+  run xx-apt check
+  assert_failure
+}
+
 @test "native" {
   run xx-apt show file
   assert_success

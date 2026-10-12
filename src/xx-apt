@@ -205,7 +205,7 @@ done
 
 if [ -z "${parsed}" ]; then
   exitnolinux
-  exec apt "$@"
+  exec "$arg0" "$@"
 fi
 
 nocross=
