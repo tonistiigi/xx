@@ -47,8 +47,8 @@ testHelloCargoRustup() {
 @test "install-rustup" {
   add clang lld curl ca-certificates
   assert_success
-  # https://releases.rs/docs/1.81.0/ adds support for loongarch64 on musl: https://doc.rust-lang.org/rustc/platform-support/loongarch-linux.html#building-rust-programs
-  run sh -c "curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=1.81.0 --no-modify-path --profile=minimal"
+  # Rust 1.81 and newer support loongarch64 on musl: https://doc.rust-lang.org/rustc/platform-support/loongarch-linux.html#building-rust-programs
+  run sh -c "curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain=1.99.0 --no-modify-path --profile=minimal"
   assert_success
   export "PATH=/root/.cargo/bin:$PATH"
   run rustup --version 2>/dev/null
