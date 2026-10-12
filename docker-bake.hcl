@@ -209,7 +209,7 @@ variable "BINUTILS_VERSION_ONLY" {
 }
 
 variable "BINUTILS_VERSION" {
-    default = "2.44"
+    default = "2.47"
 }
 
 function "binutilsTag" {
