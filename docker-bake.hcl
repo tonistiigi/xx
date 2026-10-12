@@ -41,7 +41,7 @@ target "test-rhel" {
     inherits = ["test-src"]
     args = {
         TEST_BASE_TYPE = "rhel"
-        TEST_BASE_IMAGE = "fedora:35"
+        TEST_BASE_IMAGE = "fedora:44"
     }
 }
 
@@ -209,7 +209,7 @@ variable "BINUTILS_VERSION_ONLY" {
 }
 
 variable "BINUTILS_VERSION" {
-    default = "2.44"
+    default = "2.47"
 }
 
 function "binutilsTag" {

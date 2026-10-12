@@ -87,6 +87,10 @@ jobs:
             base: debian
             allow-failure: false
           -
+            image: ubuntu:26.04
+            base: debian
+            allow-failure: false
+          -
             image: redhat/ubi8
             base: rhel
             allow-failure: false
@@ -104,6 +108,10 @@ jobs:
             allow-failure: false
           -
             image: fedora:42
+            base: rhel
+            allow-failure: false
+          -
+            image: fedora:44
             base: rhel
             allow-failure: false
           -

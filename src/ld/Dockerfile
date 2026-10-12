@@ -7,7 +7,7 @@ ARG CCTOOLS_VERSION=1030.6.3-ld64-956.6
 ARG SIGTOOL_VERSION=c6242cb29c412168f771e97d75417e55af6cdb2e
 ARG LIBDISPATCH_VERSION=swift-6.3.3-RELEASE
 ARG APORTS_VERSION=3.24-stable
-ARG BINUTILS_VERSION=2.46.1
+ARG BINUTILS_VERSION=2.47
 
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
@@ -273,6 +273,7 @@ RUN <<EOT
     --disable-elfcpp \
     --disable-binutils \
     --disable-gprofng \
+    --disable-werror \
     $BINUTILS_CONFIG
   make -j $(nproc)
   make install
@@ -319,13 +320,14 @@ RUN <<EOT
     --target=$(TARGETPLATFORM= TARGETPAIR=$BINUTILS_TARGET xx-info) \
     --host=$(xx-clang --print-target-triple) \
     --disable-nls \
-    --enable-gold \
+    --disable-gold \
     --enable-relro \
     --enable-plugins \
     --with-pic \
     --with-mmap \
     --with-system-zlib \
     --disable-gprofng \
+    --disable-werror \
     $BINUTILS_CONFIG
   make -j $(nproc)
   make install
