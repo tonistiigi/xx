@@ -3,6 +3,8 @@
 load 'assert'
 load 'test_helper'
 
+bats_require_minimum_version 1.5.0
+
 cleanPackages() {
   for p in linux/amd64 linux/arm64 linux/ppc64le linux/s390x linux/386 linux/arm/v7 linux/arm/v6; do
     TARGETPLATFORM=$p xxdel xx-c-essentials
@@ -19,13 +21,14 @@ cleanPackages() {
 @test "nocargo" {
   cleanPackages
   add clang
-  run xx-cargo --version
-  assert_failure
+  run -127 xx-cargo --version
   assert_output --partial "cargo: not found"
 }
 
 testHelloCargo() {
   rm -f "/.xx-cargo.$(xx-info arch)"
+  # lock file format depends on the cargo version that created it
+  rm -f ./fixtures/hello_cargo/Cargo.lock
   run xxadd xx-c-essentials
   assert_success
   run xx-cargo build --verbose --color=never --manifest-path=./fixtures/hello_cargo/Cargo.toml --release --target-dir /tmp/cargobuild
