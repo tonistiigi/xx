@@ -153,6 +153,10 @@ EOF
   assert_success
   assert_output "arm64"
 
+  variant=v6 TARGETPAIR=linux-arm64 run xx-info variant
+  assert_success
+  assert_output ""
+
   TARGETPAIR=linux-armv7 run xx-info arch
   assert_success
   assert_output "arm"

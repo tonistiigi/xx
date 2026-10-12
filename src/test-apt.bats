@@ -9,6 +9,15 @@ load 'test_helper'
   assert_output --partial "Usage: apt"
 }
 
+@test "apt-get-passthrough" {
+  # "check" is only implemented by apt-get, apt rejects it
+  run xx-apt-get check
+  assert_success
+
+  run xx-apt check
+  assert_failure
+}
+
 @test "native" {
   run xx-apt show file
   assert_success
@@ -29,6 +38,13 @@ load 'test_helper'
 
   run xx-apt show xx-cxx-essentials
   assert_success
+}
+
+@test "essentials use default gcc version" {
+  ver=$(apt-cache depends gcc | sed -n 's/^ *Depends: gcc-\([0-9][0-9]*\)$/\1/p' | head -n 1)
+  run xx-apt show xx-c-essentials
+  assert_success
+  assert_output --partial " show libc6-dev libgcc-${ver}-dev"
 }
 
 @test "fix-source-file-deb822" {
@@ -163,7 +179,7 @@ EOF
   export TARGETARCH=arm
   export TARGETVARIANT=v6
   if ! xx-info is-cross; then return; fi
-  if [ "$(xx-info vendor)" = "ubuntu" ]; then skip; fi
+  if ! supportArmel; then skip "armel not supported"; fi
 
   run xx-apt show file
   assert_success
