@@ -58,6 +58,15 @@ fixsourcesfile() {
   esac
 }
 
+# major version of debian; testing and unstable (eg. "forky/sid") sort after all releases
+debianversion() {
+  v=$(cut -d. -f 1 /etc/debian_version)
+  case "$v" in
+    "" | *[!0-9]*) echo 999 ;;
+    *) echo "$v" ;;
+  esac
+}
+
 exitnolinux() {
   if [ "${TARGETOS}" != "linux" ]; then
     echo >&2 "skipping packages installation on ${XX_OS}"
@@ -94,7 +103,7 @@ case "${TARGETARCH}" in
     if [ -z "$XX_APT_FORCE_RISCV64" ]; then
       case "${XX_VENDOR}" in
         debian)
-          if [ "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+          if [ "$(debianversion)" -lt 13 ]; then
             echo >&2 "skipping packages installation on ${XX_ARCH}. riscv64 requires debian 13+"
             exit 0
           fi
@@ -213,7 +222,7 @@ if ! xx-info is-cross; then
   nocross=1
 fi
 
-if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ] && [ "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+if [ "$TARGETARCH" = "riscv64" ] && [ "$(xx-info vendor)" = "debian" ] && [ "$(debianversion)" -lt 13 ]; then
   riscv64_sid_list=/etc/apt/sources.list.d/riscv64-sid.list
   riscv64_sid_repo="deb [ arch=riscv64 ] http://ftp.ports.debian.org/debian-ports sid main"
   if ! grep -Fx "$riscv64_sid_repo" "$riscv64_sid_list" >/dev/null 2>&1; then
@@ -249,7 +258,8 @@ if [ "$XX_OS" = "windows" ]; then
   esac
 fi
 
-gccvers="12 11 10 9"
+# prefer the version of the distro default gcc, then the newest available
+gccvers="$(apt-cache depends gcc 2>/dev/null | sed -n 's/^ *Depends: gcc-\([0-9][0-9]*\)$/\1/p' | head -n 1) 16 15 14 13 12 11 10 9"
 packages2=
 for p in ${packages}; do
   if [ "${p}" = "xx-c-essentials" ]; then

@@ -70,7 +70,7 @@ xxrun() {
 supportRiscV() {
   case "$(. /etc/os-release; echo "$ID")" in
     debian)
-      if [  "$(cut -d. -f 1 /etc/debian_version)" -lt 13 ]; then
+      if [ "$(debianVersion)" -lt 13 ]; then
         return 1
       else
         return 0
@@ -82,6 +82,29 @@ supportRiscV() {
       else
         return 0
       fi
+      ;;
+  esac
+  return 0
+}
+
+# major version of debian; testing and unstable (eg. "forky/sid") sort after all releases
+debianVersion() {
+  v=$(cut -d. -f 1 /etc/debian_version)
+  case "$v" in
+    "" | *[!0-9]*) echo 999 ;;
+    *) echo "$v" ;;
+  esac
+}
+
+# armel is not available on ubuntu and was dropped after debian 13
+supportArmel() {
+  case "$(xx-info vendor)" in
+    ubuntu)
+      return 1
+      ;;
+    debian)
+      [ "$(debianVersion)" -le 13 ]
+      return
       ;;
   esac
   return 0

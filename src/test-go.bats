@@ -3,6 +3,8 @@
 load 'assert'
 load 'test_helper'
 
+bats_require_minimum_version 1.5.0
+
 ensureGo() {
   if command -v apk >/dev/null 2>/dev/null; then
     add go
@@ -75,8 +77,7 @@ testEnv() {
   else
     del golang
   fi
-  run xx-go env
-  assert_failure
+  run -127 xx-go env
   assert_output --partial "go: not found"
   ensureGo
 }

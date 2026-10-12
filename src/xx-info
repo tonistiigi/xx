@@ -58,6 +58,7 @@ detectMacOSSDK() {
 # TARGETPAIR is an optional alternative format $TARGETOS-$TARGETARCH$TARGETVARIANT, eg linux-amd64, linux-armv7
 # This format is recommended to be used in image and binary names where slashes are not allowed.
 # Architecture and variant component are not separated with a dash to automatically handle empty value.
+variant=""
 if [ -n "$TARGETPAIR" ]; then
   os="$(echo "$TARGETPAIR" | cut -d"-" -f1)"
   arch="$(echo "$TARGETPAIR" | cut -d"-" -f2)"

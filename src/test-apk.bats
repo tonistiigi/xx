@@ -2,6 +2,8 @@
 
 load 'assert'
 
+bats_require_minimum_version 1.5.0
+
 @test "no_cmd" {
   run xx-apk
   assert_failure
@@ -29,6 +31,12 @@ load 'assert'
   assert_output --partial "musl-dev"
   assert_output --partial "gcc"
   assert_output --partial "g++"
+}
+
+@test "trace goes to stderr" {
+  run --separate-stderr xx-apk info -e busybox
+  assert_success
+  assert_output "busybox"
 }
 
 @test "cross" {

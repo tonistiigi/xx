@@ -40,6 +40,13 @@ load 'test_helper'
   assert_success
 }
 
+@test "essentials use default gcc version" {
+  ver=$(apt-cache depends gcc | sed -n 's/^ *Depends: gcc-\([0-9][0-9]*\)$/\1/p' | head -n 1)
+  run xx-apt show xx-c-essentials
+  assert_success
+  assert_output --partial " show libc6-dev libgcc-${ver}-dev"
+}
+
 @test "fix-source-file-deb822" {
   f="$BATS_TEST_TMPDIR/test.sources"
   cat >"$f" <<EOF
@@ -172,7 +179,7 @@ EOF
   export TARGETARCH=arm
   export TARGETVARIANT=v6
   if ! xx-info is-cross; then return; fi
-  if [ "$(xx-info vendor)" = "ubuntu" ]; then skip; fi
+  if ! supportArmel; then skip "armel not supported"; fi
 
   run xx-apt show file
   assert_success

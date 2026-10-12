@@ -125,7 +125,7 @@ cmd() {
   done
   if [ "$#" != "0" ]; then
     set -- "--root" "$root" "$@"
-    echo "+ apk " "$@"
+    echo >&2 "+ apk " "$@"
   fi
   apk "$@"
   if xx-info is-cross; then
