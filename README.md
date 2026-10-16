@@ -65,7 +65,7 @@ ARG TARGETPLATFORM
 RUN xx-info env
 ```
 
-`xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-go`, `xx-cargo`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
+`xx` currently contains `xx-info`, `xx-apk`, `xx-apt-get`, `xx-cc`, `xx-c++`, `xx-clang`, `xx-clang++`, `xx-zig`, `xx-go`, `xx-cargo`, `xx-verify`. `xx-clang` (and its aliases) creates additional aliases, eg. `${triple}-clang`, `${triple}-pkg-config`, on first invocation or on `xx-clang --setup-target-triple` call.
 
 ## Verifying release integrity
 
@@ -278,6 +278,67 @@ RUN xx-apt-get install -y binutils gcc libc6-dev
 RUN $(xx-info)-gcc -o hello hello.c
 ```
 
+### Building with Zig
+
+`xx-zig cc` and `xx-zig c++` compile C and C++ for `TARGETPLATFORM` (or
+`TARGETOS`, `TARGETARCH` and `TARGETVARIANT`). Install Zig for the build
+platform:
+
+```dockerfile
+FROM --platform=$BUILDPLATFORM alpine:3.20 AS build
+COPY --from=tonistiigi/xx / /
+RUN apk add --no-cache zig
+WORKDIR /src
+COPY hello.cc .
+ARG TARGETPLATFORM
+RUN xx-zig c++ -static -o /hello hello.cc && xx-verify --static /hello
+```
+
+Zig uses its bundled libc, C++ standard library and linker. Standalone
+programs do not need target GCC or Clang packages. `XX_LIBC` selects `musl`
+or `gnu` for Linux and defaults to the build distribution's libc. The xx
+image contains the wrapper; the caller installs the Zig compiler. For
+static Linux binaries, select `XX_LIBC=musl`; Zig's bundled glibc requires
+dynamic linking.
+
+Compiler arguments are passed through, including `-static`, `-shared` and
+`-fPIC`. An explicit `-target` overrides the environment's target. ARMv5
+and ARMv6 select a CPU as well as the ABI; an explicit `-mcpu` can override
+that CPU. For build systems accepting compiler commands, use
+`CC="xx-zig cc"` and `CXX="xx-zig c++"`.
+
+`xx-zig --print-target-triple` prints the Zig target without requiring Zig
+to be installed. This differs from `xx-info triple`, which identifies
+distribution packages and their directories. Linux, macOS and Windows
+target names are mapped, but libc, C++ and linking support depend on the
+installed Zig version. Tests exercise Linux C/C++ builds on Alpine and
+Debian. A mapped target alone does not guarantee that Zig can link it;
+older versions lack bundled libc for some targets, including LoongArch.
+
+External libraries must match the target platform and libc. Pass their
+include and library paths explicitly, or configure `pkg-config` for the
+target. For example, when cross-compiling on Alpine:
+
+```dockerfile
+RUN apk add --no-cache pkgconf
+ARG TARGETPLATFORM
+RUN xx-apk add zlib-dev
+RUN triple=$(xx-info triple) && \
+    export PKG_CONFIG_SYSROOT_DIR="/$triple" && \
+    export PKG_CONFIG_LIBDIR="/$triple/usr/lib/pkgconfig" && \
+    xx-zig cc -o /hello hello.c $(pkg-config --cflags --libs zlib) && \
+    xx-verify /hello
+```
+
+On Debian, use `PKG_CONFIG_LIBDIR="/usr/lib/$(xx-info triple)/pkgconfig"`
+and `PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1` so that `pkg-config` retains the
+include paths needed by Zig's cross-compiler.
+
+Prebuilt C++ dependencies must also be compatible with Zig's C++ runtime.
+The wrapper does not configure package paths or download SDKs. `zig build`
+and the `xx-clang` setup, wrapping and CMake helper flags are not implemented
+by `xx-zig`.
+
 ### Wrapping as default
 
 Special flags `xx-clang --wrap` and `xx-clang --unwrap` can be used to override the default behavior of `clang` with `xx-clang` in the extreme cases where your build scripts have no way to point to alternative compiler names.
@@ -393,7 +454,8 @@ already rely on Zig in your build pipeline.
 Zig support is **opt-in** and is enabled by setting the `XX_GO_PREFER_C_COMPILER`
 environment variable to `zig`. When this variable is set and the `zig` binary
 is available in `PATH`, `xx-go` will configure CGo to use Zig as the C compiler
-for the current target.
+for the current target, using `xx-zig --print-target-triple` for target
+selection.
 
 ```dockerfile
 FROM --platform=$BUILDPLATFORM golang:alpine

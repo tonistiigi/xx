@@ -1,0 +1,90 @@
+#!/usr/bin/env sh
+
+set -e
+
+case "$1" in
+  --help | -h | "")
+    echo "Usage: xx-zig {cc|c++} [ARGS...]"
+    echo "       xx-zig --print-target-triple"
+    exit 0
+    ;;
+  cc | c++ | --print-target-triple) ;;
+  *)
+    echo >&2 "xx-zig: unsupported command: $1"
+    exit 1
+    ;;
+esac
+
+for l in $(xx-info env); do
+  export "${l?}"
+done
+
+arch=$TARGETARCH
+abi=$XX_LIBC
+case "$TARGETARCH" in
+  amd64) arch=x86_64 ;;
+  arm64) arch=aarch64 ;;
+  386) arch=x86 ;;
+  ppc64le) arch=powerpc64le ;;
+  loong64) arch=loongarch64 ;;
+  mipsle) arch=mipsel ;;
+  mips64le) arch=mips64el ;;
+esac
+
+case "$TARGETOS" in
+  linux)
+    case "$TARGETARCH" in
+      arm)
+        abi=${XX_TRIPLE##*-}
+        ;;
+      mips | mipsle)
+        if [ "$abi" = gnu ]; then abi=gnueabi; fi
+        ;;
+      mips64 | mips64le)
+        if [ "$abi" = gnu ]; then abi=gnuabi64; fi
+        ;;
+    esac
+    os=linux
+    ;;
+  darwin)
+    os=macos
+    abi=none
+    ;;
+  windows)
+    os=windows
+    abi=gnu
+    ;;
+  *)
+    echo >&2 "xx-zig: unsupported target OS: $TARGETOS"
+    exit 1
+    ;;
+esac
+triple="$arch-$os-$abi"
+
+if [ "$1" = "--print-target-triple" ]; then
+  echo "$triple"
+  exit 0
+fi
+
+if ! command -v zig >/dev/null 2>/dev/null; then
+  echo >&2 "xx-zig: zig not found"
+  exit 1
+fi
+
+compiler=$1
+shift
+
+# A target override must also override the environment's CPU selection.
+explicit_target=
+for arg in "$@"; do
+  case "$arg" in
+    -target | --target | --target=*) explicit_target=1 ;;
+  esac
+done
+if [ -z "$explicit_target" ] && [ "$TARGETARCH" = arm ]; then
+  case "$TARGETVARIANT" in
+    v5) set -- -mcpu=arm926ej_s "$@" ;;
+    v6) set -- -mcpu=arm1176jzf_s "$@" ;;
+  esac
+fi
+exec zig "$compiler" -target "$triple" "$@"
