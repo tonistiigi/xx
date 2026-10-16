@@ -57,6 +57,7 @@ group "test" {
         "test-apt",
         "test-verify",
         "test-clang",
+        "test-zig",
         "test-go",
         "test-cargo"
     ]
@@ -85,6 +86,11 @@ target "test-verify" {
 target "test-clang" {
     inherits = ["test-base"]
     target = "test-clang"
+}
+
+target "test-zig" {
+    inherits = ["test-base"]
+    target = "test-zig"
 }
 
 target "test-go" {
